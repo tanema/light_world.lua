@@ -38,15 +38,23 @@ end
 
 function love.load()
     love.graphics.setBackgroundColor(0, 0, 0)
+	love.graphics.setDefaultFilter("nearest", "nearest")
 	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth(), love.window.getHeight(), 32, 32)
 	imgFloor = love.graphics.newImage("floor.png")
 	imgFloor:setWrap("repeat", "repeat")
+
+	circle = love.graphics.newImage "circle.png"
+	circle_normal = love.graphics.newImage "circle_normal.png"
+	cone = love.graphics.newImage "cone.png"
+	cone_normal = love.graphics.newImage "cone_normal.png"
+	chest = love.graphics.newImage "chest.png"
+	chest_normal = love.graphics.newImage "chest_normal.png"
 
 	-- light world
 	lightRange = 400
 	lightSmooth = 1.0
 	lightWorld = love.light.newWorld()
-	lightWorld.setAmbientColor(15, 15, 15)
+	lightWorld.setAmbientColor(15, 15, 31)
 	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
 	mouseLight.setGlowStrength(0.3)
 
@@ -54,7 +62,7 @@ function love.load()
 	initScene()
 
 	helpOn = true
-	physicOn = true
+	physicOn = false
 	lightOn = true
 	gravityOn = 1
 	shadowBlurOn = true
@@ -65,12 +73,16 @@ end
 function love.update(dt)
 	love.window.setTitle("FPS:" .. love.timer.getFPS())
 	mouseLight.setPosition(love.mouse.getX(), love.mouse.getY())
+	mx = love.mouse.getX()
+	my = love.mouse.getY()
 
     for i = 1, phyCnt do
 		if phyBody[i]:isAwake() then
-			if phyShape[i]:getType() == "polygon" then
+			if phyLight[i].getType() == "polygon" then
 				phyLight[i].setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
-			else
+			elseif phyLight[i].getType() == "circle" then
+				phyLight[i].setPosition(phyBody[i]:getX(), phyBody[i]:getY())
+			elseif phyLight[i].getType() == "image" then
 				phyLight[i].setPosition(phyBody[i]:getX(), phyBody[i]:getY())
 			end
 		end
@@ -128,7 +140,7 @@ function love.draw()
 		love.graphics.setColor(math.sin(i) * 255, math.cos(i) * 255, math.tan(i) * 255)
 		if phyLight[i].getType() == "polygon" then
 			love.graphics.polygon("fill", phyLight[i].getPoints())
-		else
+		elseif phyLight[i].getType() == "circle" then
 			love.graphics.circle("fill", phyLight[i].getX(), phyLight[i].getY(), phyLight[i].getRadius())
 		end
 	end
@@ -138,25 +150,77 @@ function love.draw()
 		lightWorld.drawShine()
 	end
 
+	for i = 1, phyCnt do
+		love.graphics.setColor(191 + math.sin(i) * 63, 191 + math.cos(i) * 63, 191 + math.tan(i) * 63)
+		if phyLight[i].getType() == "image" then
+			love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ox2, phyLight[i].y - phyLight[i].oy2)
+		end
+	end
+
+	-- draw pixel shadow
+	lightWorld.drawPixelShadow()
+
 	-- draw help
 	if helpOn then
 		love.graphics.setColor(0, 0, 0, 191)
-		love.graphics.rectangle("fill", 8, 8, 210, 16 * 15)
-		love.graphics.setColor(255, 255, 255)
+		love.graphics.rectangle("fill", 8, 8, 210, 16 * 16)
+		love.graphics.setColor(0, 127, 255)
 		love.graphics.print("WASD: Move objects", 16, 16)
-		love.graphics.print("F1: Help on/off", 16, 32)
-		love.graphics.print("F2: Physic on/off", 16, 48)
-		love.graphics.print("F3: Light on/off", 16, 64)
-		love.graphics.print("F4: Clear objects", 16, 80)
-		love.graphics.print("F5: Clear lights", 16, 96)
-		love.graphics.print("F6: Gravity on/off", 16, 112)
-		love.graphics.print("F7: Shadowblur on/off", 16, 128)
-		love.graphics.print("F8: Bloom on/off", 16, 144)
-		love.graphics.print("F9: Texture on/off", 16, 160)
+		love.graphics.setColor(0, 255, 0)
+		love.graphics.print("F1: Help on", 16, 32)
+		if physicOn then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F2: Physic on", 16, 48)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F2: Physic off", 16, 48)
+		end
+		if lightOn then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F3: Light on", 16, 64)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F3: Light off", 16, 64)
+		end
+		if gravityOn == 1.0 then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F4: Gravity on", 16, 80)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F4: Gravity off", 16, 80)
+		end
+		if shadowBlurOn then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F5: Shadowblur on", 16, 96)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F5: Shadowblur off", 16, 96)
+		end
+		if bloomOn then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F6: Bloom on", 16, 112)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F6: Bloom off", 16, 112)
+		end
+		if textureOn then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F7: Texture on", 16, 128)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F7: Texture off", 16, 128)
+		end
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.print("F11: Clear objects", 16, 144)
+		love.graphics.print("F12: Clear lights", 16, 160)
 		love.graphics.print("M.left: Add cube", 16, 176)
 		love.graphics.print("M.middle: Add light", 16, 192)
 		love.graphics.print("M.right: Add circle", 16, 208)
 		love.graphics.print("M.scroll: Change smooth", 16, 224)
+		love.graphics.print("1-3: Add image", 16, 240)
+	else
+		love.graphics.setColor(255, 255, 255, 63)
+		love.graphics.print("F1: Help", 8, 8)
 	end
 
 	-- draw shader
@@ -215,22 +279,49 @@ function love.keypressed(k, u)
 	elseif k == "f3" then
 		lightOn = not lightOn
 	elseif k == "f4" then
+		gravityOn = 1 - gravityOn
+		physicWorld:setGravity(0, gravityOn * 9.81 * 64)
+	elseif k == "f5" then
+		shadowBlurOn = not shadowBlurOn
+		lightWorld.setBlur(shadowBlurOn)
+	elseif k == "f6" then
+		bloomOn = not bloomOn
+	elseif k == "f7" then
+		textureOn = not textureOn
+	elseif k == "f11" then
 		physicWorld:destroy()
 		lightWorld.clearObjects()
 		initScene()
-	elseif k == "f5" then
+	elseif k == "f12" then
 		lightWorld.clearLights()
-		mouseLight = lightWorld.newLight(0, 0, 127, 63, 0, lightRange)
+		mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
 		mouseLight.setGlowStrength(0.3)
-	elseif k == "f6" then
-		gravityOn = 1 - gravityOn
-		physicWorld:setGravity(0, gravityOn * 9.81 * 64)
-	elseif k == "f7" then
-		shadowBlurOn = not shadowBlurOn
-		lightWorld.setBlur(shadowBlurOn)
-	elseif k == "f8" then
-		bloomOn = not bloomOn
-	elseif k == "f9" then
-		textureOn = not textureOn
+	elseif k == "1" then
+		-- add image
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newImage(circle, mx, my)
+		phyLight[phyCnt].setNormal(circle_normal)
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 32)
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
+	elseif k == "2" then
+		-- add image
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 28)
+		phyLight[phyCnt].setNormal(cone_normal)
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 25, 32)
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
+	elseif k == "3" then
+		-- add image
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 36)
+		phyLight[phyCnt].setNormal(chest_normal)
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 24)
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
 	end
 end
