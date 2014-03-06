@@ -334,6 +334,10 @@ function love.light.newWorld()
 	o.setPoints = function(n, ...)
 		o.poly[n].data = {...}
 	end
+	-- get polygon count
+	o.getObjectCount = function()
+		return #o.poly + #o.circle
+	end
 	-- get circle count
 	o.getCircleCount = function()
 		return #o.circle
