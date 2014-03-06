@@ -46,6 +46,8 @@ love.postshader.draw = function(shader)
 		love.graphics.setBlendMode("alpha")
 	elseif shader == "blur" then
 		-- Blur Shader
+		LOVE_POSTSHADER_BLURV:send("steps", 2.0)
+		LOVE_POSTSHADER_BLURH:send("steps", 2.0)
 		love.graphics.setCanvas(LOVE_POSTSHADER_BUFFER_BACK)
 		love.graphics.setBlendMode("alpha")
 

@@ -14,8 +14,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 
 	float att = 1 - distance / lightRange;
 
-	if(distance < lightRange && pixel.a > 0.0) {
-		return vec4(vec3(clamp(1 - dot(normal, lightDirection), 0.0, 1.0)) * lightColor * pow(att, lightSmooth) + lightAmbient, 1.0);
+	if(pixel.a > 0.0 && distance < lightRange) {
+		return vec4(vec3(clamp((1 - dot(normal, lightDirection)) * pow(att, lightSmooth * 4.0), 0.0, 1.0)) * lightColor + lightAmbient, 1.0);
 	} else if(pixel.a == 0.0) {
 		return vec4(0.0);
 	} else {
