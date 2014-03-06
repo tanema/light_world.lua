@@ -370,6 +370,10 @@ function love.light.newWorld()
 	o.getLightY = function(n)
 		return o.lights[n].y
 	end
+	-- get type
+	o.getType = function()
+		return "world"
+	end
 
 	return o
 end
@@ -398,6 +402,14 @@ function love.light.newLight(p, x, y, red, green, blue, range)
 			o.y = y
 			o.changed = true
 		end
+	end
+	-- get x
+	o.getX = function()
+		return o.x
+	end
+	-- get y
+	o.getY = function()
+		return o.y
 	end
 	-- set x
 	o.setX = function(x)
@@ -451,38 +463,38 @@ function love.light.newLight(p, x, y, red, green, blue, range)
 end
 
 -- rectangle object
-function love.light.newRectangle(p, x, y, w, h)
+function love.light.newRectangle(p, x, y, width, height)
 	local o = {}
 	p.poly[#p.poly + 1] = o
 	o.id = #p.poly
-	o.x = x
-	o.y = y
-	o.w = w
-	o.h = h
-	o.ox = w / 2
-	o.oy = h / 2
+	o.x = x or 0
+	o.y = y or 0
+	o.width = width or 64
+	o.height = height or 64
+	o.ox = o.width / 2
+	o.oy = o.height / 2
 	o.shine = true
 	p.changed = true
 	o.data = {
 		o.x - o.ox,
 		o.y - o.oy,
-		o.x - o.ox + o.w,
+		o.x - o.ox + o.width,
 		o.y - o.oy,
-		o.x - o.ox + o.w,
-		o.y - o.oy + o.h,
+		o.x - o.ox + o.width,
+		o.y - o.oy + o.height,
 		o.x - o.ox,
-		o.y - o.oy + o.h
+		o.y - o.oy + o.height
 	}
 	-- refresh
 	o.refresh = function()
 		o.data[1] = o.x - o.ox
 		o.data[2] = o.y - o.oy
-		o.data[3] = o.x - o.ox + o.w
+		o.data[3] = o.x - o.ox + o.width
 		o.data[4] = o.y - o.oy
-		o.data[5] = o.x - o.ox + o.w
-		o.data[6] = o.y - o.oy + o.h
+		o.data[5] = o.x - o.ox + o.width
+		o.data[6] = o.y - o.oy + o.height
 		o.data[7] = o.x - o.ox
-		o.data[8] = o.y - o.oy + o.h
+		o.data[8] = o.y - o.oy + o.height
 	end
 	-- set position
 	o.setPosition = function(x, y)
@@ -493,10 +505,26 @@ function love.light.newRectangle(p, x, y, w, h)
 			p.changed = true
 		end
 	end
+	-- set x
+	o.setX = function(x)
+		if x ~= o.x then
+			o.x = x
+			o.refresh()
+			p.changed = true
+		end
+	end
+	-- set y
+	o.setY = function(y)
+		if y ~= o.y then
+			o.y = y
+			o.refresh()
+			p.changed = true
+		end
+	end
 	-- set dimension
-	o.setDimension = function(w, h)
-		o.w = w
-		o.h = h
+	o.setDimension = function(width, height)
+		o.width = width
+		o.height = height
 		o.refresh()
 		p.changed = true
 	end
@@ -518,6 +546,18 @@ function love.light.newRectangle(p, x, y, w, h)
 	o.getY = function()
 		return o.y
 	end
+	-- get width
+	o.getWidth = function()
+		return o.width
+	end
+	-- get height
+	o.getHeight = function()
+		return o.height
+	end
+	-- get rectangle data
+	o.getPoints = function()
+		return unpack(o.data)
+	end
 	-- get type
 	o.getType = function()
 		return "rectangle"
@@ -531,15 +571,29 @@ function love.light.newCircle(p, x, y, radius)
 	local o = {}
 	p.circle[#p.circle + 1] = o
 	o.id = #p.circle
-	o.x = x
-	o.y = y
-	o.radius = radius
+	o.x = x or 0
+	o.y = y or 0
+	o.radius = radius or 200
 	o.shine = true
 	p.changed = true
 	-- set position
 	o.setPosition = function(x, y)
 		if x ~= o.x or y ~= o.y then
 			o.x = x
+			o.y = y
+			p.changed = true
+		end
+	end
+	-- set x
+	o.setX = function(x)
+		if x ~= o.x then
+			o.x = x
+			p.changed = true
+		end
+	end
+	-- set y
+	o.setY = function(y)
+		if y ~= o.y then
 			o.y = y
 			p.changed = true
 		end
@@ -629,8 +683,8 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.img = img
 	o.normal = nil
 	o.glow = nil
-	o.x = x
-	o.y = y
+	o.x = x or 0
+	o.y = y or 0
 	o.width = width or img:getWidth()
 	o.height = height or img:getHeight()
 	o.ox = o.width / 2.0
@@ -670,6 +724,38 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 			o.refresh()
 			p.changed = true
 		end
+	end
+	-- set x position
+	o.setX = function(x)
+		if x ~= o.x then
+			o.x = x
+			o.refresh()
+			p.changed = true
+		end
+	end
+	-- set y position
+	o.setY = function(y)
+		if y ~= o.y then
+			o.y = y
+			o.refresh()
+			p.changed = true
+		end
+	end
+	-- get width
+	o.getWidth = function()
+		return o.width
+	end
+	-- get height
+	o.getHeight = function()
+		return o.height
+	end
+	-- get image width
+	o.getImageWidth = function()
+		return o.imgWidth
+	end
+	-- get image height
+	o.getImageHeight = function()
+		return o.imgHeight
 	end
 	-- set dimension
 	o.setDimension = function(width, height)
