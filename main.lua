@@ -436,7 +436,7 @@ function love.keypressed(k, u)
 		-- add image
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newImage(blopp, mx, my, 42, 16, 21, 20)
-		phyLight[phyCnt].generateNormalMapFade("fade", "fade")
+		phyLight[phyCnt].generateNormalMapGradient("gradient", "gradient")
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 42, 29)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])

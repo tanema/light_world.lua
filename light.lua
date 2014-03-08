@@ -827,7 +827,7 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 		o.normal = love.graphics.newImage(imgNormalData)
 	end
 	-- generate faded normal map
-	o.generateNormalMapFade = function(horizontalFade, verticalFade)
+	o.generateNormalMapGradient = function(horizontalGradient, verticalGradient)
 		local imgData = o.img:getData()
 		local imgNormalData = love.image.newImageData(o.imgWidth, o.imgHeight)
 		local dx = 255.0 / o.imgWidth
@@ -840,18 +840,18 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 			for k = 0, o.imgHeight - 1 do
 				local r, g, b, a = imgData:getPixel(i, k)
 				if a > 0 then
-					if horizontalFade == "fade" then
+					if horizontalGradient == "gradient" then
 						nx = i * dx
-					elseif horizontalFade == "inverse" then
+					elseif horizontalGradient == "inverse" then
 						nx = 255 - i * dx
 					else
 						nx = 127
 					end
 
-					if verticalFade == "fade" then
+					if verticalGradient == "gradient" then
 						ny = 127 + k * dy * 0.5
 						nz = 255 - k * dy * 0.5
-					elseif verticalFade == "inverse" then
+					elseif verticalGradient == "inverse" then
 						ny = 127 - k * dy * 0.5
 						nz = 127 - k * dy * 0.25
 					else
