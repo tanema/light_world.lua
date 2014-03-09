@@ -67,7 +67,7 @@ function love.load()
 	lightSmooth = 1.0
 	lightWorld = love.light.newWorld()
 	lightWorld.setAmbientColor(15, 15, 31)
-	mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
+	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
 	mouseLight.setGlowStrength(0.3)
 	mouseLight.setSmooth(lightSmooth)
 
@@ -82,6 +82,7 @@ function love.load()
 	bloomOn = true
 	textureOn = true
 	normalOn = false
+	glowBlur = 1.0
 
 	offsetX = 0.0
 	offsetY = 0.0
@@ -207,7 +208,6 @@ function love.draw()
 	for i = 1, phyCnt do
 		if phyLight[i].getType() == "image" then
 			if not normalOn then
-				--love.graphics.setColor(255, 255, 255)
 				math.randomseed(i)
 				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
 				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ox2, phyLight[i].y - phyLight[i].oy2)
@@ -267,32 +267,39 @@ function love.draw()
 		end
 		if bloomOn then
 			love.graphics.setColor(0, 255, 0)
-			love.graphics.print("F6: Bloom on", 4 + 152 * 0, 4 + 20 * 1)
+			love.graphics.print("F6: Bloom (on)", 4 + 152 * 0, 4 + 20 * 1)
 		else
 			love.graphics.setColor(255, 0, 0)
-			love.graphics.print("F6: Bloom off", 4 + 152 * 0, 4 + 20 * 1)
+			love.graphics.print("F6: Bloom (off)", 4 + 152 * 0, 4 + 20 * 1)
 		end
 		if textureOn then
 			love.graphics.setColor(0, 255, 0)
-			love.graphics.print("F7: Texture on", 4 + 152 * 1, 4 + 20 * 1)
+			love.graphics.print("F7: Texture (on)", 4 + 152 * 1, 4 + 20 * 1)
 		else
 			love.graphics.setColor(255, 0, 0)
-			love.graphics.print("F7: Texture off", 4 + 152 * 1, 4 + 20 * 1)
+			love.graphics.print("F7: Texture (off)", 4 + 152 * 1, 4 + 20 * 1)
 		end
 		if normalOn then
 			love.graphics.setColor(0, 255, 0)
-			love.graphics.print("F8: Normal on", 4 + 152 * 2, 4 + 20 * 1)
+			love.graphics.print("F8: Normal (on)", 4 + 152 * 2, 4 + 20 * 1)
 		else
 			love.graphics.setColor(255, 0, 0)
-			love.graphics.print("F8: Normal off", 4 + 152 * 2, 4 + 20 * 1)
+			love.graphics.print("F8: Normal (off)", 4 + 152 * 2, 4 + 20 * 1)
+		end
+		if glowBlur >= 1.0 then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F9: Glow Blur (" .. glowBlur .. ")", 4 + 152 * 3, 4 + 20 * 1)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F9: Glow Blur (off)", 4 + 152 * 3, 4 + 20 * 1)
 		end
 		love.graphics.setColor(255, 0, 255)
-		love.graphics.print("F11: Clear obj.", 4 + 152 * 3, 4 + 20 * 1)
-		love.graphics.print("F12: Clear lights", 4 + 152 * 4, 4 + 20 * 1)
+		love.graphics.print("F11: Clear obj.", 4 + 152 * 4, 4 + 20 * 2)
+		love.graphics.print("F12: Clear lights", 4 + 152 * 4, 4 + 20 * 3)
 		love.graphics.setColor(0, 127, 255)
 		love.graphics.print("WASD Keys: Move objects", 4, love.graphics.getHeight() - 20 * 3)
 		love.graphics.print("Arrow Keys: Move map", 4, love.graphics.getHeight() - 20 * 2)
-		love.graphics.print("1-5 Keys: Add image", 4, love.graphics.getHeight() - 20 * 1)
+		love.graphics.print("0-9 Keys: Add object", 4, love.graphics.getHeight() - 20 * 1)
 		love.graphics.setColor(255, 127, 0)
 		love.graphics.print("M.left: Add cube", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 4)
 		love.graphics.print("M.middle: Add light", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 3)
@@ -378,6 +385,12 @@ function love.keypressed(k, u)
 		textureOn = not textureOn
 	elseif k == "f8" then
 		normalOn = not normalOn
+	elseif k == "f9" then
+		glowBlur = glowBlur + 1.0
+		if glowBlur > 8.0 then
+			glowBlur = 0.0
+		end
+		lightWorld.setGlowBlur(glowBlur)
 	elseif k == "f11" then
 		physicWorld:destroy()
 		lightWorld.clearObjects()
@@ -460,10 +473,13 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newPolygon()
 		phyLight[phyCnt].setAlpha(0.5)
+		phyLight[phyCnt].setGlowStrength(1.0)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
+		math.randomseed(phyCnt)
+		phyLight[phyCnt].setGlowColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 		math.randomseed(phyCnt)
 		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 	elseif k == "9" then
@@ -472,6 +488,9 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newCircle(mx, my, cRadius)
 		phyLight[phyCnt].setAlpha(0.5)
+		phyLight[phyCnt].setGlowStrength(1.0)
+		math.randomseed(phyCnt)
+		phyLight[phyCnt].setGlowColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 		math.randomseed(phyCnt)
 		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")

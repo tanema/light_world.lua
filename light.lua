@@ -29,6 +29,7 @@ function love.light.newWorld()
 	o.normalMap = love.graphics.newCanvas()
 	o.glowMap = love.graphics.newCanvas()
 	o.glowMap2 = love.graphics.newCanvas()
+	o.glowBlur = 1.0
 	o.isGlowBlur = false
 	o.pixelShadow = love.graphics.newCanvas()
 	o.pixelShadow2 = love.graphics.newCanvas()
@@ -178,10 +179,10 @@ function love.light.newWorld()
 			for i = 1, #o.img do
 				if o.img[i].normal then
 					love.graphics.setColor(255, 255, 255)
-					love.graphics.draw(o.img[i].normal, o.img[i].x - o.img[i].ox2, o.img[i].y - o.img[i].oy2)
+					love.graphics.draw(o.img[i].normal, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 				else
 					love.graphics.setColor(0, 0, 0, 0)
-					love.graphics.rectangle("fill", o.img[i].x - o.img[i].ox2, o.img[i].y - o.img[i].oy2, o.img[i].imgWidth, o.img[i].imgHeight)
+					love.graphics.rectangle("fill", o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2, o.img[i].imgWidth, o.img[i].imgHeight + LOVE_LIGHT_TRANSLATE_Y)
 				end
 			end
 			love.graphics.setColor(255, 255, 255)
@@ -218,13 +219,31 @@ function love.light.newWorld()
 		if o.changed then
 			o.glowMap:clear(0, 0, 0)
 			love.graphics.setCanvas(o.glowMap)
-			for i = 1, #o.img do
-				if o.img[i].glow then
-					love.graphics.setColor(255, 255, 255)
-					love.graphics.draw(o.img[i].glow, o.img[i].x - o.img[i].ox2, o.img[i].y - o.img[i].oy2)
+			for i = 1, #o.circle do
+				if o.circle[i].glowStrength > 0.0 then
+					love.graphics.setColor(o.circle[i].glowRed, o.circle[i].glowGreen, o.circle[i].glowBlue)
+					love.graphics.circle("fill", o.circle[i].x, o.circle[i].y, o.circle[i].radius)
 				else
 					love.graphics.setColor(0, 0, 0)
-					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2, o.img[i].y - o.img[i].oy2)
+					love.graphics.circle("fill", o.circle[i].x, o.circle[i].y, o.circle[i].radius)
+				end
+			end
+			for i = 1, #o.poly do
+				if o.poly[i].glowStrength > 0.0 then
+					love.graphics.setColor(o.poly[i].glowRed, o.poly[i].glowGreen, o.poly[i].glowBlue)
+					love.graphics.polygon("fill", unpack(o.poly[i].data))
+				else
+					love.graphics.setColor(0, 0, 0)
+					love.graphics.polygon("fill", unpack(o.poly[i].data))
+				end
+			end
+			for i = 1, #o.img do
+				if o.img[i].glow then
+					love.graphics.setColor(o.img[i].glowRed, o.img[i].glowGreen, o.img[i].glowBlue)
+					love.graphics.draw(o.img[i].glow, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_X)
+				else
+					love.graphics.setColor(0, 0, 0)
+					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_X)
 				end
 			end
 			o.isGlowBlur = false
@@ -282,16 +301,17 @@ function love.light.newWorld()
 	-- draw glow
 	o.drawGlow = function()
 		love.graphics.setColor(255, 255, 255)
-		if o.isGlowBlur then
+		if o.isGlowBlur or o.glowBlur == 0.0 then
 			love.graphics.setBlendMode("additive")
 			love.graphics.setShader()
 			love.graphics.draw(o.glowMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			love.graphics.setBlendMode("alpha")
 		else
-			LOVE_LIGHT_BLURV:send("steps", 1.0)
-			LOVE_LIGHT_BLURH:send("steps", 1.0)
+			LOVE_LIGHT_BLURV:send("steps", o.glowBlur)
+			LOVE_LIGHT_BLURH:send("steps", o.glowBlur)
 			LOVE_LIGHT_LAST_BUFFER = love.graphics.getCanvas()
-			love.graphics.setBlendMode("alpha")
+			love.graphics.setBlendMode("additive")
+			o.glowMap2:clear()
 			love.graphics.setCanvas(o.glowMap2)
 			love.graphics.setShader(LOVE_LIGHT_BLURV)
 			love.graphics.draw(o.glowMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
@@ -299,7 +319,7 @@ function love.light.newWorld()
 			love.graphics.setShader(LOVE_LIGHT_BLURH)
 			love.graphics.draw(o.glowMap2, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			love.graphics.setCanvas(LOVE_LIGHT_LAST_BUFFER)
-			love.graphics.setBlendMode("additive")
+			--love.graphics.setBlendMode("additive")
 			love.graphics.setShader()
 			love.graphics.draw(o.glowMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			love.graphics.setBlendMode("alpha")
@@ -349,6 +369,11 @@ function love.light.newWorld()
 	-- set blur
 	o.setBlur = function(blur)
 		o.blur = blur
+		o.changed = true
+	end
+	-- set glow blur
+	o.setGlowBlur = function(blur)
+		o.glowBlur = blur
 		o.changed = true
 	end
 	-- new rectangle
@@ -519,6 +544,10 @@ function love.light.newRectangle(p, x, y, width, height)
 	o.green = 255
 	o.blue = 255
 	o.glassAlpha = 1.0
+	o.glowRed = 255
+	o.glowGreen = 255
+	o.glowBlue = 255
+	o.glowStrength = 0.0
 	o.type = "rectangle"
 	p.changed = true
 	o.data = {
@@ -584,16 +613,28 @@ function love.light.newRectangle(p, x, y, width, height)
 		o.shine = b
 		p.changed = true
 	end
-	-- set glass color
+	-- set shadow color
 	o.setColor = function(red, green, blue)
 		o.red = red
 		o.green = green
 		o.blue = blue
 		p.changed = true
 	end
-	-- set glass alpha
+	-- set shadow alpha
 	o.setAlpha = function(alpha)
 		o.glassAlpha = alpha
+		p.changed = true
+	end
+	-- set glow color
+	o.setGlowColor = function(red, green, blue)
+		o.glowRed = red
+		o.glowGreen = green
+		o.glowBlue = blue
+		p.changed = true
+	end
+	-- set glow alpha
+	o.setGlowStrength = function(strength)
+		o.glowStrength = strength
 		p.changed = true
 	end
 	-- get x
@@ -637,6 +678,10 @@ function love.light.newCircle(p, x, y, radius)
 	o.green = 255
 	o.blue = 255
 	o.glassAlpha = 1.0
+	o.glowRed = 255
+	o.glowGreen = 255
+	o.glowBlue = 255
+	o.glowStrength = 0.0
 	o.type = "circle"
 	p.changed = true
 	-- set position
@@ -678,16 +723,28 @@ function love.light.newCircle(p, x, y, radius)
 		o.shine = b
 		p.changed = true
 	end
-	-- set glass color
+	-- set shadow color
 	o.setColor = function(red, green, blue)
 		o.red = red
 		o.green = green
 		o.blue = blue
 		p.changed = true
 	end
-	-- set glass alpha
+	-- set shadow alpha
 	o.setAlpha = function(alpha)
 		o.glassAlpha = alpha
+		p.changed = true
+	end
+	-- set glow color
+	o.setGlowColor = function(red, green, blue)
+		o.glowRed = red
+		o.glowGreen = green
+		o.glowBlue = blue
+		p.changed = true
+	end
+	-- set glow alpha
+	o.setGlowStrength = function(strength)
+		o.glowStrength = strength
 		p.changed = true
 	end
 	-- get x
@@ -720,6 +777,10 @@ function love.light.newPolygon(p, ...)
 	o.green = 255
 	o.blue = 255
 	o.glassAlpha = 1.0
+	o.glowRed = 255
+	o.glowGreen = 255
+	o.glowBlue = 255
+	o.glowStrength = 0.0
 	o.type = "polygon"
 	p.changed = true
 	if ... then
@@ -742,16 +803,28 @@ function love.light.newPolygon(p, ...)
 		o.shine = b
 		p.changed = true
 	end
-	-- set glass color
+	-- set shadow color
 	o.setColor = function(red, green, blue)
 		o.red = red
 		o.green = green
 		o.blue = blue
 		p.changed = true
 	end
-	-- set glass alpha
+	-- set shadow alpha
 	o.setAlpha = function(alpha)
 		o.glassAlpha = alpha
+		p.changed = true
+	end
+	-- set glow color
+	o.setGlowColor = function(red, green, blue)
+		o.glowRed = red
+		o.glowGreen = green
+		o.glowBlue = blue
+		p.changed = true
+	end
+	-- set glow alpha
+	o.setGlowStrength = function(strength)
+		o.glowStrength = strength
 		p.changed = true
 	end
 	-- get polygon data
@@ -790,6 +863,10 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.green = 255
 	o.blue = 255
 	o.glassAlpha = 1.0
+	o.glowRed = 255
+	o.glowGreen = 255
+	o.glowBlue = 255
+	o.glowStrength = 0.0
 	o.type = "image"
 	p.changed = true
 	o.data = {
@@ -1106,14 +1183,14 @@ end
 
 polyStencil = function()
     for i = 1, #LOVE_LIGHT_CIRCLE do
-		--if LOVE_LIGHT_CIRCLE[i].shine and LOVE_LIGHT_CIRCLE[i].glassAlpha == 1.0 then
+		if LOVE_LIGHT_CIRCLE[i].shine and LOVE_LIGHT_CIRCLE[i].glowStrength == 0.0 then
 			love.graphics.circle("fill", LOVE_LIGHT_CIRCLE[i].x, LOVE_LIGHT_CIRCLE[i].y, LOVE_LIGHT_CIRCLE[i].radius)
-		--end
+		end
 	end
     for i = 1, #LOVE_LIGHT_POLY do
-		--if LOVE_LIGHT_POLY[i].shine and LOVE_LIGHT_POLY[i].glassAlpha == 1.0 then
+		if LOVE_LIGHT_POLY[i].shine and LOVE_LIGHT_POLY[i].glowStrength == 0.0 then
 			love.graphics.polygon("fill", unpack(LOVE_LIGHT_POLY[i].data))
-		--end
+		end
     end
     for i = 1, #LOVE_LIGHT_IMAGE do
 		if LOVE_LIGHT_IMAGE[i].shine then
