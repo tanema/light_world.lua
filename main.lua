@@ -63,11 +63,11 @@ function love.load()
 	tile_glow = love.graphics.newImage "gfx/tile_glow.png"
 
 	-- light world
-	lightRange = 300
+	lightRange = 400
 	lightSmooth = 1.0
 	lightWorld = love.light.newWorld()
 	lightWorld.setAmbientColor(15, 15, 31)
-	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
+	mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
 	mouseLight.setGlowStrength(0.3)
 	mouseLight.setSmooth(lightSmooth)
 
@@ -190,7 +190,8 @@ function love.draw()
 	end
 
 	for i = 1, phyCnt do
-		love.graphics.setColor(math.sin(i) * 255, math.cos(i) * 255, math.tan(i) * 255)
+		math.randomseed(i)
+		love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 		if phyLight[i].getType() == "polygon" then
 			love.graphics.polygon("fill", phyLight[i].getPoints())
 		elseif phyLight[i].getType() == "circle" then
@@ -207,7 +208,8 @@ function love.draw()
 		if phyLight[i].getType() == "image" then
 			if not normalOn then
 				--love.graphics.setColor(255, 255, 255)
-				love.graphics.setColor(127 + math.sin(i) * 127, 127 + math.cos(i) * 127, 127 + math.tan(i) * 127)
+				math.randomseed(i)
+				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
 				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ox2, phyLight[i].y - phyLight[i].oy2)
 			elseif phyLight[i].normal then
 				love.graphics.setColor(255, 255, 255)
@@ -437,6 +439,7 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newImage(blopp, mx, my, 42, 16, 21, 20)
 		phyLight[phyCnt].generateNormalMapGradient("gradient", "gradient")
+		phyLight[phyCnt].setAlpha(0.5)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 42, 29)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -450,6 +453,41 @@ function love.keypressed(k, u)
 		phyLight[phyCnt].setShadow(false)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 64, 64)
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
+	elseif k == "8" then
+		-- add rectangle
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newPolygon()
+		phyLight[phyCnt].setAlpha(0.5)
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
+		math.randomseed(phyCnt)
+		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+	elseif k == "9" then
+		-- add circle
+		cRadius = math.random(8, 32)
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newCircle(mx, my, cRadius)
+		phyLight[phyCnt].setAlpha(0.5)
+		math.randomseed(phyCnt)
+		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newCircleShape(0, 0, cRadius)
+		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+		phyFixture[phyCnt]:setRestitution(0.5)
+	elseif k == "0" then
+		-- add image
+		phyCnt = phyCnt + 1
+		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 28)
+		phyLight[phyCnt].setNormalMap(cone_normal)
+		phyLight[phyCnt].setAlpha(0.0)
+		math.randomseed(phyCnt)
+		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 	end
