@@ -212,7 +212,7 @@ function love.light.newWorld()
 		love.graphics.draw(o.pixelShadow2, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 		love.graphics.setBlendMode("additive")
 		love.graphics.setColor({o.ambient[1], o.ambient[2], o.ambient[3]})
-		love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+		love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
 		love.graphics.setBlendMode("alpha")
 
 		-- create glow map
@@ -221,7 +221,7 @@ function love.light.newWorld()
 			love.graphics.setCanvas(o.glowMap)
 			for i = 1, #o.circle do
 				if o.circle[i].glowStrength > 0.0 then
-					love.graphics.setColor(o.circle[i].glowRed, o.circle[i].glowGreen, o.circle[i].glowBlue)
+					love.graphics.setColor(o.circle[i].glowRed * o.circle[i].glowStrength, o.circle[i].glowGreen * o.circle[i].glowStrength, o.circle[i].glowBlue * o.circle[i].glowStrength)
 					love.graphics.circle("fill", o.circle[i].x, o.circle[i].y, o.circle[i].radius)
 				else
 					love.graphics.setColor(0, 0, 0)
@@ -230,7 +230,7 @@ function love.light.newWorld()
 			end
 			for i = 1, #o.poly do
 				if o.poly[i].glowStrength > 0.0 then
-					love.graphics.setColor(o.poly[i].glowRed, o.poly[i].glowGreen, o.poly[i].glowBlue)
+					love.graphics.setColor(o.poly[i].glowRed * o.poly[i].glowStrength, o.poly[i].glowGreen * o.poly[i].glowStrength, o.poly[i].glowBlue * o.poly[i].glowStrength)
 					love.graphics.polygon("fill", unpack(o.poly[i].data))
 				else
 					love.graphics.setColor(0, 0, 0)
@@ -372,8 +372,8 @@ function love.light.newWorld()
 		o.changed = true
 	end
 	-- set glow blur
-	o.setGlowBlur = function(blur)
-		o.glowBlur = blur
+	o.setGlowStrength = function(strength)
+		o.glowBlur = strength
 		o.changed = true
 	end
 	-- new rectangle
@@ -1165,6 +1165,8 @@ end
 shadowStencil = function()
 	for i = 1,#LOVE_LIGHT_SHADOW_GEOMETRY do
 		if LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha == 1.0 then
+			--love.graphics.setBlendMode("replace")
+			--love.graphics.setColor(0,0,0)
 			love.graphics.polygon("fill", unpack(LOVE_LIGHT_SHADOW_GEOMETRY[i]))
 		end
 	end

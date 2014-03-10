@@ -185,6 +185,7 @@ function love.draw()
 			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 		end
 	end
+
 	-- draw lightmap shadows
 	if lightOn and not normalOn then
 		lightWorld.drawShadow()
@@ -390,7 +391,7 @@ function love.keypressed(k, u)
 		if glowBlur > 8.0 then
 			glowBlur = 0.0
 		end
-		lightWorld.setGlowBlur(glowBlur)
+		lightWorld.setGlowStrength(glowBlur)
 	elseif k == "f11" then
 		physicWorld:destroy()
 		lightWorld.clearObjects()
