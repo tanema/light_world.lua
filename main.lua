@@ -45,22 +45,22 @@ function love.load()
 	imgFloor:setWrap("repeat", "repeat")
 
 	-- load image examples
-	circle = love.graphics.newImage "gfx/circle.png"
-	circle_normal = love.graphics.newImage "gfx/circle_normal.png"
-	cone = love.graphics.newImage "gfx/cone.png"
-	cone_normal = love.graphics.newImage "gfx/cone_normal.png"
-	chest = love.graphics.newImage "gfx/chest.png"
-	chest_normal = love.graphics.newImage "gfx/chest_normal.png"
-	machine = love.graphics.newImage "gfx/machine.png"
-	machine_normal = love.graphics.newImage "gfx/machine_normal.png"
-	machine_glow = love.graphics.newImage "gfx/machine_glow.png"
-	machine2 = love.graphics.newImage "gfx/machine2.png"
-	machine2_normal = love.graphics.newImage "gfx/machine2_normal.png"
-	machine2_glow = love.graphics.newImage "gfx/machine2_glow.png"
-	blopp = love.graphics.newImage "gfx/blopp.png"
-	tile = love.graphics.newImage "gfx/tile.png"
-	tile_normal = love.graphics.newImage "gfx/tile_normal.png"
-	tile_glow = love.graphics.newImage "gfx/tile_glow.png"
+	circle = love.graphics.newImage("gfx/circle.png")
+	circle_normal = love.graphics.newImage("gfx/circle_normal.png")
+	cone = love.graphics.newImage("gfx/cone.png")
+	cone_normal = love.graphics.newImage("gfx/cone_normal.png")
+	chest = love.graphics.newImage("gfx/chest.png")
+	chest_normal = love.graphics.newImage("gfx/chest_normal.png")
+	machine = love.graphics.newImage("gfx/machine.png")
+	machine_normal = love.graphics.newImage("gfx/machine_normal.png")
+	machine_glow = love.graphics.newImage("gfx/machine_glow.png")
+	machine2 = love.graphics.newImage("gfx/machine2.png")
+	machine2_normal = love.graphics.newImage("gfx/machine2_normal.png")
+	machine2_glow = love.graphics.newImage("gfx/machine2_glow.png")
+	blopp = love.graphics.newImage("gfx/blopp.png")
+	tile = love.graphics.newImage("gfx/tile.png")
+	tile_normal = love.graphics.newImage("gfx/tile_normal.png")
+	tile_glow = love.graphics.newImage("gfx/tile_glow.png")
 
 	-- light world
 	lightRange = 400
@@ -70,6 +70,7 @@ function love.load()
 	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
 	mouseLight.setGlowStrength(0.3)
 	mouseLight.setSmooth(lightSmooth)
+	lightDirection = 0.0
 
 	-- init physic world
 	initScene()
@@ -96,6 +97,7 @@ function love.update(dt)
 	mouseLight.setPosition(love.mouse.getX(), love.mouse.getY())
 	mx = love.mouse.getX()
 	my = love.mouse.getY()
+	lightDirection = lightDirection + dt
 
 	if love.keyboard.isDown("w") then
 		for i = 1, phyCnt do
@@ -137,6 +139,10 @@ function love.update(dt)
 	else
 		offsetChanged = false
 	end
+
+    for i = 1, lightWorld.getLightCount() do
+		lightWorld.setLightDirection(i, lightDirection)
+    end
 
     for i = 1, phyCnt do
 		if phyBody[i]:isAwake() or offsetChanged then
@@ -499,16 +505,20 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "0" then
-		-- add image
-		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 28)
-		phyLight[phyCnt].setNormalMap(cone_normal)
-		phyLight[phyCnt].setAlpha(0.0)
-		math.randomseed(phyCnt)
-		phyLight[phyCnt].setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
-		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
-		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
-		phyFixture[phyCnt]:setRestitution(0.5)
+		-- add light
+		local r = lightWorld.getLightCount() % 3
+		local light
+
+		if r == 0 then
+			light = lightWorld.newLight(mx, my, 31, 127, 63, lightRange)
+		elseif r == 1 then
+			light = lightWorld.newLight(mx, my, 127, 63, 31, lightRange)
+		else
+			light = lightWorld.newLight(mx, my, 31, 63, 127, lightRange)
+		end
+		light.setSmooth(lightSmooth)
+		light.setGlowStrength(0.3)
+		math.randomseed(love.timer.getTime())
+		light.setAngle(math.random(1, 5) * 0.1 * math.pi)
 	end
 end

@@ -12,7 +12,7 @@ LOVE_LIGHT_TRANSLATE_X = 0
 LOVE_LIGHT_TRANSLATE_Y = 0
 LOVE_LIGHT_TRANSLATE_X_OLD = 0
 LOVE_LIGHT_TRANSLATE_Y_OLD = 0
-
+LOVE_LIGHT_DIRECTION = 0
 love.light = {}
 
 -- light world
@@ -26,6 +26,7 @@ function love.light.newWorld()
 	o.shadow = love.graphics.newCanvas()
 	o.shadow2 = love.graphics.newCanvas()
 	o.shine = love.graphics.newCanvas()
+	o.shine2 = love.graphics.newCanvas()
 	o.normalMap = love.graphics.newCanvas()
 	o.glowMap = love.graphics.newCanvas()
 	o.glowMap2 = love.graphics.newCanvas()
@@ -68,10 +69,14 @@ function love.light.newWorld()
 				then
 					local lightposrange = {o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].range}
 					LOVE_LIGHT_CURRENT = o.lights[i]
-					o.shader:send("lightPositionRange", {o.lights[i].x - LOVE_LIGHT_TRANSLATE_X, love.graphics.getHeight() - (o.lights[i].y - LOVE_LIGHT_TRANSLATE_Y), o.lights[i].range})
+					LOVE_LIGHT_DIRECTION = LOVE_LIGHT_DIRECTION + 0.002
+					o.shader:send("lightPosition", {o.lights[i].x - LOVE_LIGHT_TRANSLATE_X, love.graphics.getHeight() - (o.lights[i].y - LOVE_LIGHT_TRANSLATE_Y)})
+					o.shader:send("lightRange", o.lights[i].range)
 					o.shader:send("lightColor", {o.lights[i].red / 255.0, o.lights[i].green / 255.0, o.lights[i].blue / 255.0})
 					o.shader:send("lightSmooth", o.lights[i].smooth)
 					o.shader:send("lightGlow", {1.0 - o.lights[i].glowSize, o.lights[i].glowStrength})
+					o.shader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
+					o.shader:send("lightDirection", o.lights[i].direction)
 
 					--if o.changed then
 						--love.graphics.setCanvas(o.shadow)
@@ -200,6 +205,8 @@ function love.light.newWorld()
 				o.normalShader:send('lightPosition',{o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].z / 255.0})
 				o.normalShader:send('lightRange',{o.lights[i].range})
 				o.normalShader:send("lightSmooth", o.lights[i].smooth)
+				o.normalShader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
+				o.normalShader:send("lightDirection", o.lights[i].direction)
 				love.graphics.setShader(o.normalShader)
 				love.graphics.draw(o.normalMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			end
@@ -285,10 +292,28 @@ function love.light.newWorld()
 	-- draw shine
 	o.drawShine = function()
 		love.graphics.setColor(255, 255, 255)
-		love.graphics.setBlendMode("multiplicative")
-		love.graphics.setShader()
-		love.graphics.draw(o.shine, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
-		love.graphics.setBlendMode("alpha")
+		if o.blur and false then
+			LOVE_LIGHT_LAST_BUFFER = love.graphics.getCanvas()
+			LOVE_LIGHT_BLURV:send("steps", o.blur)
+			LOVE_LIGHT_BLURH:send("steps", o.blur)
+			love.graphics.setBlendMode("alpha")
+			love.graphics.setCanvas(o.shine2)
+			love.graphics.setShader(LOVE_LIGHT_BLURV)
+			love.graphics.draw(o.shine, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setCanvas(o.shine)
+			love.graphics.setShader(LOVE_LIGHT_BLURH)
+			love.graphics.draw(o.shine2, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setCanvas(LOVE_LIGHT_LAST_BUFFER)
+			love.graphics.setBlendMode("multiplicative")
+			love.graphics.setShader()
+			love.graphics.draw(o.shine, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setBlendMode("alpha")
+		else
+			love.graphics.setBlendMode("multiplicative")
+			love.graphics.setShader()
+			love.graphics.draw(o.shine, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setBlendMode("alpha")
+		end
 	end
 	-- draw pixel shadow
 	o.drawPixelShadow = function()
@@ -424,6 +449,14 @@ function love.light.newWorld()
 	o.setLightY = function(n, y)
 		o.lights[n].setY(y)
 	end
+	-- set light angle
+	o.setLightAngle = function(n, angle)
+		o.lights[n].setAngle(angle)
+	end
+	-- set light direction
+	o.setLightDirection = function(n, direction)
+		o.lights[n].setDirection(direction)
+	end
 	-- get light count
 	o.getLightCount = function()
 		return #o.lights
@@ -447,15 +480,18 @@ end
 -- light object
 function love.light.newLight(p, x, y, red, green, blue, range)
 	local o = {}
+	o.direction = 0
+	o.angle = math.pi * 2.0
+	o.range = 0
 	o.shadow = love.graphics.newCanvas()
 	o.shine = love.graphics.newCanvas()
-	o.x = x
-	o.y = y
+	o.x = x or 0
+	o.y = y or 0
 	o.z = 15
-	o.red = red
-	o.green = green
-	o.blue = blue
-	o.range = range
+	o.red = red or 255
+	o.green = green or 255
+	o.blue = blue or 255
+	o.range = range or 300
 	o.smooth = 1.0
 	o.glowSize = 0.1
 	o.glowStrength = 0.0
@@ -502,6 +538,32 @@ function love.light.newLight(p, x, y, red, green, blue, range)
 	o.setRange = function(range)
 		if range ~= o.range then
 			o.range = range
+			o.changed = true
+		end
+	end
+	-- set direction
+	o.setDirection = function(direction)
+		if direction ~= o.direction then
+			if direction > math.pi * 2 then
+				o.direction = math.mod(direction, math.pi * 2)
+			elseif direction < 0.0 then
+				o.direction = math.pi * 2 - math.mod(math.abs(direction), math.pi * 2)
+			else
+				o.direction = direction
+			end
+			o.changed = true
+		end
+	end
+	-- set angle
+	o.setAngle = function(angle)
+		if angle ~= o.angle then
+			if angle > math.pi then
+				o.angle = math.mod(angle, math.pi)
+			elseif angle < 0.0 then
+				o.angle = math.pi - math.mod(math.abs(angle), math.pi)
+			else
+				o.angle = angle
+			end
 			o.changed = true
 		end
 	end
@@ -672,7 +734,7 @@ function love.light.newCircle(p, x, y, radius)
 	o.id = #p.circle
 	o.x = x or 0
 	o.y = y or 0
-	o.radius = radius or 200
+	o.radius = radius or 64
 	o.shine = true
 	o.red = 255
 	o.green = 255
