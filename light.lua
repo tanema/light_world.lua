@@ -23,6 +23,7 @@ function love.light.newWorld()
 	o.circle = {}
 	o.poly = {}
 	o.img = {}
+	o.refraction = {}
 	o.shadow = love.graphics.newCanvas()
 	o.shadow2 = love.graphics.newCanvas()
 	o.shine = love.graphics.newCanvas()
@@ -30,12 +31,16 @@ function love.light.newWorld()
 	o.normalMap = love.graphics.newCanvas()
 	o.glowMap = love.graphics.newCanvas()
 	o.glowMap2 = love.graphics.newCanvas()
+	o.refractionMap = love.graphics.newCanvas()
+	o.refractionMap2 = love.graphics.newCanvas()
 	o.glowBlur = 1.0
 	o.isGlowBlur = false
+	o.refractionStrength = 8.0
 	o.pixelShadow = love.graphics.newCanvas()
 	o.pixelShadow2 = love.graphics.newCanvas()
 	o.shader = love.graphics.newShader("shader/poly_shadow.glsl")
 	o.normalShader = love.graphics.newShader("shader/normal.glsl")
+	o.refractionShader = love.graphics.newShader("shader/refraction.glsl")
 	o.changed = true
 	o.blur = 2.0
 	-- update
@@ -247,13 +252,29 @@ function love.light.newWorld()
 			for i = 1, #o.img do
 				if o.img[i].glow then
 					love.graphics.setColor(o.img[i].glowRed, o.img[i].glowGreen, o.img[i].glowBlue)
-					love.graphics.draw(o.img[i].glow, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_X)
+					love.graphics.draw(o.img[i].glow, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 				else
 					love.graphics.setColor(0, 0, 0)
-					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_X)
+					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 				end
 			end
 			o.isGlowBlur = false
+		end
+
+		-- create refraction map
+		if o.changed then
+			o.refractionMap:clear()
+			love.graphics.setCanvas(o.refractionMap)
+			for i = 1, #o.refraction do
+				if o.refraction[i].strength > 0.0 and o.refraction[i].normal then
+					love.graphics.setColor(255, 255, 255)
+					o.refraction[i].mesh:setVertices(o.refraction[i].vertices)
+					love.graphics.draw(o.refraction[i].mesh, o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy + LOVE_LIGHT_TRANSLATE_Y)
+				else
+					love.graphics.setColor(0, 0, 0, 0)
+					love.graphics.rectangle("fill", o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy, o.refraction[i].normalWidth, o.refraction[i].normalHeight + LOVE_LIGHT_TRANSLATE_Y)
+				end
+			end
 		end
 
 		love.graphics.setShader()
@@ -352,6 +373,23 @@ function love.light.newWorld()
 			o.isGlowBlur = true
 		end
 	end
+	-- draw refraction
+	o.drawRefraction = function()
+		LOVE_LIGHT_LAST_BUFFER = love.graphics.getCanvas()
+		if LOVE_LIGHT_LAST_BUFFER then
+			love.graphics.setColor(255, 255, 255)
+			love.graphics.setBlendMode("alpha")
+			love.graphics.setCanvas(o.refractionMap2)
+			love.graphics.draw(LOVE_LIGHT_LAST_BUFFER, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setCanvas(LOVE_LIGHT_LAST_BUFFER)
+			o.refractionShader:send("backBuffer", o.refractionMap2)
+			o.refractionShader:send("refractionStrength", o.refractionStrength)
+			love.graphics.setShader(o.refractionShader)
+			love.graphics.draw(o.refractionMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			--love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
+			love.graphics.setShader()
+		end
+	end
 	-- new light
 	o.newLight = function(x, y, red, green, blue, range)
 		o.lights[#o.lights + 1] = love.light.newLight(o, x, y, red, green, blue, range)
@@ -368,6 +406,7 @@ function love.light.newWorld()
 		o.poly = {}
 		o.circle = {}
 		o.img = {}
+		o.refraction = {}
 		o.changed = true
 	end
 	-- set offset
@@ -396,10 +435,19 @@ function love.light.newWorld()
 		o.blur = blur
 		o.changed = true
 	end
+	-- set blur
+	o.setShadowBlur = function(blur)
+		o.blur = blur
+		o.changed = true
+	end
 	-- set glow blur
 	o.setGlowStrength = function(strength)
 		o.glowBlur = strength
 		o.changed = true
+	end
+	-- set refraction blur
+	o.setRefractionStrength = function(strength)
+		o.refractionStrength = strength
 	end
 	-- new rectangle
 	o.newRectangle = function(x, y, w, h)
@@ -416,6 +464,14 @@ function love.light.newWorld()
 	-- new image
 	o.newImage = function(img, x, y, width, height, ox, oy)
 		return love.light.newImage(o, img, x, y, width, height, ox, oy)
+	end
+	-- new refraction
+	o.newRefraction = function(normal, x, y)
+		return love.light.newRefraction(o, normal, x, y)
+	end
+	-- new refraction from height map
+	o.newRefractionHeightMap = function(heightMap, x, y, strength)
+		return love.light.newRefractionHeightMap(o, heightMap, x, y, strength)
 	end
 	-- set polygon data
 	o.setPoints = function(n, ...)
@@ -929,6 +985,7 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.glowGreen = 255
 	o.glowBlue = 255
 	o.glowStrength = 0.0
+	o.refractionStrength = 1.0
 	o.type = "image"
 	p.changed = true
 	o.data = {
@@ -976,6 +1033,14 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 			o.refresh()
 			p.changed = true
 		end
+	end
+	-- get x position
+	o.getX = function()
+		return o.x
+	end
+	-- get y position
+	o.getY = function(y)
+		return o.y
 	end
 	-- get width
 	o.getWidth = function()
@@ -1110,6 +1175,186 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	-- set normal
 	o.setGlowMap = function(glow)
 		o.glow = glow
+	end
+	-- get type
+	o.getType = function()
+		return o.type
+	end
+
+	return o
+end
+
+-- refraction object (height map)
+function love.light.newRefractionHeightMap(p, heightMap, x, y, strength)
+	local normal = HeightMapToNormalMap(heightMap, strength)
+	return love.light.newRefraction(p, normal, x, y)
+end
+
+-- refraction object
+function love.light.newRefraction(p, normal, x, y)
+	local o = {}
+	p.refraction[#p.refraction + 1] = o
+	o.id = #p.refraction
+	o.normal = normal
+	o.normal:setWrap("repeat", "repeat")
+	o.x = x or 0
+	o.y = y or 0
+	o.width = width or normal:getWidth()
+	o.height = height or normal:getHeight()
+	o.ox = o.width / 2.0
+	o.oy = o.height / 2.0
+	o.tileX = 0
+	o.tileY = 0
+	o.vertices = {
+		{0.0, 0.0, 0.0, 0.0},
+		{o.width, 0.0, 1.0, 0.0},
+        {o.width, o.height, 1.0, 1.0},
+        {0.0, o.height, 0.0, 1.0}
+    }
+	o.mesh = love.graphics.newMesh(o.vertices, o.normal, "fan")
+	o.normalWidth = normal:getWidth()
+	o.normalHeight = normal:getHeight()
+	o.strength = strength or 1.0
+	o.type = "refraction"
+	p.changed = true
+	-- set position
+	o.setPosition = function(x, y)
+		if x ~= o.x or y ~= o.y then
+			o.x = x
+			o.y = y
+			p.changed = true
+		end
+	end
+	-- set x position
+	o.setX = function(x)
+		if x ~= o.x then
+			o.x = x
+			p.changed = true
+		end
+	end
+	-- set y position
+	o.setY = function(y)
+		if y ~= o.y then
+			o.y = y
+			p.changed = true
+		end
+	end
+	-- set tile offset
+	o.setTileOffset = function(tx, ty)
+		o.tileX = tx / o.width
+		o.tileY = ty / o.height
+		o.vertices = {
+			{0.0, 0.0, o.tileX, o.tileY},
+			{o.width, 0.0, o.tileX + 1.0, o.tileY},
+			{o.width, o.height, o.tileX + 1.0, o.tileY + 1.0},
+			{0.0, o.height, o.tileX, o.tileY + 1.0}
+		}
+		p.changed = true
+	end
+	-- get x position
+	o.getX = function()
+		return o.x
+	end
+	-- get y position
+	o.getY = function(y)
+		return o.y
+	end
+	-- get width
+	o.getWidth = function()
+		return o.width
+	end
+	-- get height
+	o.getHeight = function()
+		return o.height
+	end
+	-- get image width
+	o.getImageWidth = function()
+		return o.imgWidth
+	end
+	-- get image height
+	o.getImageHeight = function()
+		return o.imgHeight
+	end
+	-- set normal
+	o.setNormalMap = function(normal)
+		o.normal = normal
+	end
+	-- set height map
+	o.setHeightMap = function(heightMap, strength)
+		o.normal = HeightMapToNormalMap(heightMap, strength)
+	end
+	-- generate flat normal map
+	o.generateNormalMapFlat = function(mode)
+		local imgData = o.img:getData()
+		local imgNormalData = love.image.newImageData(o.imgWidth, o.imgHeight)
+		local color
+
+		if mode == "top" then
+			color = {127, 127, 255}
+		elseif mode == "front" then
+			color = {127, 255, 127}
+		elseif mode == "back" then
+			color = {127, 0, 127}
+		elseif mode == "left" then
+			color = {31, 255, 223}
+		elseif mode == "right" then
+			color = {223, 223, 127}
+		end
+
+		for i = 0, o.imgHeight - 1 do
+			for k = 0, o.imgWidth - 1 do
+				local r, g, b, a = imgData:getPixel(k, i)
+				if a > 0 then
+					imgNormalData:setPixel(k, i, color[1], color[2], color[3], 255)
+				end
+			end
+		end
+
+		o.normal = love.graphics.newImage(imgNormalData)
+	end
+	-- generate faded normal map
+	o.generateNormalMapGradient = function(horizontalGradient, verticalGradient)
+		local imgData = o.img:getData()
+		local imgNormalData = love.image.newImageData(o.imgWidth, o.imgHeight)
+		local dx = 255.0 / o.imgWidth
+		local dy = 255.0 / o.imgHeight
+		local nx
+		local ny
+		local nz
+
+		for i = 0, o.imgWidth - 1 do
+			for k = 0, o.imgHeight - 1 do
+				local r, g, b, a = imgData:getPixel(i, k)
+				if a > 0 then
+					if horizontalGradient == "gradient" then
+						nx = i * dx
+					elseif horizontalGradient == "inverse" then
+						nx = 255 - i * dx
+					else
+						nx = 127
+					end
+
+					if verticalGradient == "gradient" then
+						ny = 127 + k * dy * 0.5
+						nz = 255 - k * dy * 0.5
+					elseif verticalGradient == "inverse" then
+						ny = 127 - k * dy * 0.5
+						nz = 127 - k * dy * 0.25
+					else
+						ny = 255
+						nz = 127
+					end
+
+					imgNormalData:setPixel(i, k, nx, ny, nz, 255)
+				end
+			end
+		end
+
+		o.normal = love.graphics.newImage(imgNormalData)
+	end
+	-- generate normal map
+	o.generateNormalMap = function(strength)
+		o.normal = HeightMapToNormalMap(o.img, strength)
 	end
 	-- get type
 	o.getType = function()
