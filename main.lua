@@ -62,6 +62,7 @@ function love.load()
 	tile_normal = love.graphics.newImage("gfx/tile_normal.png")
 	tile_glow = love.graphics.newImage("gfx/tile_glow.png")
 	refraction_normal = love.graphics.newImage("gfx/refraction_normal.png")
+	water = love.graphics.newImage("gfx/water.png")
 
 	-- light world
 	lightRange = 400
@@ -69,6 +70,7 @@ function love.load()
 	lightWorld = love.light.newWorld()
 	lightWorld.setAmbientColor(15, 15, 31)
 	lightWorld.setRefractionStrength(16.0)
+	lightWorld.setReflectionVisibility(0.75)
 	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
 	mouseLight.setGlowStrength(0.3)
 	mouseLight.setSmooth(lightSmooth)
@@ -216,6 +218,16 @@ function love.draw()
 		end
 	end
 
+	love.graphics.setBlendMode("multiplicative")
+	for i = 1, phyCnt do
+		if phyLight[i].getType() == "refraction" then
+			if not normalOn then
+				love.graphics.setColor(255, 255, 255, 127)
+				love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
+			end
+		end
+	end
+
 	-- draw lightmap shadows
 	if lightOn and not normalOn then
 		lightWorld.drawShadow()
@@ -236,6 +248,7 @@ function love.draw()
 		lightWorld.drawShine()
 	end
 
+	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
 		if phyLight[i].getType() == "image" then
 			if not normalOn then
@@ -258,6 +271,9 @@ function love.draw()
 	if lightOn and not normalOn then
 		lightWorld.drawGlow()
 	end
+
+	-- draw reflection
+	lightWorld.drawReflection()
 
 	-- draw refraction
 	lightWorld.drawRefraction()
@@ -498,6 +514,7 @@ function love.keypressed(k, u)
 		phyLight[phyCnt].setHeightMap(tile_normal, 2.0)
 		phyLight[phyCnt].setGlowMap(tile_glow)
 		phyLight[phyCnt].setShadow(false)
+		phyLight[phyCnt].reflective = false
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 64, 64)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -535,7 +552,7 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "0" then
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newRefraction(refraction_normal, mx, my, 1.0)
+		phyLight[phyCnt] = lightWorld.newRefraction(refraction_normal, mx, my)
 		--phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		--phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, phyLight[phyCnt].getWidth(), phyLight[phyCnt].getHeight())
 		--phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])

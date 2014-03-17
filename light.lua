@@ -7,6 +7,8 @@ LOVE_LIGHT_SHADOW_GEOMETRY = nil
 
 LOVE_LIGHT_BLURV = love.graphics.newShader("shader/blurv.glsl")
 LOVE_LIGHT_BLURH = love.graphics.newShader("shader/blurh.glsl")
+LOVE_LIGHT_BLURV:send("screen", {love.window.getWidth(), love.window.getHeight()})
+LOVE_LIGHT_BLURH:send("screen", {love.window.getWidth(), love.window.getHeight()})
 
 LOVE_LIGHT_TRANSLATE_X = 0
 LOVE_LIGHT_TRANSLATE_Y = 0
@@ -33,6 +35,8 @@ function love.light.newWorld()
 	o.glowMap2 = love.graphics.newCanvas()
 	o.refractionMap = love.graphics.newCanvas()
 	o.refractionMap2 = love.graphics.newCanvas()
+	o.reflectionMap = love.graphics.newCanvas()
+	o.reflectionMap2 = love.graphics.newCanvas()
 	o.glowBlur = 1.0
 	o.isGlowBlur = false
 	o.refractionStrength = 8.0
@@ -41,6 +45,11 @@ function love.light.newWorld()
 	o.shader = love.graphics.newShader("shader/poly_shadow.glsl")
 	o.normalShader = love.graphics.newShader("shader/normal.glsl")
 	o.refractionShader = love.graphics.newShader("shader/refraction.glsl")
+	o.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+	o.reflectionShader = love.graphics.newShader("shader/reflection.glsl")
+	o.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+	o.reflectionStrength = 16.0
+	o.reflectionVisibility = 1.0
 	o.changed = true
 	o.blur = 2.0
 	-- update
@@ -178,7 +187,6 @@ function love.light.newWorld()
 		end
 
 		-- update pixel shadow
-		love.graphics.setColor(255, 255, 255)
 		love.graphics.setBlendMode("alpha")
 
 		-- create normal map
@@ -190,12 +198,10 @@ function love.light.newWorld()
 				if o.img[i].normal then
 					love.graphics.setColor(255, 255, 255)
 					love.graphics.draw(o.img[i].normal, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
-				else
-					love.graphics.setColor(0, 0, 0, 0)
-					love.graphics.rectangle("fill", o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2, o.img[i].imgWidth, o.img[i].imgHeight + LOVE_LIGHT_TRANSLATE_Y)
 				end
 			end
 			love.graphics.setColor(255, 255, 255)
+			love.graphics.setBlendMode("alpha")
 		end
 
 		o.pixelShadow2:clear()
@@ -274,6 +280,35 @@ function love.light.newWorld()
 					love.graphics.setColor(0, 0, 0, 0)
 					love.graphics.rectangle("fill", o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy, o.refraction[i].normalWidth, o.refraction[i].normalHeight + LOVE_LIGHT_TRANSLATE_Y)
 				end
+			end
+			for i = 1, #o.img do
+				if o.img[i].img then
+					love.graphics.setColor(0, 0, 0)
+					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
+				end
+			end
+		end
+
+		-- create reflection map
+		if o.changed then
+			o.reflectionMap:clear(0, 0, 0)
+			love.graphics.setCanvas(o.reflectionMap)
+			for i = 1, #o.refraction do
+				if o.refraction[i].reflective and o.refraction[i].normal then
+					love.graphics.setColor(255, 0, 0)
+				else
+					love.graphics.setColor(0, 0, 0)
+				end
+				o.refraction[i].mesh:setVertices(o.refraction[i].vertices)
+				love.graphics.draw(o.refraction[i].mesh, o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy + LOVE_LIGHT_TRANSLATE_Y)
+			end
+			for i = 1, #o.img do
+				if o.img[i].reflective and o.img[i].img then
+					love.graphics.setColor(0, 255, 0)
+				else
+					love.graphics.setColor(0, 0, 0)
+				end
+				love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 			end
 		end
 
@@ -386,7 +421,23 @@ function love.light.newWorld()
 			o.refractionShader:send("refractionStrength", o.refractionStrength)
 			love.graphics.setShader(o.refractionShader)
 			love.graphics.draw(o.refractionMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
-			--love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
+			love.graphics.setShader()
+		end
+	end
+	-- draw reflection
+	o.drawReflection = function()
+		LOVE_LIGHT_LAST_BUFFER = love.graphics.getCanvas()
+		if LOVE_LIGHT_LAST_BUFFER then
+			love.graphics.setColor(255, 255, 255)
+			love.graphics.setBlendMode("alpha")
+			love.graphics.setCanvas(o.reflectionMap2)
+			love.graphics.draw(LOVE_LIGHT_LAST_BUFFER, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
+			love.graphics.setCanvas(LOVE_LIGHT_LAST_BUFFER)
+			o.reflectionShader:send("backBuffer", o.reflectionMap2)
+			o.reflectionShader:send("reflectionStrength", o.reflectionStrength)
+			o.reflectionShader:send("reflectionVisibility", o.reflectionVisibility)
+			love.graphics.setShader(o.reflectionShader)
+			love.graphics.draw(o.reflectionMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			love.graphics.setShader()
 		end
 	end
@@ -448,6 +499,14 @@ function love.light.newWorld()
 	-- set refraction blur
 	o.setRefractionStrength = function(strength)
 		o.refractionStrength = strength
+	end
+	-- set reflection strength
+	o.setReflectionStrength = function(strength)
+		o.reflectionStrength = strength
+	end
+	-- set reflection visibility
+	o.setReflectionVisibility = function(visibility)
+		o.reflectionVisibility = visibility
 	end
 	-- new rectangle
 	o.newRectangle = function(x, y, w, h)
@@ -986,6 +1045,7 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.glowBlue = 255
 	o.glowStrength = 0.0
 	o.refractionStrength = 1.0
+	o.reflective = true
 	o.type = "image"
 	p.changed = true
 	o.data = {
@@ -1215,6 +1275,7 @@ function love.light.newRefraction(p, normal, x, y)
 	o.normalWidth = normal:getWidth()
 	o.normalHeight = normal:getHeight()
 	o.strength = strength or 1.0
+	o.reflective = true
 	o.type = "refraction"
 	p.changed = true
 	-- set position
