@@ -39,10 +39,13 @@ function love.light.newWorld()
 	o.reflectionMap2 = love.graphics.newCanvas()
 	o.glowBlur = 1.0
 	o.isGlowBlur = false
+	o.glowTimer = 0.0
+	o.glowDown = false
 	o.refractionStrength = 8.0
 	o.pixelShadow = love.graphics.newCanvas()
 	o.pixelShadow2 = love.graphics.newCanvas()
 	o.shader = love.graphics.newShader("shader/poly_shadow.glsl")
+	o.glowShader = love.graphics.newShader("shader/glow.glsl")
 	o.normalShader = love.graphics.newShader("shader/normal.glsl")
 	o.refractionShader = love.graphics.newShader("shader/refraction.glsl")
 	o.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
@@ -234,7 +237,7 @@ function love.light.newWorld()
 		love.graphics.setBlendMode("alpha")
 
 		-- create glow map
-		if o.changed then
+		--if o.changed then
 			o.glowMap:clear(0, 0, 0)
 			love.graphics.setCanvas(o.glowMap)
 			for i = 1, #o.circle do
@@ -255,17 +258,34 @@ function love.light.newWorld()
 					love.graphics.polygon("fill", unpack(o.poly[i].data))
 				end
 			end
-			for i = 1, #o.img do
-				if o.img[i].glow then
-					love.graphics.setColor(o.img[i].glowRed, o.img[i].glowGreen, o.img[i].glowBlue)
-					love.graphics.draw(o.img[i].glow, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
-				else
-					love.graphics.setColor(0, 0, 0)
-					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
+
+			if o.glowDown then
+				o.glowTimer = math.max(0.0, o.glowTimer - love.timer.getDelta())
+				if o.glowTimer == 0.0 then
+					o.glowDown = not o.glowDown
+				end
+			else
+				o.glowTimer = math.min(o.glowTimer + love.timer.getDelta(), 1.0)
+				if o.glowTimer == 1.0 then
+					o.glowDown = not o.glowDown
 				end
 			end
+
+			for i = 1, #o.img do
+				if o.img[i].glow then
+					love.graphics.setShader(o.glowShader)
+					o.glowShader:send("glowImage", o.img[i].glow)
+					o.glowShader:send("glowTime", love.timer.getTime())
+					love.graphics.setColor(255, 255, 255)
+				else
+					love.graphics.setShader()
+					love.graphics.setColor(0, 0, 0)
+				end
+				love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
+			end
+			love.graphics.setShader()
 			o.isGlowBlur = false
-		end
+		--end
 
 		-- create refraction map
 		if o.changed then
@@ -282,7 +302,7 @@ function love.light.newWorld()
 				end
 			end
 			for i = 1, #o.img do
-				if o.img[i].img then
+				if not o.img[i].refractive and o.img[i].img then
 					love.graphics.setColor(0, 0, 0)
 					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 				end
@@ -538,7 +558,7 @@ function love.light.newWorld()
 	end
 	-- get polygon count
 	o.getObjectCount = function()
-		return #o.poly + #o.circle
+		return #o.poly + #o.circle + #o.img
 	end
 	-- get circle count
 	o.getCircleCount = function()
@@ -547,6 +567,10 @@ function love.light.newWorld()
 	-- get polygon count
 	o.getPolygonCount = function()
 		return #o.poly
+	end
+	-- get image count
+	o.getImageCount = function()
+		return #o.img
 	end
 	-- get polygon
 	o.getPoints = function(n)
@@ -1046,6 +1070,7 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.glowStrength = 0.0
 	o.refractionStrength = 1.0
 	o.reflective = true
+	o.refractive = false
 	o.type = "image"
 	p.changed = true
 	o.data = {
@@ -1146,6 +1171,14 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	o.setAlpha = function(alpha)
 		o.glassAlpha = alpha
 		p.changed = true
+	end
+	-- set reflective on other objects on/off
+	o.setReflective = function(reflective)
+		o.reflective = reflective
+	end
+	-- set refractive on other objects on/off
+	o.setRefractive = function(refractive)
+		o.refractive = refractive
 	end
 	-- set image
 	o.setImage = function(img)
