@@ -48,6 +48,8 @@ function love.load()
 	circle = love.graphics.newImage("gfx/circle.png")
 	circle_normal = love.graphics.newImage("gfx/circle_normal.png")
 	cone = love.graphics.newImage("gfx/cone.png")
+	cone_large = love.graphics.newImage("gfx/cone_large.png")
+	cone_large_normal = love.graphics.newImage("gfx/cone_large_normal.png")
 	cone_normal = love.graphics.newImage("gfx/cone_normal.png")
 	chest = love.graphics.newImage("gfx/chest.png")
 	chest_normal = love.graphics.newImage("gfx/chest_normal.png")
@@ -92,7 +94,7 @@ function love.load()
 	lightOn = true
 	gravityOn = 1
 	shadowBlur = 2.0
-	bloomOn = true
+	bloomOn = 0.25
 	textureOn = true
 	normalOn = false
 	glowBlur = 1.0
@@ -189,7 +191,7 @@ function love.update(dt)
 		end
 		if phyLight[i].getType() == "refraction" then
 			--if math.mod(i, 2) == 0  then
-				phyLight[i].setTileOffset(tileX, tileY)
+				phyLight[i].setNormalTileOffset(tileX, tileY)
 			--end
 			if offsetChanged then
 				phyLight[i].setPosition(phyLight[i].getX() + (offsetX - offsetOldX), phyLight[i].getY() + (offsetY - offsetOldY))
@@ -272,10 +274,10 @@ function love.draw()
 			if not normalOn then
 				math.randomseed(i)
 				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
-				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ox2, phyLight[i].y - phyLight[i].oy2)
+				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
 			elseif phyLight[i].normal then
 				love.graphics.setColor(255, 255, 255)
-				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].ox2, phyLight[i].y - phyLight[i].oy2)
+				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
 			end
 		end
 	end
@@ -333,9 +335,9 @@ function love.draw()
 			love.graphics.setColor(255, 0, 0)
 			love.graphics.print("F5: Shadowblur (off)", 4 + 152 * 4, 4)
 		end
-		if bloomOn then
+		if bloomOn > 0.0 then
 			love.graphics.setColor(0, 255, 0)
-			love.graphics.print("F6: Bloom (on)", 4 + 152 * 0, 4 + 20 * 1)
+			love.graphics.print("F6: Bloom (" .. (bloomOn * 4) .. ")", 4 + 152 * 0, 4 + 20 * 1)
 		else
 			love.graphics.setColor(255, 0, 0)
 			love.graphics.print("F6: Bloom (off)", 4 + 152 * 0, 4 + 20 * 1)
@@ -380,14 +382,18 @@ function love.draw()
 	end
 
 	-- draw shader
-	if bloomOn then
-		if colorAberration > 0.0 then
-			love.postshader.addEffect("blur", 2.0, 2.0)
-			love.postshader.addEffect("chromatic", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
-		end
-		love.postshader.addEffect("bloom")
-		love.postshader.draw()
+	if colorAberration > 0.0 then
+		-- vert / horz blur
+		love.postshader.addEffect("blur", 2.0, 2.0)
+		love.postshader.addEffect("chromatic", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
 	end
+
+	if bloomOn > 0.0 then
+		-- blur, strength
+		love.postshader.addEffect("bloom", 2.0, bloomOn)
+	end
+
+	love.postshader.draw()
 end
 
 function love.mousepressed(x, y, c)
@@ -453,7 +459,10 @@ function love.keypressed(k, u)
 		end
 		lightWorld.setBlur(shadowBlur)
 	elseif k == "f6" or k == "b" then
-		bloomOn = not bloomOn
+		bloomOn = math.max(0.25, bloomOn * 2.0)
+		if bloomOn > 1.0 then
+			bloomOn = 0.0
+		end
 	elseif k == "f7" then
 		textureOn = not textureOn
 	elseif k == "f8" then
@@ -466,7 +475,7 @@ function love.keypressed(k, u)
 		lightWorld.setGlowStrength(glowBlur)
 	elseif k == "f11" then
 		physicWorld:destroy()
-		lightWorld.clearObjects()
+		lightWorld.clearBodys()
 		initScene()
 	elseif k == "f12" then
 		lightWorld.clearLights()
@@ -478,6 +487,7 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newImage(circle, mx, my)
 		phyLight[phyCnt].setNormalMap(circle_normal)
+		phyLight[phyCnt].setShadowType("circle", 16)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 32)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -485,8 +495,9 @@ function love.keypressed(k, u)
 	elseif k == "2" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 28)
+		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 16)
 		phyLight[phyCnt].setNormalMap(cone_normal)
+		--phyLight[phyCnt].setShadowType("circle", 12, 0, -8)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -494,7 +505,7 @@ function love.keypressed(k, u)
 	elseif k == "3" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 36)
+		phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 0)
 		phyLight[phyCnt].setNormalMap(chest_normal)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 24)
@@ -502,10 +513,10 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "4" then
 		-- add glow image
-		local r = lightWorld.getImageCount() % 5
+		local r = lightWorld.getBodyCount() % 5
 		if r == 0 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(machine, mx, my, 32, 24, 16, 36)
+			phyLight[phyCnt] = lightWorld.newImage(machine, mx, my, 32, 24, 16, 0)
 			phyLight[phyCnt].setNormalMap(machine_normal)
 			phyLight[phyCnt].setGlowMap(machine_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -514,7 +525,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 1 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(machine2, mx, my, 24, 12, 12, 28)
+			phyLight[phyCnt] = lightWorld.newImage(machine2, mx, my, 24, 12, 12, -4)
 			phyLight[phyCnt].setNormalMap(machine2_normal)
 			phyLight[phyCnt].setGlowMap(machine2_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -523,7 +534,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 2 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led, mx, my, 32, 6, 16, 27)
+			phyLight[phyCnt] = lightWorld.newImage(led, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt].setNormalMap(led_normal)
 			phyLight[phyCnt].setGlowMap(led_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -532,7 +543,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 3 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led2, mx, my, 32, 6, 16, 27)
+			phyLight[phyCnt] = lightWorld.newImage(led2, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt].setNormalMap(led_normal)
 			phyLight[phyCnt].setGlowMap(led_glow2)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -541,7 +552,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 4 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led3, mx, my, 32, 6, 16, 27)
+			phyLight[phyCnt] = lightWorld.newImage(led3, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt].setNormalMap(led_normal)
 			phyLight[phyCnt].setGlowMap(led_glow3)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -552,9 +563,9 @@ function love.keypressed(k, u)
 	elseif k == "5" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(machine2, mx, my, 24, 12, 12, 28)
-		phyLight[phyCnt].setNormalMap(machine2_normal)
-		phyLight[phyCnt].setGlowMap(machine2_glow)
+		phyLight[phyCnt] = lightWorld.newImage(cone_large, mx, my, 24, 128, 12, 64)
+		phyLight[phyCnt].setNormalMap(cone_large_normal)
+		phyLight[phyCnt].setShadowType("image", 0, -6, 0.0)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -562,7 +573,7 @@ function love.keypressed(k, u)
 	elseif k == "6" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(blopp, mx, my, 42, 16, 21, 20)
+		phyLight[phyCnt] = lightWorld.newImage(blopp, mx, my, 42, 16, 21, 0)
 		phyLight[phyCnt].generateNormalMapGradient("gradient", "gradient")
 		phyLight[phyCnt].setAlpha(0.5)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -615,6 +626,7 @@ function love.keypressed(k, u)
 	elseif k == "0" then
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newRefraction(refraction_normal, mx, my)
+		phyLight[phyCnt].setReflection(true)
 	elseif k == "l" then
 		-- add light
 		local r = lightWorld.getLightCount() % 3

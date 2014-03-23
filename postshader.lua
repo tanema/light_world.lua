@@ -27,6 +27,8 @@ love.postshader.addEffect = function(shader, ...)
 
 	if shader == "bloom" then
 		-- Bloom Shader
+		LOVE_POSTSHADER_BLURV:send("steps", args[1] or 2.0)
+		LOVE_POSTSHADER_BLURH:send("steps", args[1] or 2.0)
 		love.graphics.setCanvas(LOVE_POSTSHADER_BUFFER_BACK)
 		love.graphics.setBlendMode("alpha")
 
@@ -44,7 +46,7 @@ love.postshader.addEffect = function(shader, ...)
 		love.graphics.setColor(255, 255, 255)
 		love.graphics.draw(LOVE_POSTSHADER_BUFFER_RENDER)
 		love.graphics.setBlendMode("additive")
-		love.graphics.setColor(255, 255, 255, 63)
+		love.graphics.setColor(255, 255, 255, (args[2] or 0.25) * 255)
 		love.graphics.draw(LOVE_POSTSHADER_BUFFER_BACK)
 		love.graphics.setBlendMode("alpha")
 	elseif shader == "blur" then

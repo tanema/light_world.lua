@@ -2,6 +2,7 @@ LOVE_LIGHT_CURRENT = nil
 LOVE_LIGHT_CIRCLE = nil
 LOVE_LIGHT_POLY = nil
 LOVE_LIGHT_IMAGE = nil
+LOVE_LIGHT_BODY = nil
 LOVE_LIGHT_LAST_BUFFER = nil
 LOVE_LIGHT_SHADOW_GEOMETRY = nil
 
@@ -25,6 +26,7 @@ function love.light.newWorld()
 	o.circle = {}
 	o.poly = {}
 	o.img = {}
+	o.body = {}
 	o.refraction = {}
 	o.shadow = love.graphics.newCanvas()
 	o.shadow2 = love.graphics.newCanvas()
@@ -66,19 +68,14 @@ function love.light.newWorld()
 			o.changed = true
 		end
 
-		--if o.changed then
-			--love.graphics.setCanvas(o.shadow)
-			--o.shadow:clear()
-			--love.graphics.setBlendMode("additive")
-		--else
-			love.graphics.setColor(255, 255, 255)
-			love.graphics.setBlendMode("alpha")
-		--end
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.setBlendMode("alpha")
 
 		local lightsOnScreen = 0
 		LOVE_LIGHT_CIRCLE = o.circle
 		LOVE_LIGHT_POLY = o.poly
 		LOVE_LIGHT_IMAGE = o.img
+		LOVE_LIGHT_BODY = o.body
 		for i = 1, #o.lights do
 			if o.lights[i].changed or o.changed then
 				if  o.lights[i].x + o.lights[i].range > LOVE_LIGHT_TRANSLATE_X and o.lights[i].x - o.lights[i].range < love.graphics.getWidth() + LOVE_LIGHT_TRANSLATE_X
@@ -95,15 +92,11 @@ function love.light.newWorld()
 					o.shader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
 					o.shader:send("lightDirection", o.lights[i].direction)
 
-					--if o.changed then
-						--love.graphics.setCanvas(o.shadow)
-					--else
-						love.graphics.setCanvas(o.lights[i].shadow)
-						love.graphics.clear()
-					--end
+					love.graphics.setCanvas(o.lights[i].shadow)
+					love.graphics.clear()
 
 					-- calculate shadows
-					LOVE_LIGHT_SHADOW_GEOMETRY = calculateShadows(LOVE_LIGHT_CURRENT, LOVE_LIGHT_POLY, LOVE_LIGHT_CIRCLE)
+					LOVE_LIGHT_SHADOW_GEOMETRY = calculateShadows(LOVE_LIGHT_CURRENT, LOVE_LIGHT_BODY)
 
 					-- draw shadow
 					love.graphics.setInvertedStencil(shadowStencil)
@@ -113,28 +106,44 @@ function love.light.newWorld()
 					-- draw color shadows
 					love.graphics.setBlendMode("multiplicative")
 					love.graphics.setShader()
-					for i = 1,#LOVE_LIGHT_SHADOW_GEOMETRY do
-						if LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha < 1.0 then
+					for k = 1,#LOVE_LIGHT_SHADOW_GEOMETRY do
+						if LOVE_LIGHT_SHADOW_GEOMETRY[k].alpha < 1.0 then
 							love.graphics.setColor(
-								LOVE_LIGHT_SHADOW_GEOMETRY[i].red * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha),
-								LOVE_LIGHT_SHADOW_GEOMETRY[i].green * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha),
-								LOVE_LIGHT_SHADOW_GEOMETRY[i].blue * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha)
+								LOVE_LIGHT_SHADOW_GEOMETRY[k].red * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[k].alpha),
+								LOVE_LIGHT_SHADOW_GEOMETRY[k].green * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[k].alpha),
+								LOVE_LIGHT_SHADOW_GEOMETRY[k].blue * (1.0 - LOVE_LIGHT_SHADOW_GEOMETRY[k].alpha)
 							)
-							love.graphics.polygon("fill", unpack(LOVE_LIGHT_SHADOW_GEOMETRY[i]))
+							love.graphics.polygon("fill", unpack(LOVE_LIGHT_SHADOW_GEOMETRY[k]))
 						end
 					end
 
-					for i = 1, #LOVE_LIGHT_CIRCLE do
-						if LOVE_LIGHT_CIRCLE[i].glassAlpha < 1.0 then
-							love.graphics.setColor(LOVE_LIGHT_CIRCLE[i].red, LOVE_LIGHT_CIRCLE[i].green, LOVE_LIGHT_CIRCLE[i].blue)
-							love.graphics.circle("fill", LOVE_LIGHT_CIRCLE[i].x, LOVE_LIGHT_CIRCLE[i].y, LOVE_LIGHT_CIRCLE[i].radius)
+					for k = 1, #LOVE_LIGHT_BODY do
+						if LOVE_LIGHT_BODY[k].alpha < 1.0 then
+							love.graphics.setBlendMode("multiplicative")
+							love.graphics.setColor(LOVE_LIGHT_BODY[k].red, LOVE_LIGHT_BODY[k].green, LOVE_LIGHT_BODY[k].blue)
+							if LOVE_LIGHT_BODY[k].shadowType == "circle" then
+								love.graphics.circle("fill", LOVE_LIGHT_BODY[k].x - LOVE_LIGHT_BODY[k].ox, LOVE_LIGHT_BODY[k].y - LOVE_LIGHT_BODY[k].oy, LOVE_LIGHT_BODY[k].radius)
+							elseif LOVE_LIGHT_BODY[k].shadowType == "rectangle" then
+								love.graphics.rectangle("fill", LOVE_LIGHT_BODY[k].x - LOVE_LIGHT_BODY[k].ox, LOVE_LIGHT_BODY[k].y - LOVE_LIGHT_BODY[k].oy, LOVE_LIGHT_BODY[k].width, LOVE_LIGHT_BODY[k].height)
+							elseif LOVE_LIGHT_BODY[k].shadowType == "polygon" then
+								love.graphics.polygon("fill", unpack(LOVE_LIGHT_BODY[k].data))
+							end
 						end
-					end
+						if LOVE_LIGHT_BODY[k].shadowType == "image" and LOVE_LIGHT_BODY[k].img then
+							love.graphics.setBlendMode("alpha")
+							local length = 1.0
+							local shadowRotation = math.atan2((LOVE_LIGHT_BODY[k].x) - o.lights[i].x, (LOVE_LIGHT_BODY[k].y + LOVE_LIGHT_BODY[k].oy) - o.lights[i].y)
+							--local alpha = math.abs(math.cos(shadowRotation))
 
-					for i = 1, #LOVE_LIGHT_POLY do
-						if LOVE_LIGHT_POLY[i].glassAlpha < 1.0 then
-							love.graphics.setColor(LOVE_LIGHT_POLY[i].red, LOVE_LIGHT_POLY[i].green, LOVE_LIGHT_POLY[i].blue)
-							love.graphics.polygon("fill", unpack(LOVE_LIGHT_POLY[i].data))
+							LOVE_LIGHT_BODY[k].shadowVert = {
+								{math.sin(shadowRotation) * LOVE_LIGHT_BODY[k].imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].imgHeight + (math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].shadowY, 0, 0, LOVE_LIGHT_BODY[k].red, LOVE_LIGHT_BODY[k].green, LOVE_LIGHT_BODY[k].blue, LOVE_LIGHT_BODY[k].alpha * LOVE_LIGHT_BODY[k].fadeStrength * 255},
+								{LOVE_LIGHT_BODY[k].imgWidth + math.sin(shadowRotation) * LOVE_LIGHT_BODY[k].imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].imgHeight + (math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].shadowY, 1, 0, LOVE_LIGHT_BODY[k].red, LOVE_LIGHT_BODY[k].green, LOVE_LIGHT_BODY[k].blue, LOVE_LIGHT_BODY[k].alpha * LOVE_LIGHT_BODY[k].fadeStrength * 255},
+								{LOVE_LIGHT_BODY[k].imgWidth, LOVE_LIGHT_BODY[k].imgHeight + (math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].shadowY, 1, 1, LOVE_LIGHT_BODY[k].red, LOVE_LIGHT_BODY[k].green, LOVE_LIGHT_BODY[k].blue, LOVE_LIGHT_BODY[k].alpha * 255},
+								{0, LOVE_LIGHT_BODY[k].imgHeight + (math.cos(shadowRotation) + 1.0) * LOVE_LIGHT_BODY[k].shadowY, 0, 1, LOVE_LIGHT_BODY[k].red, LOVE_LIGHT_BODY[k].green, LOVE_LIGHT_BODY[k].blue, LOVE_LIGHT_BODY[k].alpha * 255}
+							}
+
+							LOVE_LIGHT_BODY[k].shadowMesh:setVertices(LOVE_LIGHT_BODY[k].shadowVert)
+							love.graphics.draw(LOVE_LIGHT_BODY[k].shadowMesh, LOVE_LIGHT_BODY[k].x - LOVE_LIGHT_BODY[k].ox + LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_BODY[k].y - LOVE_LIGHT_BODY[k].oy + LOVE_LIGHT_TRANSLATE_Y)
 						end
 					end
 
@@ -160,21 +169,19 @@ function love.light.newWorld()
 
 		-- update shadow
 		love.graphics.setShader()
-		--if not o.changed then
-			love.graphics.setCanvas(o.shadow)
-			love.graphics.setStencil()
-			love.graphics.setColor(unpack(o.ambient))
-			love.graphics.setBlendMode("alpha")
-			love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
-			love.graphics.setColor(255, 255, 255)
-			love.graphics.setBlendMode("additive")
-			for i = 1, #o.lights do
-				if o.lights[i].visible then
-					love.graphics.draw(o.lights[i].shadow, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
-				end
+		love.graphics.setCanvas(o.shadow)
+		love.graphics.setStencil()
+		love.graphics.setColor(unpack(o.ambient))
+		love.graphics.setBlendMode("alpha")
+		love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.setBlendMode("additive")
+		for i = 1, #o.lights do
+			if o.lights[i].visible then
+				love.graphics.draw(o.lights[i].shadow, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			end
-			o.isShadowBlur = false
-		--end
+		end
+		o.isShadowBlur = false
 
 		-- update shine
 		love.graphics.setCanvas(o.shine)
@@ -193,19 +200,17 @@ function love.light.newWorld()
 		love.graphics.setBlendMode("alpha")
 
 		-- create normal map
-		if o.changed then
-			o.normalMap:clear()
-			love.graphics.setShader()
-			love.graphics.setCanvas(o.normalMap)
-			for i = 1, #o.img do
-				if o.img[i].normal then
-					love.graphics.setColor(255, 255, 255)
-					love.graphics.draw(o.img[i].normal, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
-				end
+		o.normalMap:clear()
+		love.graphics.setShader()
+		love.graphics.setCanvas(o.normalMap)
+		for i = 1, #o.body do
+			if o.body[i].type == "image" and o.body[i].normal then
+				love.graphics.setColor(255, 255, 255)
+				love.graphics.draw(o.body[i].normal, o.body[i].x - o.body[i].nx + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].ny + LOVE_LIGHT_TRANSLATE_Y)
 			end
-			love.graphics.setColor(255, 255, 255)
-			love.graphics.setBlendMode("alpha")
 		end
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.setBlendMode("alpha")
 
 		o.pixelShadow2:clear()
 		love.graphics.setCanvas(o.pixelShadow2)
@@ -237,98 +242,102 @@ function love.light.newWorld()
 		love.graphics.setBlendMode("alpha")
 
 		-- create glow map
-		--if o.changed then
-			o.glowMap:clear(0, 0, 0)
-			love.graphics.setCanvas(o.glowMap)
-			for i = 1, #o.circle do
-				if o.circle[i].glowStrength > 0.0 then
-					love.graphics.setColor(o.circle[i].glowRed * o.circle[i].glowStrength, o.circle[i].glowGreen * o.circle[i].glowStrength, o.circle[i].glowBlue * o.circle[i].glowStrength)
-					love.graphics.circle("fill", o.circle[i].x, o.circle[i].y, o.circle[i].radius)
-				else
-					love.graphics.setColor(0, 0, 0)
-					love.graphics.circle("fill", o.circle[i].x, o.circle[i].y, o.circle[i].radius)
-				end
-			end
-			for i = 1, #o.poly do
-				if o.poly[i].glowStrength > 0.0 then
-					love.graphics.setColor(o.poly[i].glowRed * o.poly[i].glowStrength, o.poly[i].glowGreen * o.poly[i].glowStrength, o.poly[i].glowBlue * o.poly[i].glowStrength)
-					love.graphics.polygon("fill", unpack(o.poly[i].data))
-				else
-					love.graphics.setColor(0, 0, 0)
-					love.graphics.polygon("fill", unpack(o.poly[i].data))
-				end
-			end
+		o.glowMap:clear(0, 0, 0)
+		love.graphics.setCanvas(o.glowMap)
 
-			if o.glowDown then
-				o.glowTimer = math.max(0.0, o.glowTimer - love.timer.getDelta())
-				if o.glowTimer == 0.0 then
-					o.glowDown = not o.glowDown
-				end
+		if o.glowDown then
+			o.glowTimer = math.max(0.0, o.glowTimer - love.timer.getDelta())
+			if o.glowTimer == 0.0 then
+				o.glowDown = not o.glowDown
+			end
+		else
+			o.glowTimer = math.min(o.glowTimer + love.timer.getDelta(), 1.0)
+			if o.glowTimer == 1.0 then
+				o.glowDown = not o.glowDown
+			end
+		end
+
+		for i = 1, #o.body do
+			if o.body[i].glowStrength > 0.0 then
+				love.graphics.setColor(o.body[i].glowRed * o.body[i].glowStrength, o.body[i].glowGreen * o.body[i].glowStrength, o.body[i].glowBlue * o.body[i].glowStrength)
 			else
-				o.glowTimer = math.min(o.glowTimer + love.timer.getDelta(), 1.0)
-				if o.glowTimer == 1.0 then
-					o.glowDown = not o.glowDown
-				end
+				love.graphics.setColor(0, 0, 0)
 			end
 
-			for i = 1, #o.img do
-				if o.img[i].glow then
+			if o.body[i].type == "circle" then
+				love.graphics.circle("fill", o.body[i].x, o.body[i].y, o.body[i].radius)
+			elseif o.body[i].type == "rectangle" then
+				love.graphics.rectangle("fill", o.body[i].x, o.body[i].y, o.body[i].width, o.body[i].height)
+			elseif o.body[i].type == "polygon" then
+				love.graphics.polygon("fill", unpack(o.body[i].data))
+			elseif o.body[i].type == "image" and o.body[i].img then
+				if o.body[i].glowStrength > 0.0 and o.body[i].glow then
 					love.graphics.setShader(o.glowShader)
-					o.glowShader:send("glowImage", o.img[i].glow)
+					o.glowShader:send("glowImage", o.body[i].glow)
 					o.glowShader:send("glowTime", love.timer.getTime())
 					love.graphics.setColor(255, 255, 255)
 				else
 					love.graphics.setShader()
 					love.graphics.setColor(0, 0, 0)
 				end
-				love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
+				love.graphics.draw(o.body[i].img, o.body[i].x - o.body[i].ix + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].iy + LOVE_LIGHT_TRANSLATE_Y)
 			end
-			love.graphics.setShader()
-			o.isGlowBlur = false
-		--end
+		end
+
+		love.graphics.setShader()
+		o.isGlowBlur = false
 
 		-- create refraction map
-		if o.changed then
-			o.refractionMap:clear()
-			love.graphics.setCanvas(o.refractionMap)
-			for i = 1, #o.refraction do
-				if o.refraction[i].strength > 0.0 and o.refraction[i].normal then
-					love.graphics.setColor(255, 255, 255)
-					o.refraction[i].mesh:setVertices(o.refraction[i].vertices)
-					love.graphics.draw(o.refraction[i].mesh, o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy + LOVE_LIGHT_TRANSLATE_Y)
+		o.refractionMap:clear()
+		love.graphics.setCanvas(o.refractionMap)
+		for i = 1, #o.body do
+			if o.body[i].refraction and o.body[i].normal then
+				love.graphics.setColor(255, 255, 255)
+				if o.body[i].tileX == 0.0 and o.body[i].tileY == 0.0 then
+					love.graphics.draw(normal, o.body[i].x - o.body[i].nx + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].ny + LOVE_LIGHT_TRANSLATE_Y)
 				else
-					love.graphics.setColor(0, 0, 0, 0)
-					love.graphics.rectangle("fill", o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy, o.refraction[i].normalWidth, o.refraction[i].normalHeight + LOVE_LIGHT_TRANSLATE_Y)
+					o.body[i].normalMesh:setVertices(o.body[i].normalVert)
+					love.graphics.draw(o.body[i].normalMesh, o.body[i].x - o.body[i].nx + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].ny + LOVE_LIGHT_TRANSLATE_Y)
 				end
 			end
-			for i = 1, #o.img do
-				if not o.img[i].refractive and o.img[i].img then
-					love.graphics.setColor(0, 0, 0)
-					love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
+		end
+
+		love.graphics.setBlendMode("replace")
+		love.graphics.setColor(0, 0, 0, 0)
+		for i = 1, #o.body do
+			if not o.body[i].refractive then
+				if o.body[i].type == "circle" then
+					love.graphics.circle("fill", o.body[i].x, o.body[i].y, o.body[i].radius)
+				elseif o.body[i].type == "rectangle" then
+					love.graphics.rectangle("fill", o.body[i].x, o.body[i].y, o.body[i].width, o.body[i].height)
+				elseif o.body[i].type == "polygon" then
+					love.graphics.polygon("fill", unpack(o.body[i].data))
+				elseif o.body[i].type == "image" and o.body[i].img then
+					love.graphics.draw(o.body[i].img, o.body[i].x - o.body[i].ix + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].iy + LOVE_LIGHT_TRANSLATE_Y)
 				end
 			end
 		end
 
 		-- create reflection map
+		love.graphics.setBlendMode("alpha")
 		if o.changed then
 			o.reflectionMap:clear(0, 0, 0)
 			love.graphics.setCanvas(o.reflectionMap)
-			for i = 1, #o.refraction do
-				if o.refraction[i].reflective and o.refraction[i].normal then
+			for i = 1, #o.body do
+				if o.body[i].reflection and o.body[i].normal then
 					love.graphics.setColor(255, 0, 0)
-				else
-					love.graphics.setColor(0, 0, 0)
+					o.body[i].normalMesh:setVertices(o.body[i].normalVert)
+					love.graphics.draw(o.body[i].normalMesh, o.body[i].x - o.body[i].nx + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].ny + LOVE_LIGHT_TRANSLATE_Y)
 				end
-				o.refraction[i].mesh:setVertices(o.refraction[i].vertices)
-				love.graphics.draw(o.refraction[i].mesh, o.refraction[i].x - o.refraction[i].ox + LOVE_LIGHT_TRANSLATE_X, o.refraction[i].y - o.refraction[i].oy + LOVE_LIGHT_TRANSLATE_Y)
 			end
-			for i = 1, #o.img do
-				if o.img[i].reflective and o.img[i].img then
+			for i = 1, #o.body do
+				if o.body[i].reflective and o.body[i].img then
 					love.graphics.setColor(0, 255, 0)
-				else
+					love.graphics.draw(o.body[i].img, o.body[i].x - o.body[i].ix + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].iy + LOVE_LIGHT_TRANSLATE_Y)
+				elseif not o.body[i].reflection and o.body[i].img then
 					love.graphics.setColor(0, 0, 0)
+					love.graphics.draw(o.body[i].img, o.body[i].x - o.body[i].ix + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].iy + LOVE_LIGHT_TRANSLATE_Y)
 				end
-				love.graphics.draw(o.img[i].img, o.img[i].x - o.img[i].ox2 + LOVE_LIGHT_TRANSLATE_X, o.img[i].y - o.img[i].oy2 + LOVE_LIGHT_TRANSLATE_Y)
 			end
 		end
 
@@ -473,11 +482,8 @@ function love.light.newWorld()
 		o.changed = true
 	end
 	-- clear objects
-	o.clearObjects = function()
-		o.poly = {}
-		o.circle = {}
-		o.img = {}
-		o.refraction = {}
+	o.clearBodys = function()
+		o.body = {}
 		o.changed = true
 	end
 	-- set offset
@@ -552,29 +558,23 @@ function love.light.newWorld()
 	o.newRefractionHeightMap = function(heightMap, x, y, strength)
 		return love.light.newRefractionHeightMap(o, heightMap, x, y, strength)
 	end
+	-- new body
+	o.newBody = function(type, ...)
+		return love.light.newBody(o, type, ...)
+	end
 	-- set polygon data
 	o.setPoints = function(n, ...)
-		o.poly[n].data = {...}
+		o.body[n].data = {...}
 	end
 	-- get polygon count
-	o.getObjectCount = function()
-		return #o.poly + #o.circle + #o.img
-	end
-	-- get circle count
-	o.getCircleCount = function()
-		return #o.circle
-	end
-	-- get polygon count
-	o.getPolygonCount = function()
-		return #o.poly
-	end
-	-- get image count
-	o.getImageCount = function()
-		return #o.img
+	o.getBodyCount = function()
+		return #o.body
 	end
 	-- get polygon
 	o.getPoints = function(n)
-		return unpack(o.poly[n].data)
+		if o.body[n].data then
+			return unpack(o.body[n].data)
+		end
 	end
 	-- set light position
 	o.setLightPosition = function(n, x, y)
@@ -729,370 +729,141 @@ function love.light.newLight(p, x, y, red, green, blue, range)
 	return o
 end
 
--- rectangle object
-function love.light.newRectangle(p, x, y, width, height)
+-- body object
+function love.light.newBody(p, type, ...)
+	local args = {...}
 	local o = {}
-	p.poly[#p.poly + 1] = o
-	o.id = #p.poly
-	o.x = x or 0
-	o.y = y or 0
-	o.width = width or 64
-	o.height = height or 64
-	o.ox = o.width / 2
-	o.oy = o.height / 2
-	o.shine = true
-	o.red = 255
-	o.green = 255
-	o.blue = 255
-	o.glassAlpha = 1.0
-	o.glowRed = 255
-	o.glowGreen = 255
-	o.glowBlue = 255
-	o.glowStrength = 0.0
-	o.type = "rectangle"
+	p.body[#p.body + 1] = o
 	p.changed = true
-	o.data = {
-		o.x - o.ox,
-		o.y - o.oy,
-		o.x - o.ox + o.width,
-		o.y - o.oy,
-		o.x - o.ox + o.width,
-		o.y - o.oy + o.height,
-		o.x - o.ox,
-		o.y - o.oy + o.height
-	}
-	-- refresh
-	o.refresh = function()
-		o.data[1] = o.x - o.ox
-		o.data[2] = o.y - o.oy
-		o.data[3] = o.x - o.ox + o.width
-		o.data[4] = o.y - o.oy
-		o.data[5] = o.x - o.ox + o.width
-		o.data[6] = o.y - o.oy + o.height
-		o.data[7] = o.x - o.ox
-		o.data[8] = o.y - o.oy + o.height
-	end
-	-- set position
-	o.setPosition = function(x, y)
-		if x ~= o.x or y ~= o.y then
-			o.x = x
-			o.y = y
-			o.refresh()
-			p.changed = true
-		end
-	end
-	-- set x
-	o.setX = function(x)
-		if x ~= o.x then
-			o.x = x
-			o.refresh()
-			p.changed = true
-		end
-	end
-	-- set y
-	o.setY = function(y)
-		if y ~= o.y then
-			o.y = y
-			o.refresh()
-			p.changed = true
-		end
-	end
-	-- set dimension
-	o.setDimension = function(width, height)
-		o.width = width
-		o.height = height
-		o.refresh()
-		p.changed = true
-	end
-	-- set shadow on/off
-	o.setShadow = function(b)
-		o.castsNoShadow = not b
-		p.changed = true
-	end
-	-- set shine on/off
-	o.setShine = function(b)
-		o.shine = b
-		p.changed = true
-	end
-	-- set shadow color
-	o.setColor = function(red, green, blue)
-		o.red = red
-		o.green = green
-		o.blue = blue
-		p.changed = true
-	end
-	-- set shadow alpha
-	o.setAlpha = function(alpha)
-		o.glassAlpha = alpha
-		p.changed = true
-	end
-	-- set glow color
-	o.setGlowColor = function(red, green, blue)
-		o.glowRed = red
-		o.glowGreen = green
-		o.glowBlue = blue
-		p.changed = true
-	end
-	-- set glow alpha
-	o.setGlowStrength = function(strength)
-		o.glowStrength = strength
-		p.changed = true
-	end
-	-- get x
-	o.getX = function()
-		return o.x
-	end
-	-- get y
-	o.getY = function()
-		return o.y
-	end
-	-- get width
-	o.getWidth = function()
-		return o.width
-	end
-	-- get height
-	o.getHeight = function()
-		return o.height
-	end
-	-- get rectangle data
-	o.getPoints = function()
-		return unpack(o.data)
-	end
-	-- get type
-	o.getType = function()
-		return o.type
-	end
-
-	return o
-end
-
--- circle object
-function love.light.newCircle(p, x, y, radius)
-	local o = {}
-	p.circle[#p.circle + 1] = o
-	o.id = #p.circle
-	o.x = x or 0
-	o.y = y or 0
-	o.radius = radius or 64
-	o.shine = true
-	o.red = 255
-	o.green = 255
-	o.blue = 255
-	o.glassAlpha = 1.0
-	o.glowRed = 255
-	o.glowGreen = 255
-	o.glowBlue = 255
-	o.glowStrength = 0.0
-	o.type = "circle"
-	p.changed = true
-	-- set position
-	o.setPosition = function(x, y)
-		if x ~= o.x or y ~= o.y then
-			o.x = x
-			o.y = y
-			p.changed = true
-		end
-	end
-	-- set x
-	o.setX = function(x)
-		if x ~= o.x then
-			o.x = x
-			p.changed = true
-		end
-	end
-	-- set y
-	o.setY = function(y)
-		if y ~= o.y then
-			o.y = y
-			p.changed = true
-		end
-	end
-	-- set radius
-	o.setRadius = function(radius)
-		if radius ~= o.radius then
-			o.radius = radius
-			p.changed = true
-		end
-	end
-	-- set shadow on/off
-	o.setShadow = function(b)
-		o.castsNoShadow = not b
-		p.changed = true
-	end
-	-- set shine on/off
-	o.setShine = function(b)
-		o.shine = b
-		p.changed = true
-	end
-	-- set shadow color
-	o.setColor = function(red, green, blue)
-		o.red = red
-		o.green = green
-		o.blue = blue
-		p.changed = true
-	end
-	-- set shadow alpha
-	o.setAlpha = function(alpha)
-		o.glassAlpha = alpha
-		p.changed = true
-	end
-	-- set glow color
-	o.setGlowColor = function(red, green, blue)
-		o.glowRed = red
-		o.glowGreen = green
-		o.glowBlue = blue
-		p.changed = true
-	end
-	-- set glow alpha
-	o.setGlowStrength = function(strength)
-		o.glowStrength = strength
-		p.changed = true
-	end
-	-- get x
-	o.getX = function()
-		return o.x
-	end
-	-- get y
-	o.getY = function()
-		return o.y
-	end
-	-- get radius
-	o.getRadius = function()
-		return o.radius
-	end
-	-- get type
-	o.getType = function()
-		return o.type
-	end
-
-	return o
-end
-
--- poly object
-function love.light.newPolygon(p, ...)
-	local o = {}
-	p.poly[#p.poly + 1] = o
-	o.id = #p.poly
-	o.shine = true
-	o.red = 255
-	o.green = 255
-	o.blue = 255
-	o.glassAlpha = 1.0
-	o.glowRed = 255
-	o.glowGreen = 255
-	o.glowBlue = 255
-	o.glowStrength = 0.0
-	o.type = "polygon"
-	p.changed = true
-	if ... then
-		o.data = {...}
-	else
-		o.data = {0, 0, 0, 0, 0, 0}
-	end
-	-- set polygon data
-	o.setPoints = function(...)
-		o.data = {...}
-		p.changed = true
-	end
-	-- set shadow on/off
-	o.setShadow = function(b)
-		o.castsNoShadow = not b
-		p.changed = true
-	end
-	-- set shine on/off
-	o.setShine = function(b)
-		o.shine = b
-		p.changed = true
-	end
-	-- set shadow color
-	o.setColor = function(red, green, blue)
-		o.red = red
-		o.green = green
-		o.blue = blue
-		p.changed = true
-	end
-	-- set shadow alpha
-	o.setAlpha = function(alpha)
-		o.glassAlpha = alpha
-		p.changed = true
-	end
-	-- set glow color
-	o.setGlowColor = function(red, green, blue)
-		o.glowRed = red
-		o.glowGreen = green
-		o.glowBlue = blue
-		p.changed = true
-	end
-	-- set glow alpha
-	o.setGlowStrength = function(strength)
-		o.glowStrength = strength
-		p.changed = true
-	end
-	-- get polygon data
-	o.getPoints = function()
-		return unpack(o.data)
-	end
-	-- get type
-	o.getType = function()
-		return o.type
-	end
-
-	return o
-end
-
--- image object
-function love.light.newImage(p, img, x, y, width, height, ox, oy)
-	local o = {}
-	p.poly[#p.poly + 1] = o
-	p.img[#p.img + 1] = o
-	o.id = #p.img
-	o.img = img
+	o.id = #p.body
+	o.type = type
 	o.normal = nil
 	o.glow = nil
-	o.x = x or 0
-	o.y = y or 0
-	o.width = width or img:getWidth()
-	o.height = height or img:getHeight()
-	o.ox = o.width / 2.0
-	o.oy = o.height / 2.0
-	o.ox2 = ox or o.width / 2.0
-	o.oy2 = oy or o.height / 2.0
-	o.imgWidth = img:getWidth()
-	o.imgHeight = img:getHeight()
+	if o.type == "circle" then
+		o.x = args[1] or 0
+		o.y = args[2] or 0
+		o.radius = args[3] or 16
+		o.ox = args[4] or 0
+		o.oy = args[5] or 0
+		o.shadowType = "circle"
+		o.reflection = false
+		o.reflective = false
+		o.refraction = false
+		o.refractive = false
+	elseif o.type == "rectangle" then
+		o.x = args[1] or 0
+		o.y = args[2] or 0
+		o.width = args[3] or 64
+		o.height = args[4] or 64
+		o.ox = o.width * 0.5
+		o.oy = o.height * 0.5
+		o.shadowType = "rectangle"
+		o.data = {
+			o.x - o.ox,
+			o.y - o.oy,
+			o.x - o.ox + o.width,
+			o.y - o.oy,
+			o.x - o.ox + o.width,
+			o.y - o.oy + o.height,
+			o.x - o.ox,
+			o.y - o.oy + o.height
+		}
+		o.reflection = false
+		o.reflective = false
+		o.refraction = false
+		o.refractive = false
+	elseif o.type == "polygon" then
+		o.shadowType = "polygon"
+		o.data = args or {0, 0, 0, 0, 0, 0}
+		o.reflection = false
+		o.reflective = false
+		o.refraction = false
+		o.refractive = false
+	elseif o.type == "image" then
+		o.img = args[1]
+		o.x = args[2] or 0
+		o.y = args[3] or 0
+		if o.img then
+			o.imgWidth = o.img:getWidth()
+			o.imgHeight = o.img:getHeight()
+			o.width = args[4] or o.imgWidth
+			o.height = args[5] or o.imgHeight
+			o.ix = o.imgWidth * 0.5
+			o.iy = o.imgHeight * 0.5
+		else
+			o.width = args[4] or 64
+			o.height = args[5] or 64
+		end
+		o.ox = args[6] or o.width * 0.5
+		o.oy = args[7] or o.height * 0.5
+		o.shadowType = "rectangle"
+		o.data = {
+			o.x - o.ox,
+			o.y - o.oy,
+			o.x - o.ox + o.width,
+			o.y - o.oy,
+			o.x - o.ox + o.width,
+			o.y - o.oy + o.height,
+			o.x - o.ox,
+			o.y - o.oy + o.height
+		}
+		o.reflection = false
+		o.reflective = true
+		o.refraction = false
+		o.refractive = false
+	elseif o.type == "refraction" then
+		o.normal = args[1]
+		o.x = args[2] or 0
+		o.y = args[3] or 0
+		if o.normal then
+			o.normalWidth = o.normal:getWidth()
+			o.normalHeight = o.normal:getHeight()
+			o.width = args[4] or o.normalWidth
+			o.height = args[5] or o.normalHeight
+			o.nx = o.normalWidth * 0.5
+			o.ny = o.normalHeight * 0.5
+			o.normal:setWrap("repeat", "repeat")
+			o.normalVert = {
+				{0.0, 0.0, 0.0, 0.0},
+				{o.width, 0.0, 1.0, 0.0},
+				{o.width, o.height, 1.0, 1.0},
+				{0.0, o.height, 0.0, 1.0}
+			}
+			o.normalMesh = love.graphics.newMesh(o.normalVert, o.normal, "fan")
+		else
+			o.width = args[4] or 64
+			o.height = args[5] or 64
+		end
+		o.ox = o.width / 2.0
+		o.oy = o.height / 2.0
+		o.reflection = false
+		o.reflective = false
+		o.refraction = true
+		o.refractive = false
+	end
 	o.shine = true
-	o.red = 255
-	o.green = 255
-	o.blue = 255
-	o.glassAlpha = 1.0
+	o.red = 0
+	o.green = 0
+	o.blue = 0
+	o.alpha = 1.0
 	o.glowRed = 255
 	o.glowGreen = 255
 	o.glowBlue = 255
 	o.glowStrength = 0.0
-	o.refractionStrength = 1.0
-	o.reflective = true
-	o.refractive = false
-	o.type = "image"
-	p.changed = true
-	o.data = {
-		o.x - o.ox,
-		o.y - o.oy,
-		o.x - o.ox + o.width,
-		o.y - o.oy,
-		o.x - o.ox + o.width,
-		o.y - o.oy + o.height,
-		o.x - o.ox,
-		o.y - o.oy + o.height
-	}
+	o.tileX = 0
+	o.tileY = 0
 	-- refresh
 	o.refresh = function()
-		o.data[1] = o.x - o.ox
-		o.data[2] = o.y - o.oy
-		o.data[3] = o.x - o.ox + o.width
-		o.data[4] = o.y - o.oy
-		o.data[5] = o.x - o.ox + o.width
-		o.data[6] = o.y - o.oy + o.height
-		o.data[7] = o.x - o.ox
-		o.data[8] = o.y - o.oy + o.height
+		if o.data then
+			o.data[1] = o.x - o.ox
+			o.data[2] = o.y - o.oy
+			o.data[3] = o.x - o.ox + o.width
+			o.data[4] = o.y - o.oy
+			o.data[5] = o.x - o.ox + o.width
+			o.data[6] = o.y - o.oy + o.height
+			o.data[7] = o.x - o.ox
+			o.data[8] = o.y - o.oy + o.height
+		end
 	end
 	-- set position
 	o.setPosition = function(x, y)
@@ -1148,6 +919,72 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 		o.width = width
 		o.height = height
 		o.refresh()
+		p.changed = true
+	end
+	-- set offset
+	o.setOffset = function(ox, oy)
+		if ox ~= o.ox or oy ~= o.oy then
+			o.ox = ox
+			o.oy = oy
+			if o.shadowType == "rectangle" then
+				o.refresh()
+			end
+			p.changed = true
+		end
+	end
+	-- set offset
+	o.setImageOffset = function(ix, iy)
+		if ix ~= o.ix or iy ~= o.iy then
+			o.ix = ix
+			o.iy = iy
+			o.refresh()
+			p.changed = true
+		end
+	end
+	-- set offset
+	o.setNormalOffset = function(nx, ny)
+		if nx ~= o.nx or ny ~= o.ny then
+			o.nx = nx
+			o.ny = ny
+			o.refresh()
+			p.changed = true
+		end
+	end
+	-- set glow color
+	o.setGlowColor = function(red, green, blue)
+		o.glowRed = red
+		o.glowGreen = green
+		o.glowBlue = blue
+		p.changed = true
+	end
+	-- set glow alpha
+	o.setGlowStrength = function(strength)
+		o.glowStrength = strength
+		p.changed = true
+	end
+	-- get radius
+	o.getRadius = function()
+		return o.radius
+	end
+	-- set radius
+	o.setRadius = function(radius)
+		if radius ~= o.radius then
+			o.radius = radius
+			p.changed = true
+		end
+	end
+	-- set polygon data
+	o.setPoints = function(...)
+		o.data = {...}
+		p.changed = true
+	end
+	-- get polygon data
+	o.getPoints = function()
+		return unpack(o.data)
+	end
+	-- set shadow on/off
+	o.setShadowType = function(type)
+		o.shadowType = type
 		p.changed = true
 	end
 	-- set shadow on/off
@@ -1169,8 +1006,16 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	end
 	-- set glass alpha
 	o.setAlpha = function(alpha)
-		o.glassAlpha = alpha
+		o.alpha = alpha
 		p.changed = true
+	end
+	-- set reflection on/off
+	o.setReflection = function(reflection)
+		o.reflection = reflection
+	end
+	-- set refraction on/off
+	o.setRefraction = function(refraction)
+		o.refraction = refraction
 	end
 	-- set reflective on other objects on/off
 	o.setReflective = function(reflective)
@@ -1182,15 +1027,31 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 	end
 	-- set image
 	o.setImage = function(img)
-		o.img = img
+		if img then
+			o.img = img
+			o.imgWidth = o.img:getWidth()
+			o.imgHeight = o.img:getHeight()
+			o.ix = o.imgWidth * 0.5
+			o.iy = o.imgHeight * 0.5
+		end
 	end
 	-- set normal
 	o.setNormalMap = function(normal)
-		o.normal = normal
+		if normal then
+			o.normal = normal
+			o.normalWidth = o.normal:getWidth()
+			o.normalHeight = o.normal:getHeight()
+			o.nx = o.normalWidth * 0.5
+			o.ny = o.normalHeight * 0.5
+		end
 	end
 	-- set height map
 	o.setHeightMap = function(heightMap, strength)
 		o.normal = HeightMapToNormalMap(heightMap, strength)
+		o.normalWidth = o.normal:getWidth()
+		o.normalHeight = o.normal:getHeight()
+		o.nx = o.normalWidth * 0.5
+		o.ny = o.normalHeight * 0.5
 	end
 	-- generate flat normal map
 	o.generateNormalMapFlat = function(mode)
@@ -1220,6 +1081,10 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 		end
 
 		o.normal = love.graphics.newImage(imgNormalData)
+		o.normalWidth = o.normal:getWidth()
+		o.normalHeight = o.normal:getHeight()
+		o.nx = o.normalWidth * 0.5
+		o.ny = o.normalHeight * 0.5
 	end
 	-- generate faded normal map
 	o.generateNormalMapGradient = function(horizontalGradient, verticalGradient)
@@ -1260,202 +1125,121 @@ function love.light.newImage(p, img, x, y, width, height, ox, oy)
 		end
 
 		o.normal = love.graphics.newImage(imgNormalData)
+		o.normalWidth = o.normal:getWidth()
+		o.normalHeight = o.normal:getHeight()
+		o.nx = o.normalWidth * 0.5
+		o.ny = o.normalHeight * 0.5
 	end
 	-- generate normal map
 	o.generateNormalMap = function(strength)
 		o.normal = HeightMapToNormalMap(o.img, strength)
+		o.normalWidth = o.normal:getWidth()
+		o.normalHeight = o.normal:getHeight()
+		o.nx = o.normalWidth * 0.5
+		o.ny = o.normalHeight * 0.5
 	end
 	-- set normal
 	o.setGlowMap = function(glow)
 		o.glow = glow
+		o.glowStrength = 1.0
+	end
+	-- set tile offset
+	o.setNormalTileOffset = function(tx, ty)
+		o.tileX = tx / o.normalWidth
+		o.tileY = ty / o.normalHeight
+		o.normalVert = {
+			{0.0, 0.0, o.tileX, o.tileY},
+			{o.normalWidth, 0.0, o.tileX + 1.0, o.tileY},
+			{o.normalWidth, o.normalHeight, o.tileX + 1.0, o.tileY + 1.0},
+			{0.0, o.normalHeight, o.tileX, o.tileY + 1.0}
+		}
+		p.changed = true
 	end
 	-- get type
 	o.getType = function()
 		return o.type
 	end
+	-- get type
+	o.setShadowType = function(type, ...)
+		o.shadowType = type
+		local args = {...}
+		if o.shadowType == "circle" then
+			o.radius = args[1] or 16
+			o.ox = args[2] or 0
+			o.oy = args[3] or 0
+		elseif o.shadowType == "rectangle" then
+			o.width = args[1] or 64
+			o.height = args[2] or 64
+			o.ox = args[3] or o.width * 0.5
+			o.oy = args[4] or o.height * 0.5
+			o.data = {
+				o.x - o.ox,
+				o.y - o.oy,
+				o.x - o.ox + o.width,
+				o.y - o.oy,
+				o.x - o.ox + o.width,
+				o.y - o.oy + o.height,
+				o.x - o.ox,
+				o.y - o.oy + o.height
+			}
+		elseif o.shadowType == "polygon" then
+			o.data = args or {0, 0, 0, 0, 0, 0}
+		elseif o.shadowType == "image" then
+			if o.img then
+				o.width = o.imgWidth
+				o.height = o.imgHeight
+				o.shadowVert = {
+					{0.0, 0.0, 0.0, 0.0},
+					{o.width, 0.0, 1.0, 0.0},
+					{o.width, o.height, 1.0, 1.0},
+					{0.0, o.height, 0.0, 1.0}
+				}
+				if not o.shadowMesh then
+					o.shadowMesh = love.graphics.newMesh(o.shadowVert, o.img, "fan")
+					o.shadowMesh:setVertexColors(true)
+				end
+			else
+				o.width = 64
+				o.height = 64
+			end
+			o.shadowX = args[1] or 0
+			o.shadowY = args[2] or 0
+			o.fadeStrength = args[3] or 0.0
+		end
+	end
 
 	return o
+end
+
+-- rectangle object
+function love.light.newRectangle(p, x, y, width, height)
+	return p.newBody("rectangle", x, y, width, height)
+end
+
+-- circle object
+function love.light.newCircle(p, x, y, radius)
+	return p.newBody("circle", x, y, radius)
+end
+
+-- poly object
+function love.light.newPolygon(p, ...)
+	return p.newBody("polygon", ...)
+end
+
+-- image object
+function love.light.newImage(p, img, x, y, width, height, ox, oy)
+	return p.newBody("image", img, x, y, width, height, ox, oy)
+end
+
+-- refraction object
+function love.light.newRefraction(p, normal, x, y, width, height)
+	return p.newBody("refraction", normal, x, y, width, height)
 end
 
 -- refraction object (height map)
 function love.light.newRefractionHeightMap(p, heightMap, x, y, strength)
 	local normal = HeightMapToNormalMap(heightMap, strength)
 	return love.light.newRefraction(p, normal, x, y)
-end
-
--- refraction object
-function love.light.newRefraction(p, normal, x, y)
-	local o = {}
-	p.refraction[#p.refraction + 1] = o
-	o.id = #p.refraction
-	o.normal = normal
-	o.normal:setWrap("repeat", "repeat")
-	o.x = x or 0
-	o.y = y or 0
-	o.width = width or normal:getWidth()
-	o.height = height or normal:getHeight()
-	o.ox = o.width / 2.0
-	o.oy = o.height / 2.0
-	o.tileX = 0
-	o.tileY = 0
-	o.vertices = {
-		{0.0, 0.0, 0.0, 0.0},
-		{o.width, 0.0, 1.0, 0.0},
-        {o.width, o.height, 1.0, 1.0},
-        {0.0, o.height, 0.0, 1.0}
-    }
-	o.mesh = love.graphics.newMesh(o.vertices, o.normal, "fan")
-	o.normalWidth = normal:getWidth()
-	o.normalHeight = normal:getHeight()
-	o.strength = strength or 1.0
-	o.reflective = true
-	o.type = "refraction"
-	p.changed = true
-	-- set position
-	o.setPosition = function(x, y)
-		if x ~= o.x or y ~= o.y then
-			o.x = x
-			o.y = y
-			p.changed = true
-		end
-	end
-	-- set x position
-	o.setX = function(x)
-		if x ~= o.x then
-			o.x = x
-			p.changed = true
-		end
-	end
-	-- set y position
-	o.setY = function(y)
-		if y ~= o.y then
-			o.y = y
-			p.changed = true
-		end
-	end
-	-- set tile offset
-	o.setTileOffset = function(tx, ty)
-		o.tileX = tx / o.width
-		o.tileY = ty / o.height
-		o.vertices = {
-			{0.0, 0.0, o.tileX, o.tileY},
-			{o.width, 0.0, o.tileX + 1.0, o.tileY},
-			{o.width, o.height, o.tileX + 1.0, o.tileY + 1.0},
-			{0.0, o.height, o.tileX, o.tileY + 1.0}
-		}
-		p.changed = true
-	end
-	-- get x position
-	o.getX = function()
-		return o.x
-	end
-	-- get y position
-	o.getY = function(y)
-		return o.y
-	end
-	-- get width
-	o.getWidth = function()
-		return o.width
-	end
-	-- get height
-	o.getHeight = function()
-		return o.height
-	end
-	-- get image width
-	o.getImageWidth = function()
-		return o.imgWidth
-	end
-	-- get image height
-	o.getImageHeight = function()
-		return o.imgHeight
-	end
-	-- set normal
-	o.setNormalMap = function(normal)
-		o.normal = normal
-	end
-	-- set height map
-	o.setHeightMap = function(heightMap, strength)
-		o.normal = HeightMapToNormalMap(heightMap, strength)
-	end
-	-- generate flat normal map
-	o.generateNormalMapFlat = function(mode)
-		local imgData = o.img:getData()
-		local imgNormalData = love.image.newImageData(o.imgWidth, o.imgHeight)
-		local color
-
-		if mode == "top" then
-			color = {127, 127, 255}
-		elseif mode == "front" then
-			color = {127, 255, 127}
-		elseif mode == "back" then
-			color = {127, 0, 127}
-		elseif mode == "left" then
-			color = {31, 255, 223}
-		elseif mode == "right" then
-			color = {223, 223, 127}
-		end
-
-		for i = 0, o.imgHeight - 1 do
-			for k = 0, o.imgWidth - 1 do
-				local r, g, b, a = imgData:getPixel(k, i)
-				if a > 0 then
-					imgNormalData:setPixel(k, i, color[1], color[2], color[3], 255)
-				end
-			end
-		end
-
-		o.normal = love.graphics.newImage(imgNormalData)
-	end
-	-- generate faded normal map
-	o.generateNormalMapGradient = function(horizontalGradient, verticalGradient)
-		local imgData = o.img:getData()
-		local imgNormalData = love.image.newImageData(o.imgWidth, o.imgHeight)
-		local dx = 255.0 / o.imgWidth
-		local dy = 255.0 / o.imgHeight
-		local nx
-		local ny
-		local nz
-
-		for i = 0, o.imgWidth - 1 do
-			for k = 0, o.imgHeight - 1 do
-				local r, g, b, a = imgData:getPixel(i, k)
-				if a > 0 then
-					if horizontalGradient == "gradient" then
-						nx = i * dx
-					elseif horizontalGradient == "inverse" then
-						nx = 255 - i * dx
-					else
-						nx = 127
-					end
-
-					if verticalGradient == "gradient" then
-						ny = 127 + k * dy * 0.5
-						nz = 255 - k * dy * 0.5
-					elseif verticalGradient == "inverse" then
-						ny = 127 - k * dy * 0.5
-						nz = 127 - k * dy * 0.25
-					else
-						ny = 255
-						nz = 127
-					end
-
-					imgNormalData:setPixel(i, k, nx, ny, nz, 255)
-				end
-			end
-		end
-
-		o.normal = love.graphics.newImage(imgNormalData)
-	end
-	-- generate normal map
-	o.generateNormalMap = function(strength)
-		o.normal = HeightMapToNormalMap(o.img, strength)
-	end
-	-- get type
-	o.getType = function()
-		return o.type
-	end
-
-	return o
 end
 
 -- vector functions
@@ -1477,87 +1261,91 @@ function length(v)
     return math.sqrt(lengthSqr(v))
 end
 
-function calculateShadows(lightsource, geometry, circle, image)
+function calculateShadows(light, body)
     local shadowGeometry = {}
     local shadowLength = 10000
 
-    for i, v in pairs(geometry) do
-		curPolygon = v.data
-		if not v.castsNoShadow then 
-            local edgeFacingTo = {}
-            for j=1,#curPolygon,2 do
-                local indexOfNextVertex = (j+2) % #curPolygon
-                local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[j+1], curPolygon[indexOfNextVertex] - curPolygon[j]}
-                local lightToPoint = {curPolygon[j] - lightsource.x, curPolygon[j+1] - lightsource.y}
+    for i = 1, #body do
+		if body[i].shadowType == "rectangle" or body[i].shadowType == "polygon" then
+			curPolygon = body[i].data
+			if not body[i].castsNoShadow then 
+				local edgeFacingTo = {}
+				for k = 1, #curPolygon, 2 do
+					local indexOfNextVertex = (k + 2) % #curPolygon
+					local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
+					local lightToPoint = {curPolygon[k] - light.x, curPolygon[k + 1] - light.y}
 
-                normal = normalize(normal)
-                lightToPoint = normalize(lightToPoint)
+					normal = normalize(normal)
+					lightToPoint = normalize(lightToPoint)
 
-				local dotProduct = dot(normal, lightToPoint)
-                if dotProduct > 0 then table.insert(edgeFacingTo, true)
-                else table.insert(edgeFacingTo, false) end
-            end
+					local dotProduct = dot(normal, lightToPoint)
+					if dotProduct > 0 then table.insert(edgeFacingTo, true)
+					else table.insert(edgeFacingTo, false) end
+				end
 
-			local curShadowGeometry = {}
-			for j, curFacing in pairs(edgeFacingTo) do
-				local nextIndex = (j+1) % #edgeFacingTo; if nextIndex == 0 then nextIndex = #edgeFacingTo end
-				if curFacing and not edgeFacingTo[nextIndex] then 
-					curShadowGeometry[1] = curPolygon[nextIndex*2-1]
-					curShadowGeometry[2] = curPolygon[nextIndex*2]
+				local curShadowGeometry = {}
+				for k = 1, #edgeFacingTo do
+					local nextIndex = (k + 1) % #edgeFacingTo
+					if nextIndex == 0 then nextIndex = #edgeFacingTo end
+					if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then 
+						curShadowGeometry[1] = curPolygon[nextIndex*2-1]
+						curShadowGeometry[2] = curPolygon[nextIndex*2]
 
-					local lightVecFrontBack = normalize({curPolygon[nextIndex*2-1] - lightsource.x, curPolygon[nextIndex*2] - lightsource.y})
-					curShadowGeometry[3] = curShadowGeometry[1] + lightVecFrontBack[1] * shadowLength
-					curShadowGeometry[4] = curShadowGeometry[2] + lightVecFrontBack[2] * shadowLength
+						local lightVecFrontBack = normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
+						curShadowGeometry[3] = curShadowGeometry[1] + lightVecFrontBack[1] * shadowLength
+						curShadowGeometry[4] = curShadowGeometry[2] + lightVecFrontBack[2] * shadowLength
 
-				elseif not curFacing and edgeFacingTo[nextIndex] then 
-					curShadowGeometry[7] = curPolygon[nextIndex*2-1]
-					curShadowGeometry[8] = curPolygon[nextIndex*2]
+					elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then 
+						curShadowGeometry[7] = curPolygon[nextIndex*2-1]
+						curShadowGeometry[8] = curPolygon[nextIndex*2]
 
-					local lightVecBackFront = normalize({curPolygon[nextIndex*2-1] - lightsource.x, curPolygon[nextIndex*2] - lightsource.y})
-					curShadowGeometry[5] = curShadowGeometry[7] + lightVecBackFront[1] * shadowLength
-					curShadowGeometry[6] = curShadowGeometry[8] + lightVecBackFront[2] * shadowLength
+						local lightVecBackFront = normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
+						curShadowGeometry[5] = curShadowGeometry[7] + lightVecBackFront[1] * shadowLength
+						curShadowGeometry[6] = curShadowGeometry[8] + lightVecBackFront[2] * shadowLength
+					end
+				end
+				if  curShadowGeometry[1]
+				and curShadowGeometry[2]
+				and curShadowGeometry[3]
+				and curShadowGeometry[4]
+				and curShadowGeometry[5]
+				and curShadowGeometry[6]
+				and curShadowGeometry[7]
+				and curShadowGeometry[8]
+				then
+					curShadowGeometry.alpha = body[i].alpha
+					curShadowGeometry.red = body[i].red
+					curShadowGeometry.green = body[i].green
+					curShadowGeometry.blue = body[i].blue
+					shadowGeometry[#shadowGeometry + 1] = curShadowGeometry
 				end
 			end
-			if  curShadowGeometry[1]
-			and curShadowGeometry[2]
-			and curShadowGeometry[3]
-			and curShadowGeometry[4]
-			and curShadowGeometry[5]
-			and curShadowGeometry[6]
-			and curShadowGeometry[7]
-			and curShadowGeometry[8]
-			then
-				curShadowGeometry.alpha = v.glassAlpha
-				curShadowGeometry.red = v.red
-				curShadowGeometry.green = v.green
-				curShadowGeometry.blue = v.blue
+		elseif body[i].shadowType == "circle" then
+			local length = math.sqrt(math.pow(light.x - (body[i].x - body[i].ox), 2) + math.pow(light.y - (body[i].y - body[i].oy), 2))
+			if length >= body[i].radius and length <= light.range then
+				local curShadowGeometry = {}
+				local angle = math.atan2(light.x - (body[i].x - body[i].ox), (body[i].y - body[i].oy) - light.y) + math.pi / 2
+				local x2 = ((body[i].x - body[i].ox) + math.sin(angle) * body[i].radius)
+				local y2 = ((body[i].y - body[i].oy) - math.cos(angle) * body[i].radius)
+				local x3 = ((body[i].x - body[i].ox) - math.sin(angle) * body[i].radius)
+				local y3 = ((body[i].y - body[i].oy) + math.cos(angle) * body[i].radius)
+
+				curShadowGeometry[1] = x2
+				curShadowGeometry[2] = y2
+				curShadowGeometry[3] = x3
+				curShadowGeometry[4] = y3
+
+				curShadowGeometry[5] = x3 - (light.x - x3) * shadowLength
+				curShadowGeometry[6] = y3 - (light.y - y3) * shadowLength
+				curShadowGeometry[7] = x2 - (light.x - x2) * shadowLength
+				curShadowGeometry[8] = y2 - (light.y - y2) * shadowLength
+				curShadowGeometry.alpha = body[i].alpha
+				curShadowGeometry.red = body[i].red
+				curShadowGeometry.green = body[i].green
+				curShadowGeometry.blue = body[i].blue
 				shadowGeometry[#shadowGeometry + 1] = curShadowGeometry
 			end
 		end
-	end
-
-    for i, v in pairs(circle) do
-		local curShadowGeometry = {}
-		local angle = math.atan2(lightsource.x - v.x, v.y - lightsource.y) + math.pi / 2
-		local x2 = (v.x + math.sin(angle) * v.radius)
-		local y2 = (v.y - math.cos(angle) * v.radius)
-		local x3 = (v.x - math.sin(angle) * v.radius)
-		local y3 = (v.y + math.cos(angle) * v.radius)
-
-		curShadowGeometry[1] = x2
-		curShadowGeometry[2] = y2
-		curShadowGeometry[3] = x3
-		curShadowGeometry[4] = y3
-
-		curShadowGeometry[5] = x3 - (lightsource.x - x3) * shadowLength
-		curShadowGeometry[6] = y3 - (lightsource.y - y3) * shadowLength
-		curShadowGeometry[7] = x2 - (lightsource.x - x2) * shadowLength
-		curShadowGeometry[8] = y2 - (lightsource.y - y2) * shadowLength
-		curShadowGeometry.alpha = v.glassAlpha
-		curShadowGeometry.red = v.red
-		curShadowGeometry.green = v.green
-		curShadowGeometry.blue = v.blue
-		shadowGeometry[#shadowGeometry + 1] = curShadowGeometry
 	end
 
     return shadowGeometry
@@ -1566,40 +1354,36 @@ end
 shadowStencil = function()
 	for i = 1,#LOVE_LIGHT_SHADOW_GEOMETRY do
 		if LOVE_LIGHT_SHADOW_GEOMETRY[i].alpha == 1.0 then
-			--love.graphics.setBlendMode("replace")
-			--love.graphics.setColor(0,0,0)
 			love.graphics.polygon("fill", unpack(LOVE_LIGHT_SHADOW_GEOMETRY[i]))
 		end
 	end
-    for i = 1, #LOVE_LIGHT_POLY do
-		if LOVE_LIGHT_POLY[i].glassAlpha == 1.0 then
-			love.graphics.polygon("fill", unpack(LOVE_LIGHT_POLY[i].data))
+    for i = 1, #LOVE_LIGHT_BODY do
+		if LOVE_LIGHT_BODY[i].shadowType == "circle" then
+			love.graphics.circle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].radius)
+		elseif LOVE_LIGHT_BODY[i].shadowType == "rectangle" then
+			love.graphics.rectangle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].width, LOVE_LIGHT_BODY[i].height)
+		elseif LOVE_LIGHT_BODY[i].shadowType == "polygon" then
+			love.graphics.polygon("fill", unpack(LOVE_LIGHT_BODY[i].data))
+		elseif LOVE_LIGHT_BODY[i].shadowType == "image" then
+			--love.graphics.rectangle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].width, LOVE_LIGHT_BODY[i].height)
 		end
-    end
-    for i = 1, #LOVE_LIGHT_CIRCLE do
-        love.graphics.circle("fill", LOVE_LIGHT_CIRCLE[i].x, LOVE_LIGHT_CIRCLE[i].y, LOVE_LIGHT_CIRCLE[i].radius)
 	end
-    for i = 1, #LOVE_LIGHT_IMAGE do
-		--love.graphics.rectangle("fill", LOVE_LIGHT_IMAGE[i].x, LOVE_LIGHT_IMAGE[i].y, LOVE_LIGHT_IMAGE[i].width, LOVE_LIGHT_IMAGE[i].height)
-    end
 end
 
 polyStencil = function()
-    for i = 1, #LOVE_LIGHT_CIRCLE do
-		if LOVE_LIGHT_CIRCLE[i].shine and LOVE_LIGHT_CIRCLE[i].glowStrength == 0.0 then
-			love.graphics.circle("fill", LOVE_LIGHT_CIRCLE[i].x, LOVE_LIGHT_CIRCLE[i].y, LOVE_LIGHT_CIRCLE[i].radius)
+    for i = 1, #LOVE_LIGHT_BODY do
+		if LOVE_LIGHT_BODY[i].shine and (LOVE_LIGHT_BODY[i].glowStrength == 0.0 or (LOVE_LIGHT_BODY[i].type == "image" and not LOVE_LIGHT_BODY[i].normal)) then
+			if LOVE_LIGHT_BODY[i].shadowType == "circle" then
+				love.graphics.circle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].radius)
+			elseif LOVE_LIGHT_BODY[i].shadowType == "rectangle" then
+				love.graphics.rectangle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].width, LOVE_LIGHT_BODY[i].height)
+			elseif LOVE_LIGHT_BODY[i].shadowType == "polygon" then
+				love.graphics.polygon("fill", unpack(LOVE_LIGHT_BODY[i].data))
+			elseif LOVE_LIGHT_BODY[i].shadowType == "image" then
+				--love.graphics.rectangle("fill", LOVE_LIGHT_BODY[i].x - LOVE_LIGHT_BODY[i].ox, LOVE_LIGHT_BODY[i].y - LOVE_LIGHT_BODY[i].oy, LOVE_LIGHT_BODY[i].width, LOVE_LIGHT_BODY[i].height)
+			end
 		end
 	end
-    for i = 1, #LOVE_LIGHT_POLY do
-		if LOVE_LIGHT_POLY[i].shine and LOVE_LIGHT_POLY[i].glowStrength == 0.0 then
-			love.graphics.polygon("fill", unpack(LOVE_LIGHT_POLY[i].data))
-		end
-    end
-    for i = 1, #LOVE_LIGHT_IMAGE do
-		if LOVE_LIGHT_IMAGE[i].shine then
-			--love.graphics.rectangle("fill", LOVE_LIGHT_IMAGE[i].x, LOVE_LIGHT_IMAGE[i].y, LOVE_LIGHT_IMAGE[i].width, LOVE_LIGHT_IMAGE[i].height)
-		end
-    end
 end
 
 function HeightMapToNormalMap(heightMap, strength)
