@@ -39,6 +39,7 @@ function love.light.newWorld()
 	o.refractionMap2 = love.graphics.newCanvas()
 	o.reflectionMap = love.graphics.newCanvas()
 	o.reflectionMap2 = love.graphics.newCanvas()
+	o.normalInvert = false
 	o.glowBlur = 1.0
 	o.isGlowBlur = false
 	o.glowTimer = 0.0
@@ -49,6 +50,8 @@ function love.light.newWorld()
 	o.shader = love.graphics.newShader("shader/poly_shadow.glsl")
 	o.glowShader = love.graphics.newShader("shader/glow.glsl")
 	o.normalShader = love.graphics.newShader("shader/normal.glsl")
+	o.normalInvertShader = love.graphics.newShader("shader/normal_invert.glsl")
+	o.materialShader = love.graphics.newShader("shader/material.glsl")
 	o.refractionShader = love.graphics.newShader("shader/refraction.glsl")
 	o.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
 	o.reflectionShader = love.graphics.newShader("shader/reflection.glsl")
@@ -219,14 +222,25 @@ function love.light.newWorld()
 
 		for i = 1, #o.lights do
 			if o.lights[i].visible then
-				o.normalShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
-				o.normalShader:send('lightColor', {o.lights[i].red / 255.0, o.lights[i].green / 255.0, o.lights[i].blue / 255.0})
-				o.normalShader:send('lightPosition',{o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].z / 255.0})
-				o.normalShader:send('lightRange',{o.lights[i].range})
-				o.normalShader:send("lightSmooth", o.lights[i].smooth)
-				o.normalShader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
-				o.normalShader:send("lightDirection", o.lights[i].direction)
-				love.graphics.setShader(o.normalShader)
+				if normalInvert then
+					o.normalInvertShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
+					o.normalInvertShader:send('lightColor', {o.lights[i].red / 255.0, o.lights[i].green / 255.0, o.lights[i].blue / 255.0})
+					o.normalInvertShader:send('lightPosition',{o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].z / 255.0})
+					o.normalInvertShader:send('lightRange',{o.lights[i].range})
+					o.normalInvertShader:send("lightSmooth", o.lights[i].smooth)
+					o.normalInvertShader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
+					o.normalInvertShader:send("lightDirection", o.lights[i].direction)
+					love.graphics.setShader(o.normalInvertShader)
+				else
+					o.normalShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
+					o.normalShader:send('lightColor', {o.lights[i].red / 255.0, o.lights[i].green / 255.0, o.lights[i].blue / 255.0})
+					o.normalShader:send('lightPosition',{o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].z / 255.0})
+					o.normalShader:send('lightRange',{o.lights[i].range})
+					o.normalShader:send("lightSmooth", o.lights[i].smooth)
+					o.normalShader:send("lightAngle", math.pi - o.lights[i].angle / 2.0)
+					o.normalShader:send("lightDirection", o.lights[i].direction)
+					love.graphics.setShader(o.normalShader)
+				end
 				love.graphics.draw(o.normalMap, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 			end
 		end
@@ -408,6 +422,18 @@ function love.light.newWorld()
 		love.graphics.draw(o.pixelShadow, LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y)
 		love.graphics.setBlendMode("alpha")
 	end
+	-- draw material
+	o.drawMaterial = function()
+		love.graphics.setShader(o.materialShader)
+		for i = 1, #o.body do
+			if o.body[i].material and o.body[i].normal then
+				love.graphics.setColor(255, 255, 255)
+				o.materialShader:send("material", o.body[i].material)
+				love.graphics.draw(o.body[i].normal, o.body[i].x - o.body[i].nx + LOVE_LIGHT_TRANSLATE_X, o.body[i].y - o.body[i].ny + LOVE_LIGHT_TRANSLATE_Y)
+			end
+		end
+		love.graphics.setShader()
+	end
 	-- draw glow
 	o.drawGlow = function()
 		love.graphics.setColor(255, 255, 255)
@@ -507,6 +533,10 @@ function love.light.newWorld()
 	o.setAmbientBlue = function(blue)
 		o.ambient[3] = blue
 	end
+	-- set normal invert
+	o.setNormalInvert = function(invert)
+		o.normalInvert = invert
+	end
 	-- set blur
 	o.setBlur = function(blur)
 		o.blur = blur
@@ -557,6 +587,14 @@ function love.light.newWorld()
 	-- new refraction from height map
 	o.newRefractionHeightMap = function(heightMap, x, y, strength)
 		return love.light.newRefractionHeightMap(o, heightMap, x, y, strength)
+	end
+	-- new reflection
+	o.newReflection = function(normal, x, y)
+		return love.light.newReflection(o, normal, x, y)
+	end
+	-- new reflection from height map
+	o.newReflectionHeightMap = function(heightMap, x, y, strength)
+		return love.light.newReflectionHeightMap(o, heightMap, x, y, strength)
 	end
 	-- new body
 	o.newBody = function(type, ...)
@@ -738,6 +776,7 @@ function love.light.newBody(p, type, ...)
 	o.id = #p.body
 	o.type = type
 	o.normal = nil
+	o.material = nil
 	o.glow = nil
 	if o.type == "circle" then
 		o.x = args[1] or 0
@@ -834,11 +873,40 @@ function love.light.newBody(p, type, ...)
 			o.width = args[4] or 64
 			o.height = args[5] or 64
 		end
-		o.ox = o.width / 2.0
-		o.oy = o.height / 2.0
+		o.ox = o.width * 0.5
+		o.oy = o.height * 0.5
 		o.reflection = false
 		o.reflective = false
 		o.refraction = true
+		o.refractive = false
+	elseif o.type == "reflection" then
+		o.normal = args[1]
+		o.x = args[2] or 0
+		o.y = args[3] or 0
+		if o.normal then
+			o.normalWidth = o.normal:getWidth()
+			o.normalHeight = o.normal:getHeight()
+			o.width = args[4] or o.normalWidth
+			o.height = args[5] or o.normalHeight
+			o.nx = o.normalWidth * 0.5
+			o.ny = o.normalHeight * 0.5
+			o.normal:setWrap("repeat", "repeat")
+			o.normalVert = {
+				{0.0, 0.0, 0.0, 0.0},
+				{o.width, 0.0, 1.0, 0.0},
+				{o.width, o.height, 1.0, 1.0},
+				{0.0, o.height, 0.0, 1.0}
+			}
+			o.normalMesh = love.graphics.newMesh(o.normalVert, o.normal, "fan")
+		else
+			o.width = args[4] or 64
+			o.height = args[5] or 64
+		end
+		o.ox = o.width * 0.5
+		o.oy = o.height * 0.5
+		o.reflection = true
+		o.reflective = false
+		o.refraction = false
 		o.refractive = false
 	end
 	o.shine = true
@@ -1062,13 +1130,13 @@ function love.light.newBody(p, type, ...)
 		if mode == "top" then
 			color = {127, 127, 255}
 		elseif mode == "front" then
-			color = {127, 255, 127}
-		elseif mode == "back" then
 			color = {127, 0, 127}
+		elseif mode == "back" then
+			color = {127, 255, 127}
 		elseif mode == "left" then
-			color = {31, 255, 223}
+			color = {31, 0, 223}
 		elseif mode == "right" then
-			color = {223, 223, 127}
+			color = {223, 0, 127}
 		end
 
 		for i = 0, o.imgHeight - 1 do
@@ -1109,10 +1177,10 @@ function love.light.newBody(p, type, ...)
 					end
 
 					if verticalGradient == "gradient" then
-						ny = 127 + k * dy * 0.5
+						ny = 127 - k * dy * 0.5
 						nz = 255 - k * dy * 0.5
 					elseif verticalGradient == "inverse" then
-						ny = 127 - k * dy * 0.5
+						ny = 127 + k * dy * 0.5
 						nz = 127 - k * dy * 0.25
 					else
 						ny = 255
@@ -1137,6 +1205,12 @@ function love.light.newBody(p, type, ...)
 		o.normalHeight = o.normal:getHeight()
 		o.nx = o.normalWidth * 0.5
 		o.ny = o.normalHeight * 0.5
+	end
+	-- set material
+	o.setMaterial = function(material)
+		if material then
+			o.material = material
+		end
 	end
 	-- set normal
 	o.setGlowMap = function(glow)
@@ -1240,6 +1314,17 @@ end
 function love.light.newRefractionHeightMap(p, heightMap, x, y, strength)
 	local normal = HeightMapToNormalMap(heightMap, strength)
 	return love.light.newRefraction(p, normal, x, y)
+end
+
+-- reflection object
+function love.light.newReflection(p, normal, x, y, width, height)
+	return p.newBody("reflection", normal, x, y, width, height)
+end
+
+-- reflection object (height map)
+function love.light.newReflectionHeightMap(p, heightMap, x, y, strength)
+	local normal = HeightMapToNormalMap(heightMap, strength)
+	return love.light.newReflection(p, normal, x, y)
 end
 
 -- vector functions
@@ -1423,7 +1508,7 @@ function HeightMapToNormalMap(heightMap, strength)
 			end
 
 			red = (255 + ((matrix[1][2] - matrix[2][2]) + (matrix[2][2] - matrix[3][2])) * strength) / 2.0
-			green = (255 - ((matrix[2][2] - matrix[1][1]) + (matrix[2][3] - matrix[2][2])) * strength) / 2.0
+			green = (255 + ((matrix[2][2] - matrix[1][1]) + (matrix[2][3] - matrix[2][2])) * strength) / 2.0
 			blue = 192
 
 			imgData2:setPixel(k, i, red, green, blue)

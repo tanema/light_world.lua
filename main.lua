@@ -72,6 +72,17 @@ function love.load()
 	led_glow = love.graphics.newImage("gfx/led_glow.png")
 	led_glow2 = love.graphics.newImage("gfx/led_glow2.png")
 	led_glow3 = love.graphics.newImage("gfx/led_glow3.png")
+	ape = love.graphics.newImage("gfx/ape.png")
+	ape_normal = love.graphics.newImage("gfx/ape_normal.png")
+	ape_glow = love.graphics.newImage("gfx/ape_glow.png")
+
+	-- materials
+	material = {}
+
+	local files = love.filesystem.getDirectoryItems("gfx/sphere")
+	for i, file in ipairs(files) do
+		material[i] = love.graphics.newImage("gfx/sphere/" .. file)
+	end
 
 	-- light world
 	lightRange = 400
@@ -80,9 +91,10 @@ function love.load()
 	lightWorld.setAmbientColor(15, 15, 31)
 	lightWorld.setRefractionStrength(16.0)
 	lightWorld.setReflectionVisibility(0.75)
-	mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
+	mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
 	mouseLight.setGlowStrength(0.3)
 	mouseLight.setSmooth(lightSmooth)
+	mouseLight.z = 63
 	lightDirection = 0.0
 	colorAberration = 0.0
 
@@ -270,7 +282,7 @@ function love.draw()
 
 	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
-		if phyLight[i].getType() == "image" then
+		if phyLight[i].getType() == "image" and not phyLight[i].material then
 			if not normalOn then
 				math.randomseed(i)
 				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
@@ -282,6 +294,8 @@ function love.draw()
 		end
 	end
 
+	lightWorld.drawMaterial()
+	
 	-- draw pixel shadow
 	if lightOn and not normalOn then
 		lightWorld.drawPixelShadow()
@@ -479,7 +493,7 @@ function love.keypressed(k, u)
 		initScene()
 	elseif k == "f12" then
 		lightWorld.clearLights()
-		mouseLight = lightWorld.newLight(0, 0, 255, 127, 63, lightRange)
+		mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
 		mouseLight.setGlowStrength(0.3)
 		mouseLight.setSmooth(lightSmooth)
 	elseif k == "1" then
@@ -493,24 +507,42 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "2" then
-		-- add image
-		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 16)
-		phyLight[phyCnt].setNormalMap(cone_normal)
-		phyLight[phyCnt].setShadowType("circle", 12, 0, -8)
-		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
-		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
-		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
-		phyFixture[phyCnt]:setRestitution(0.5)
+		local r = lightWorld.getBodyCount() % 2
+		if r == 0 then
+			-- add image
+			phyCnt = phyCnt + 1
+			phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 16)
+			phyLight[phyCnt].setNormalMap(cone_normal)
+			phyLight[phyCnt].setShadowType("circle", 12, 0, -8)
+			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+			phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
+			phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+			phyFixture[phyCnt]:setRestitution(0.5)
+		elseif r == 1 then
+			-- add image
+			phyCnt = phyCnt + 1
+			phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 0)
+			phyLight[phyCnt].setNormalMap(chest_normal)
+			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
+			phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 24)
+			phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
+			phyFixture[phyCnt]:setRestitution(0.5)
+		end
 	elseif k == "3" then
 		-- add image
+		local r = lightWorld.getBodyCount() % #material
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 0)
-		phyLight[phyCnt].setNormalMap(chest_normal)
+		phyLight[phyCnt] = lightWorld.newImage(ape, mx, my, 160, 128, 80, 64)
+		phyLight[phyCnt].setNormalMap(ape_normal)
+		if r == 3 then
+			phyLight[phyCnt].setGlowMap(ape_glow)
+		end
+		phyLight[phyCnt].setMaterial(material[r + 1])
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 24)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
+		phyLight[phyCnt].setShadowType("image", 0, -16, 0.0)
 	elseif k == "4" then
 		-- add glow image
 		local r = lightWorld.getBodyCount() % 5

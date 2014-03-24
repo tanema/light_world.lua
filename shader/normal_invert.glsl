@@ -25,7 +25,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 			}
 		}
 
-		vec3 normal = pixelColor.rgb;
+		vec3 normal = vec3(pixelColor.r, 1 - pixelColor.g, pixelColor.b);
 		float dist = distance(lightPosition, vec3(pixel_coords, normal.b));
 
 		if(dist < lightRange) {
