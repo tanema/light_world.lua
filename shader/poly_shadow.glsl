@@ -1,6 +1,6 @@
 #define PI 3.1415926535897932384626433832795
 
-extern vec2 lightPosition;
+extern vec3 lightPosition;
 extern vec3 lightColor;
 extern float lightRange;
 extern float lightSmooth;
@@ -10,7 +10,7 @@ extern float lightAngle;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
 	vec4 pixel = Texel(texture, texture_coords);
-	vec2 lightToPixel = pixel_coords - lightPosition;
+	vec3 lightToPixel = vec3(pixel_coords.x, pixel_coords.y, 0.0) - lightPosition;
 	float distance = length(lightToPixel);
 	float att = 1 - distance / lightRange;
 

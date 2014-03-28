@@ -87,7 +87,7 @@ function love.light.newWorld()
 					local lightposrange = {o.lights[i].x, love.graphics.getHeight() - o.lights[i].y, o.lights[i].range}
 					LOVE_LIGHT_CURRENT = o.lights[i]
 					LOVE_LIGHT_DIRECTION = LOVE_LIGHT_DIRECTION + 0.002
-					o.shader:send("lightPosition", {o.lights[i].x - LOVE_LIGHT_TRANSLATE_X, love.graphics.getHeight() - (o.lights[i].y - LOVE_LIGHT_TRANSLATE_Y)})
+					o.shader:send("lightPosition", {o.lights[i].x - LOVE_LIGHT_TRANSLATE_X, love.graphics.getHeight() - (o.lights[i].y - LOVE_LIGHT_TRANSLATE_Y), o.lights[i].z})
 					o.shader:send("lightRange", o.lights[i].range)
 					o.shader:send("lightColor", {o.lights[i].red / 255.0, o.lights[i].green / 255.0, o.lights[i].blue / 255.0})
 					o.shader:send("lightSmooth", o.lights[i].smooth)
@@ -315,9 +315,8 @@ function love.light.newWorld()
 				end
 			end
 		end
-
-		love.graphics.setBlendMode("replace")
-		love.graphics.setColor(0, 0, 0, 0)
+		
+		love.graphics.setColor(0, 0, 0)
 		for i = 1, #o.body do
 			if not o.body[i].refractive then
 				if o.body[i].type == "circle" then
@@ -333,7 +332,6 @@ function love.light.newWorld()
 		end
 
 		-- create reflection map
-		love.graphics.setBlendMode("alpha")
 		if o.changed then
 			o.reflectionMap:clear(0, 0, 0)
 			love.graphics.setCanvas(o.reflectionMap)
@@ -615,8 +613,8 @@ function love.light.newWorld()
 		end
 	end
 	-- set light position
-	o.setLightPosition = function(n, x, y)
-		o.lights[n].setPosition(x, y)
+	o.setLightPosition = function(n, x, y, z)
+		o.lights[n].setPosition(x, y, z)
 	end
 	-- set light x
 	o.setLightX = function(n, x)
@@ -675,10 +673,12 @@ function love.light.newLight(p, x, y, red, green, blue, range)
 	o.changed = true
 	o.visible = true
 	-- set position
-	o.setPosition = function(x, y)
-		if x ~= o.x or y ~= o.y then
+	o.setPosition = function(x, y, z)
+		o.z = z or o.z
+		if x ~= o.x or y ~= o.y or z ~= o.z then
 			o.x = x
 			o.y = y
+			o.z = z
 			o.changed = true
 		end
 	end

@@ -75,6 +75,7 @@ function love.load()
 	ape = love.graphics.newImage("gfx/ape.png")
 	ape_normal = love.graphics.newImage("gfx/ape_normal.png")
 	ape_glow = love.graphics.newImage("gfx/ape_glow.png")
+	imgLight = love.graphics.newImage("gfx/light.png")
 
 	-- materials
 	material = {}
@@ -110,6 +111,7 @@ function love.load()
 	textureOn = true
 	normalOn = false
 	glowBlur = 1.0
+	effectOn = 0.0
 
 	offsetX = 0.0
 	offsetY = 0.0
@@ -123,7 +125,7 @@ end
 
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
-	mouseLight.setPosition(love.mouse.getX(), love.mouse.getY())
+	mouseLight.setPosition(love.mouse.getX(), love.mouse.getY(), 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
 	mx = love.mouse.getX()
 	my = love.mouse.getY()
 	lightDirection = lightDirection + dt
@@ -282,20 +284,22 @@ function love.draw()
 
 	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
-		if phyLight[i].getType() == "image" and not phyLight[i].material then
-			if not normalOn then
+		if phyLight[i].getType() == "image" then
+			if normalOn and phyLight[i].normal then
+				love.graphics.setColor(255, 255, 255)
+				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
+			elseif not phyLight[i].material then
 				math.randomseed(i)
 				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
 				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
-			elseif phyLight[i].normal then
-				love.graphics.setColor(255, 255, 255)
-				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
 			end
 		end
 	end
 
-	lightWorld.drawMaterial()
-	
+	if not normalOn then
+		lightWorld.drawMaterial()
+	end
+
 	-- draw pixel shadow
 	if lightOn and not normalOn then
 		lightWorld.drawPixelShadow()
@@ -311,6 +315,8 @@ function love.draw()
 
 	-- draw refraction
 	lightWorld.drawRefraction()
+
+	love.graphics.draw(imgLight, mx - 5, (my - 5) - (16.0 + (math.sin(lightDirection) + 1.0) * 64.0))
 
 	-- draw help
 	if helpOn then
@@ -377,6 +383,13 @@ function love.draw()
 			love.graphics.setColor(255, 0, 0)
 			love.graphics.print("F9: Glow Blur (off)", 4 + 152 * 3, 4 + 20 * 1)
 		end
+		if effectOn >= 1.0 then
+			love.graphics.setColor(0, 255, 0)
+			love.graphics.print("F10: Effects (" .. effectOn .. ")", 4 + 152 * 4, 4 + 20 * 1)
+		else
+			love.graphics.setColor(255, 0, 0)
+			love.graphics.print("F10: Effects (off)", 4 + 152 * 4, 4 + 20 * 1)
+		end
 		love.graphics.setColor(255, 0, 255)
 		love.graphics.print("F11: Clear obj.", 4 + 152 * 4, 4 + 20 * 2)
 		love.graphics.print("F12: Clear lights", 4 + 152 * 4, 4 + 20 * 3)
@@ -407,6 +420,17 @@ function love.draw()
 		love.postshader.addEffect("bloom", 2.0, bloomOn)
 	end
 
+	if effectOn == 1.0 then
+		love.postshader.addEffect("4colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
+		--love.postshader.addEffect("4colors", {108, 108, 78}, {142, 139, 87}, {195, 196, 165}, {227, 230, 201})
+	elseif effectOn == 2.0 then
+		love.postshader.addEffect("monochrom")
+	elseif effectOn == 3.0 then
+		love.postshader.addEffect("scanlines")
+	elseif effectOn == 4.0 then
+		love.postshader.addEffect("tiltshift", 4.0)
+	end
+
 	love.postshader.draw()
 end
 
@@ -427,6 +451,7 @@ function love.mousepressed(x, y, c)
 		light.setGlowStrength(0.3)
 	elseif c == "l" then
 		-- add rectangle
+		math.randomseed(love.timer.getTime())
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newPolygon()
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, x, y, "dynamic")
@@ -435,6 +460,7 @@ function love.mousepressed(x, y, c)
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif c == "r" then
 		-- add circle
+		math.randomseed(love.timer.getTime())
 		cRadius = math.random(8, 32)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld.newCircle(x, y, cRadius)
@@ -487,6 +513,11 @@ function love.keypressed(k, u)
 			glowBlur = 0.0
 		end
 		lightWorld.setGlowStrength(glowBlur)
+	elseif k == "f10" then
+		effectOn = effectOn + 1.0
+		if effectOn > 4.0 then
+			effectOn = 0.0
+		end
 	elseif k == "f11" then
 		physicWorld:destroy()
 		lightWorld.clearBodys()
