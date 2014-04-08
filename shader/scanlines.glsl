@@ -1,22 +1,24 @@
 extern vec2 screenHeight = vec2(800.0, 600.0);
+extern float strength = 2.0;
 extern float time = 0.0;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
 	vec2 pSize = 1.0 / screenHeight;
 	float brightness = 1.0;
-	float offsetX = sin(texture_coords.y * 10.0 + time * 2.0) * pSize.x;
+	float offsetX = sin(texture_coords.y * 10.0 + time * strength) * pSize.x;
+	float corner = 500.0;
 
 	if(texture_coords.x < 0.5) {
 		if(texture_coords.y < 0.5) {
-			brightness = min(texture_coords.x * texture_coords.y * 100.0, 1.0);
+			brightness = min(texture_coords.x * texture_coords.y * corner, 1.0);
 		} else {
-			brightness = min(texture_coords.x * (1.0 - texture_coords.y) * 100.0, 1.0);
+			brightness = min(texture_coords.x * (1.0 - texture_coords.y) * corner, 1.0);
 		}
 	} else {
 		if(texture_coords.y < 0.5) {
-			brightness = min((1.0 - texture_coords.x) * texture_coords.y * 100.0, 1.0);
+			brightness = min((1.0 - texture_coords.x) * texture_coords.y * corner, 1.0);
 		} else {
-			brightness = min((1.0 - texture_coords.x) * (1.0 - texture_coords.y) * 100.0, 1.0);
+			brightness = min((1.0 - texture_coords.x) * (1.0 - texture_coords.y) * corner, 1.0);
 		}
 	}
 	float red = Texel(texture, vec2(texture_coords.x + offsetX, texture_coords.y + pSize.y * 0.5)).r;

@@ -1,5 +1,6 @@
-require "postshader"
-require "light"
+-- Example: Short Example
+require "lib/postshader"
+require "lib/light"
 
 function love.load()
 	-- load images
