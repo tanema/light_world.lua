@@ -224,7 +224,7 @@ function love.light.newWorld()
 			love.graphics.setCanvas(o.shine)
 			love.graphics.setColor(unpack(o.ambient))
 			love.graphics.setBlendMode("alpha")
-			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+			love.graphics.rectangle("fill", LOVE_LIGHT_TRANSLATE_X, LOVE_LIGHT_TRANSLATE_Y, love.graphics.getWidth(), love.graphics.getHeight())
 			love.graphics.setColor(255, 255, 255)
 			love.graphics.setBlendMode("additive")
 			for i = 1, #o.lights do
