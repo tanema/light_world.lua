@@ -290,7 +290,6 @@ function light_world:update()
     love.graphics.setBlendMode("alpha")
   end
 
-  print(self.optionGlow, self.isGlow)
   if self.optionGlow and self.isGlow then
     -- create glow map
     self.glowMap:clear(0, 0, 0)
