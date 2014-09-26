@@ -1,26 +1,28 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 
-local light = class(function(l, world, x, y, r, g, b, range)
-  l.world = world
-	l.direction = 0
-	l.angle = math.pi * 2.0
-	l.range = 0
-	l.shadow = love.graphics.newCanvas()
-	l.shine = love.graphics.newCanvas()
-	l.x = x or 0
-	l.y = y or 0
-	l.z = 15
-	l.red = r or 255
-	l.green = g or 255
-	l.blue = b or 255
-	l.range = range or 300
-	l.smooth = 1.0
-	l.glowSize = 0.1
-	l.glowStrength = 0.0
-	l.changed = true
-	l.visible = true
-end)
+local light = class()
+
+function light:init(world, x, y, r, g, b, range)
+  self.world = world
+	self.direction = 0
+	self.angle = math.pi * 2.0
+	self.range = 0
+	self.shadow = love.graphics.newCanvas()
+	self.shine = love.graphics.newCanvas()
+	self.x = x or 0
+	self.y = y or 0
+	self.z = 15
+	self.red = r or 255
+	self.green = g or 255
+	self.blue = b or 255
+	self.range = range or 300
+	self.smooth = 1.0
+	self.glowSize = 0.1
+	self.glowStrength = 0.0
+	self.changed = true
+	self.visible = true
+end
 
 -- set position
 function light:setPosition(x, y, z)

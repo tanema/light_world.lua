@@ -28,70 +28,72 @@ local vector = require(_PACKAGE..'/vector')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
 
-local light_world = class(function(o)
-  o.translate_x = 0
-  o.translate_y = 0
-  o.translate_x_old = 0
-  o.translate_y_old = 0
-  o.direction = 0
+local light_world = class()
 
-  o.last_buffer = nil
+function light_world:init()
+  self.translate_x = 0
+  self.translate_y = 0
+  self.translate_x_old = 0
+  self.translate_y_old = 0
+  self.direction = 0
 
-	o.lights = {}
-	o.ambient = {0, 0, 0}
-	o.body = {}
-	o.refraction = {}
-	o.shadow = love.graphics.newCanvas()
-	o.shadow2 = love.graphics.newCanvas()
-	o.shine = love.graphics.newCanvas()
-	o.shine2 = love.graphics.newCanvas()
-	o.normalMap = love.graphics.newCanvas()
-	o.glowMap = love.graphics.newCanvas()
-	o.glowMap2 = love.graphics.newCanvas()
-	o.refractionMap = love.graphics.newCanvas()
-	o.refractionMap2 = love.graphics.newCanvas()
-	o.reflectionMap = love.graphics.newCanvas()
-	o.reflectionMap2 = love.graphics.newCanvas()
-	o.normalInvert = false
-	o.glowBlur = 1.0
-	o.glowTimer = 0.0
-	o.glowDown = false
-	o.refractionStrength = 8.0
+  self.last_buffer = nil
 
-	o.pixelShadow = love.graphics.newCanvas()
-	o.pixelShadow2 = love.graphics.newCanvas()
+	self.lights = {}
+	self.ambient = {0, 0, 0}
+	self.body = {}
+	self.refraction = {}
+	self.shadow = love.graphics.newCanvas()
+	self.shadow2 = love.graphics.newCanvas()
+	self.shine = love.graphics.newCanvas()
+	self.shine2 = love.graphics.newCanvas()
+	self.normalMap = love.graphics.newCanvas()
+	self.glowMap = love.graphics.newCanvas()
+	self.glowMap2 = love.graphics.newCanvas()
+	self.refractionMap = love.graphics.newCanvas()
+	self.refractionMap2 = love.graphics.newCanvas()
+	self.reflectionMap = love.graphics.newCanvas()
+	self.reflectionMap2 = love.graphics.newCanvas()
+	self.normalInvert = false
+	self.glowBlur = 1.0
+	self.glowTimer = 0.0
+	self.glowDown = false
+	self.refractionStrength = 8.0
 
-  o.blurv = love.graphics.newShader("shader/blurv.glsl")
-  o.blurh = love.graphics.newShader("shader/blurh.glsl")
-  o.blurv:send("screen", {love.window.getWidth(), love.window.getHeight()})
-  o.blurh:send("screen", {love.window.getWidth(), love.window.getHeight()})
+	self.pixelShadow = love.graphics.newCanvas()
+	self.pixelShadow2 = love.graphics.newCanvas()
 
-	o.shader = love.graphics.newShader("shader/poly_shadow.glsl")
-	o.glowShader = love.graphics.newShader("shader/glow.glsl")
-	o.normalShader = love.graphics.newShader("shader/normal.glsl")
-	o.normalInvertShader = love.graphics.newShader("shader/normal_invert.glsl")
-	o.materialShader = love.graphics.newShader("shader/material.glsl")
-	o.refractionShader = love.graphics.newShader("shader/refraction.glsl")
-	o.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
-	o.reflectionShader = love.graphics.newShader("shader/reflection.glsl")
-	o.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+  self.blurv = love.graphics.newShader("shader/blurv.glsl")
+  self.blurh = love.graphics.newShader("shader/blurh.glsl")
+  self.blurv:send("screen", {love.window.getWidth(), love.window.getHeight()})
+  self.blurh:send("screen", {love.window.getWidth(), love.window.getHeight()})
 
-	o.reflectionStrength = 16.0
-	o.reflectionVisibility = 1.0
-	o.changed = true
-	o.blur = 2.0
-	o.optionShadows = true
-	o.optionPixelShadows = true
-	o.optionGlow = true
-	o.optionRefraction = true
-	o.optionReflection = true
-	o.isShadows = false
-	o.isLight = false
-	o.isPixelShadows = false
-	o.isGlow = false
-	o.isRefraction = false
-	o.isReflection = false
-end)
+	self.shader = love.graphics.newShader("shader/poly_shadow.glsl")
+	self.glowShader = love.graphics.newShader("shader/glow.glsl")
+	self.normalShader = love.graphics.newShader("shader/normal.glsl")
+	self.normalInvertShader = love.graphics.newShader("shader/normal_invert.glsl")
+	self.materialShader = love.graphics.newShader("shader/material.glsl")
+	self.refractionShader = love.graphics.newShader("shader/refraction.glsl")
+	self.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+	self.reflectionShader = love.graphics.newShader("shader/reflection.glsl")
+	self.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+
+	self.reflectionStrength = 16.0
+	self.reflectionVisibility = 1.0
+	self.changed = true
+	self.blur = 2.0
+	self.optionShadows = true
+	self.optionPixelShadows = true
+	self.optionGlow = true
+	self.optionRefraction = true
+	self.optionReflection = true
+	self.isShadows = false
+	self.isLight = false
+	self.isPixelShadows = false
+	self.isGlow = false
+	self.isRefraction = false
+	self.isReflection = false
+end
 
 -- update
 function light_world:update()

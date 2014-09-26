@@ -22,13 +22,14 @@ function love.load()
 	-- create shadow bodys
 	circleTest = lightWorld:newCircle(256, 256, 16)
 	rectangleTest = lightWorld:newRectangle(512, 512, 64, 64)
+
 	imageTest = lightWorld:newImage(image, 64, 64, 24, 6)
 	imageTest:setNormalMap(image_normal)
 	imageTest:setGlowMap(glow)
 	imageTest:setOffset(12, -10)
 
 	-- create body object
-	objectTest = lightWorld:newBody("refraction", normal, 64, 64, 128, 128)
+	objectTest = lightWorld:newRefraction(normal, 64, 64, 128, 128)
 	--objectTest:setShine(false)
 	--objectTest:setShadowType("rectangle")
 	--objectTest:setShadowDimension(64, 64)

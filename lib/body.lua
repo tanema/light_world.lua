@@ -1,170 +1,172 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 
-local body = class(function(o, world, id, type, ...)
+local body = class()
+
+function body:init(world, id, type, ...)
 	local args = {...}
-	o.id = id
-	o.type = type
-	o.normal = nil
-	o.material = nil
-	o.glow = nil
-  o.world = world
-	if o.type == "circle" then
-		o.x = args[1] or 0
-		o.y = args[2] or 0
-		o.radius = args[3] or 16
-		o.ox = args[4] or 0
-		o.oy = args[5] or 0
-		o.shadowType = "circle"
-		o.reflection = false
-		o.reflective = false
-		o.refraction = false
-		o.refractive = false
+	self.id = id
+	self.type = type
+	self.normal = nil
+	self.material = nil
+	self.glow = nil
+  self.world = world
+	if self.type == "circle" then
+		self.x = args[1] or 0
+		self.y = args[2] or 0
+		self.radius = args[3] or 16
+		self.ox = args[4] or 0
+		self.oy = args[5] or 0
+		self.shadowType = "circle"
+		self.reflection = false
+		self.reflective = false
+		self.refraction = false
+		self.refractive = false
 		world.isShadows = true
-	elseif o.type == "rectangle" then
-		o.x = args[1] or 0
-		o.y = args[2] or 0
-		o.width = args[3] or 64
-		o.height = args[4] or 64
-		o.ox = o.width * 0.5
-		o.oy = o.height * 0.5
-		o.shadowType = "rectangle"
-		o.data = {
-			o.x - o.ox,
-			o.y - o.oy,
-			o.x - o.ox + o.width,
-			o.y - o.oy,
-			o.x - o.ox + o.width,
-			o.y - o.oy + o.height,
-			o.x - o.ox,
-			o.y - o.oy + o.height
+	elseif self.type == "rectangle" then
+		self.x = args[1] or 0
+		self.y = args[2] or 0
+		self.width = args[3] or 64
+		self.height = args[4] or 64
+		self.ox = self.width * 0.5
+		self.oy = self.height * 0.5
+		self.shadowType = "rectangle"
+		self.data = {
+			self.x - self.ox,
+			self.y - self.oy,
+			self.x - self.ox + self.width,
+			self.y - self.oy,
+			self.x - self.ox + self.width,
+			self.y - self.oy + self.height,
+			self.x - self.ox,
+			self.y - self.oy + self.height
 		}
-		o.reflection = false
-		o.reflective = false
-		o.refraction = false
-		o.refractive = false
+		self.reflection = false
+		self.reflective = false
+		self.refraction = false
+		self.refractive = false
 		world.isShadows = true
-	elseif o.type == "polygon" then
-		o.shadowType = "polygon"
-		o.data = args or {0, 0, 0, 0, 0, 0}
-		o.reflection = false
-		o.reflective = false
-		o.refraction = false
-		o.refractive = false
+	elseif self.type == "polygon" then
+		self.shadowType = "polygon"
+		self.data = args or {0, 0, 0, 0, 0, 0}
+		self.reflection = false
+		self.reflective = false
+		self.refraction = false
+		self.refractive = false
 		world.isShadows = true
-	elseif o.type == "image" then
-		o.img = args[1]
-		o.x = args[2] or 0
-		o.y = args[3] or 0
-		if o.img then
-			o.imgWidth = o.img:getWidth()
-			o.imgHeight = o.img:getHeight()
-			o.width = args[4] or o.imgWidth
-			o.height = args[5] or o.imgHeight
-			o.ix = o.imgWidth * 0.5
-			o.iy = o.imgHeight * 0.5
-			o.vert = {
+	elseif self.type == "image" then
+		self.img = args[1]
+		self.x = args[2] or 0
+		self.y = args[3] or 0
+		if self.img then
+			self.imgWidth = self.img:getWidth()
+			self.imgHeight = self.img:getHeight()
+			self.width = args[4] or self.imgWidth
+			self.height = args[5] or self.imgHeight
+			self.ix = self.imgWidth * 0.5
+			self.iy = self.imgHeight * 0.5
+			self.vert = {
 				{ 0.0, 0.0, 0.0, 0.0 },
-				{ o.width, 0.0, 1.0, 0.0 },
-				{ o.width, o.height, 1.0, 1.0 },
-				{ 0.0, o.height, 0.0, 1.0 },
+				{ self.width, 0.0, 1.0, 0.0 },
+				{ self.width, self.height, 1.0, 1.0 },
+				{ 0.0, self.height, 0.0, 1.0 },
 			}
-			o.msh = love.graphics.newMesh(o.vert, o.img, "fan")
+			self.msh = love.graphics.newMesh(self.vert, self.img, "fan")
 		else
-			o.width = args[4] or 64
-			o.height = args[5] or 64
+			self.width = args[4] or 64
+			self.height = args[5] or 64
 		end
-		o.ox = args[6] or o.width * 0.5
-		o.oy = args[7] or o.height * 0.5
-		o.shadowType = "rectangle"
-		o.data = {
-			o.x - o.ox,
-			o.y - o.oy,
-			o.x - o.ox + o.width,
-			o.y - o.oy,
-			o.x - o.ox + o.width,
-			o.y - o.oy + o.height,
-			o.x - o.ox,
-			o.y - o.oy + o.height
+		self.ox = args[6] or self.width * 0.5
+		self.oy = args[7] or self.height * 0.5
+		self.shadowType = "rectangle"
+		self.data = {
+			self.x - self.ox,
+			self.y - self.oy,
+			self.x - self.ox + self.width,
+			self.y - self.oy,
+			self.x - self.ox + self.width,
+			self.y - self.oy + self.height,
+			self.x - self.ox,
+			self.y - self.oy + self.height
 		}
-		o.reflection = false
-		o.reflective = true
-		o.refraction = false
-		o.refractive = false
+		self.reflection = false
+		self.reflective = true
+		self.refraction = false
+		self.refractive = false
 		world.isShadows = true
-	elseif o.type == "refraction" then
-		o.normal = args[1]
-		o.x = args[2] or 0
-		o.y = args[3] or 0
-		if o.normal then
-			o.normalWidth = o.normal:getWidth()
-			o.normalHeight = o.normal:getHeight()
-			o.width = args[4] or o.normalWidth
-			o.height = args[5] or o.normalHeight
-			o.nx = o.normalWidth * 0.5
-			o.ny = o.normalHeight * 0.5
-			o.normal:setWrap("repeat", "repeat")
-			o.normalVert = {
+	elseif self.type == "refraction" then
+		self.normal = args[1]
+		self.x = args[2] or 0
+		self.y = args[3] or 0
+		if self.normal then
+			self.normalWidth = self.normal:getWidth()
+			self.normalHeight = self.normal:getHeight()
+			self.width = args[4] or self.normalWidth
+			self.height = args[5] or self.normalHeight
+			self.nx = self.normalWidth * 0.5
+			self.ny = self.normalHeight * 0.5
+			self.normal:setWrap("repeat", "repeat")
+			self.normalVert = {
 				{0.0, 0.0, 0.0, 0.0},
-				{o.width, 0.0, 1.0, 0.0},
-				{o.width, o.height, 1.0, 1.0},
-				{0.0, o.height, 0.0, 1.0}
+				{self.width, 0.0, 1.0, 0.0},
+				{self.width, self.height, 1.0, 1.0},
+				{0.0, self.height, 0.0, 1.0}
 			}
-			o.normalMesh = love.graphics.newMesh(o.normalVert, o.normal, "fan")
+			self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
 		else
-			o.width = args[4] or 64
-			o.height = args[5] or 64
+			self.width = args[4] or 64
+			self.height = args[5] or 64
 		end
-		o.ox = o.width * 0.5
-		o.oy = o.height * 0.5
-		o.reflection = false
-		o.reflective = false
-		o.refraction = true
-		o.refractive = false
+		self.ox = self.width * 0.5
+		self.oy = self.height * 0.5
+		self.reflection = false
+		self.reflective = false
+		self.refraction = true
+		self.refractive = false
 		world.isRefraction = true
-	elseif o.type == "reflection" then
-		o.normal = args[1]
-		o.x = args[2] or 0
-		o.y = args[3] or 0
-		if o.normal then
-			o.normalWidth = o.normal:getWidth()
-			o.normalHeight = o.normal:getHeight()
-			o.width = args[4] or o.normalWidth
-			o.height = args[5] or o.normalHeight
-			o.nx = o.normalWidth * 0.5
-			o.ny = o.normalHeight * 0.5
-			o.normal:setWrap("repeat", "repeat")
-			o.normalVert = {
+	elseif self.type == "reflection" then
+		self.normal = args[1]
+		self.x = args[2] or 0
+		self.y = args[3] or 0
+		if self.normal then
+			self.normalWidth = self.normal:getWidth()
+			self.normalHeight = self.normal:getHeight()
+			self.width = args[4] or self.normalWidth
+			self.height = args[5] or self.normalHeight
+			self.nx = self.normalWidth * 0.5
+			self.ny = self.normalHeight * 0.5
+			self.normal:setWrap("repeat", "repeat")
+			self.normalVert = {
 				{0.0, 0.0, 0.0, 0.0},
-				{o.width, 0.0, 1.0, 0.0},
-				{o.width, o.height, 1.0, 1.0},
-				{0.0, o.height, 0.0, 1.0}
+				{self.width, 0.0, 1.0, 0.0},
+				{self.width, self.height, 1.0, 1.0},
+				{0.0, self.height, 0.0, 1.0}
 			}
-			o.normalMesh = love.graphics.newMesh(o.normalVert, o.normal, "fan")
+			self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
 		else
-			o.width = args[4] or 64
-			o.height = args[5] or 64
+			self.width = args[4] or 64
+			self.height = args[5] or 64
 		end
-		o.ox = o.width * 0.5
-		o.oy = o.height * 0.5
-		o.reflection = true
-		o.reflective = false
-		o.refraction = false
-		o.refractive = false
+		self.ox = self.width * 0.5
+		self.oy = self.height * 0.5
+		self.reflection = true
+		self.reflective = false
+		self.refraction = false
+		self.refractive = false
 		world.isReflection = true
 	end
-	o.shine = true
-	o.red = 0
-	o.green = 0
-	o.blue = 0
-	o.alpha = 1.0
-	o.glowRed = 255
-	o.glowGreen = 255
-	o.glowBlue = 255
-	o.glowStrength = 0.0
-	o.tileX = 0
-	o.tileY = 0
-end)
+	self.shine = true
+	self.red = 0
+	self.green = 0
+	self.blue = 0
+	self.alpha = 1.0
+	self.glowRed = 255
+	self.glowGreen = 255
+	self.glowBlue = 255
+	self.glowStrength = 0.0
+	self.tileX = 0
+	self.tileY = 0
+end
 
 -- refresh
 function body:refresh()
@@ -295,11 +297,6 @@ end
 -- get polygon data
 function body:getPoints()
   return unpack(self.data)
-end
--- set shadow on/off
-function body:setShadowType(type)
-  self.shadowType = type
-  self.world.changed = true
 end
 -- set shadow on/off
 function body:setShadow(b)

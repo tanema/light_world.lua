@@ -21,8 +21,8 @@ local class = function(base, init)
    mt.__call = function(class_tbl, ...)
    local obj = {}
    setmetatable(obj,c)
-   if init then
-      init(obj,...)
+   if class_tbl.init then
+      class_tbl.init(obj,...)
    else 
       -- make sure that any stuff from the base class is initialized!
       if base and base.init then
