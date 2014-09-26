@@ -523,4 +523,119 @@ function body:setShadowType(type, ...)
   end
 end
 
+function body:drawShadow(light)
+  if self.alpha < 1.0 then
+    love.graphics.setBlendMode("multiplicative")
+    love.graphics.setColor(self.red, self.green, self.blue)
+    if self.shadowType == "circle" then
+      love.graphics.circle("fill", self.x - self.ox, self.y - self.oy, self.radius)
+    elseif self.shadowType == "rectangle" then
+      love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
+    elseif self.shadowType == "polygon" then
+      love.graphics.polygon("fill", unpack(self.data))
+    end
+  end
+
+  if self.shadowType == "image" and self.img then
+    love.graphics.setBlendMode("alpha")
+    local length = 1.0
+    local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
+
+    self.shadowVert = {
+      {math.sin(shadowRotation) * self.imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 0, 0, self.red, self.green, self.blue, self.alpha * self.fadeStrength * 255},
+      {self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 1, 0, self.red, self.green, self.blue, self.alpha * self.fadeStrength * 255},
+      {self.imgWidth, self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 1, 1, self.red, self.green, self.blue, self.alpha * 255},
+      {0, self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 0, 1, self.red, self.green, self.blue, self.alpha * 255}
+    }
+
+    self.shadowMesh:setVertices(self.shadowVert)
+    love.graphics.draw(self.shadowMesh, self.x - self.ox + self.world.translate_x, self.y - self.oy + self.world.translate_y)
+  end
+end
+
+
+function body:drawPixelShadow()
+  if self.type == "image" and self.normalMesh then
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+  end
+end
+
+
+function body:drawGlow()
+  if self.glowStrength > 0.0 then
+    love.graphics.setColor(self.glowRed * self.glowStrength, self.glowGreen * self.glowStrength, self.glowBlue * self.glowStrength)
+  else
+    love.graphics.setColor(0, 0, 0)
+  end
+
+  if self.type == "circle" then
+    love.graphics.circle("fill", self.x, self.y, self.radius)
+  elseif self.type == "rectangle" then
+    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+  elseif self.type == "polygon" then
+    love.graphics.polygon("fill", unpack(self.data))
+  elseif self.type == "image" and self.img then
+    if self.glowStrength > 0.0 and self.glow then
+      love.graphics.setShader(self.world.glowShader)
+      self.world.glowShader:send("glowImage", self.glow)
+      self.world.glowShader:send("glowTime", love.timer.getTime() * 0.5)
+      love.graphics.setColor(255, 255, 255)
+    else
+      love.graphics.setShader()
+      love.graphics.setColor(0, 0, 0)
+    end
+    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+  end
+end
+
+function body:drawRefraction()
+  if self.refraction and self.normal then
+    love.graphics.setColor(255, 255, 255)
+    if self.tileX == 0.0 and self.tileY == 0.0 then
+      love.graphics.draw(normal, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    else
+      self.normalMesh:setVertices(self.normalVert)
+      love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    end
+  end
+
+  love.graphics.setColor(0, 0, 0)
+
+  if not self.refractive then
+    if self.type == "circle" then
+      love.graphics.circle("fill", self.x, self.y, self.radius)
+    elseif self.type == "rectangle" then
+      love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+    elseif self.type == "polygon" then
+      love.graphics.polygon("fill", unpack(self.data))
+    elseif self.type == "image" and self.img then
+      love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+    end
+  end
+end
+
+function body:drawReflection()
+  if self.reflection and self.normal then
+    love.graphics.setColor(255, 0, 0)
+    self.normalMesh:setVertices(self.normalVert)
+    love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+  end
+  if self.reflective and self.img then
+    love.graphics.setColor(0, 255, 0)
+    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+  elseif not self.reflection and self.img then
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+  end
+end
+
+function body:drawMaterial()
+  if self.material and self.normal then
+    love.graphics.setColor(255, 255, 255)
+    self.world.materialShader:send("material", self.material)
+    love.graphics.draw(self.normal, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+  end
+end
+
 return body
