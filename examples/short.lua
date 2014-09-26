@@ -1,6 +1,6 @@
 -- Example: Short Example
 require "lib/postshader"
-require "lib/light"
+require "lib/light_world"
 
 function love.load()
 	-- load images
@@ -16,23 +16,23 @@ function love.load()
 
 	-- create light
 	lightMouse = lightWorld.newLight(0, 0, 255, 127, 63, 300)
-	lightMouse.setGlowStrength(0.3)
-	--lightMouse.setSmooth(0.01)
+	lightMouse:setGlowStrength(0.3)
+	--lightMouse:setSmooth(0.01)
 
 	-- create shadow bodys
 	circleTest = lightWorld.newCircle(256, 256, 16)
 	rectangleTest = lightWorld.newRectangle(512, 512, 64, 64)
 	imageTest = lightWorld.newImage(image, 64, 64, 24, 6)
-	imageTest.setNormalMap(image_normal)
-	imageTest.setGlowMap(glow)
-	imageTest.setOffset(12, -10)
+	imageTest:setNormalMap(image_normal)
+	imageTest:setGlowMap(glow)
+	imageTest:setOffset(12, -10)
 
 	-- create body object
 	objectTest = lightWorld.newBody("refraction", normal, 64, 64, 128, 128)
-	--objectTest.setShine(false)
-	--objectTest.setShadowType("rectangle")
-	--objectTest.setShadowDimension(64, 64)
-	objectTest.setReflection(true)
+	--objectTest:setShine(false)
+	--objectTest:setShadowType("rectangle")
+	--objectTest:setShadowDimension(64, 64)
+	objectTest:setReflection(true)
 
 	-- set background
 	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth(), love.window.getHeight(), 32, 24)
@@ -42,7 +42,7 @@ end
 
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
-	lightMouse.setPosition(love.mouse.getX(), love.mouse.getY())
+	lightMouse:setPosition(love.mouse.getX(), love.mouse.getY())
 end
 
 function love.draw()
@@ -61,8 +61,8 @@ function love.draw()
 
 	-- draw scene objects
 	love.graphics.setColor(63, 255, 127)
-	love.graphics.circle("fill", circleTest.getX(), circleTest.getY(), circleTest.getRadius())
-	love.graphics.polygon("fill", rectangleTest.getPoints())
+	love.graphics.circle("fill", circleTest:getX(), circleTest:getY(), circleTest:getRadius())
+	love.graphics.polygon("fill", rectangleTest:getPoints())
 	love.graphics.setColor(255, 255, 255)
 	love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
 

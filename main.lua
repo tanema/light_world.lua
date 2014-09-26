@@ -7,7 +7,7 @@
 -- Updated by Dresenpai
 
 require "lib/postshader"
-require "lib/light"
+require "lib/light_world"
 
 exf = {}
 exf.current = nil
@@ -53,8 +53,8 @@ function love.mousereleased(x, y, b) end
 function exf.empty() end
 
 function exf.update(dt)
-    exf.list:update(dt)
-	lightMouse.setPosition(love.mouse.getX(), love.mouse.getY())
+  exf.list:update(dt)
+	lightMouse:setPosition(love.mouse.getX(), love.mouse.getY())
 end
 
 function exf.draw()
@@ -184,7 +184,7 @@ function exf.resume()
 
 	-- create light
 	lightMouse = lightWorld.newLight(0, 0, 255, 127, 63, 500)
-	lightMouse.setSmooth(2)
+	lightMouse:setSmooth(2)
 
 	-- create shadow bodys
 	circleTest = lightWorld.newCircle(800 - 128, 600 - 128, 46)
