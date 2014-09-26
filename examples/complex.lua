@@ -1,6 +1,6 @@
 -- Example: Complex Example
 require "lib/postshader"
-require "lib/light_world"
+local LightWorld = require "lib/light_world"
 
 function initScene()
 	-- physic world
@@ -89,11 +89,11 @@ function love.load()
 	-- light world
 	lightRange = 400
 	lightSmooth = 1.0
-	lightWorld = love.light.newWorld()
-	lightWorld.setAmbientColor(15, 15, 31)
-	lightWorld.setRefractionStrength(16.0)
-	lightWorld.setReflectionVisibility(0.75)
-	mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
+	lightWorld = LightWorld()
+	lightWorld:setAmbientColor(15, 15, 31)
+	lightWorld:setRefractionStrength(16.0)
+	lightWorld:setReflectionVisibility(0.75)
+	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
 	mouseLight:setGlowStrength(0.3)
 	mouseLight:setSmooth(lightSmooth)
 	mouseLight.z = 63
@@ -174,15 +174,15 @@ function love.update(dt)
 
 	if offsetX ~= offsetOldX or offsetY ~= offsetOldY then
 		offsetChanged = true
-		for i = 2, lightWorld.getLightCount() do
-			lightWorld.setLightPosition(i, lightWorld.getLightX(i) + (offsetX - offsetOldX), lightWorld.getLightY(i) + (offsetY - offsetOldY))
+		for i = 2, lightWorld:getLightCount() do
+			lightWorld:setLightPosition(i, lightWorld:getLightX(i) + (offsetX - offsetOldX), lightWorld:getLightY(i) + (offsetY - offsetOldY))
 		end
 	else
 		offsetChanged = false
 	end
 
-    for i = 1, lightWorld.getLightCount() do
-		lightWorld.setLightDirection(i, lightDirection)
+    for i = 1, lightWorld:getLightCount() do
+		lightWorld:setLightDirection(i, lightDirection)
     end
 
 	tileX = tileX + dt * 32.0
@@ -225,7 +225,7 @@ end
 function love.draw()
 	-- update lightmap (don't need deltatime)
 	if lightOn then
-		lightWorld.update()
+		lightWorld:update()
 	end
 
 	-- set shader buffer
@@ -265,7 +265,7 @@ function love.draw()
 
 	-- draw lightmap shadows
 	if lightOn and not normalOn then
-		lightWorld.drawShadow()
+		lightWorld:drawShadow()
 	end
 
 	for i = 1, phyCnt do
@@ -280,7 +280,7 @@ function love.draw()
 
 	-- draw lightmap shine
 	if lightOn and not normalOn then
-		lightWorld.drawShine()
+		lightWorld:drawShine()
 	end
 
 	love.graphics.setBlendMode("alpha")
@@ -298,24 +298,24 @@ function love.draw()
 	end
 
 	if not normalOn then
-		lightWorld.drawMaterial()
+		lightWorld:drawMaterial()
 	end
 
 	-- draw pixel shadow
 	if lightOn and not normalOn then
-		lightWorld.drawPixelShadow()
+		lightWorld:drawPixelShadow()
 	end
 
 	-- draw glow
 	if lightOn and not normalOn then
-		lightWorld.drawGlow()
+		lightWorld:drawGlow()
 	end
 
 	-- draw reflection
-	lightWorld.drawReflection()
+	lightWorld:drawReflection()
 
 	-- draw refraction
-	lightWorld.drawRefraction()
+	lightWorld:drawRefraction()
 
 	love.graphics.draw(imgLight, mx - 5, (my - 5) - (16.0 + (math.sin(lightDirection) + 1.0) * 64.0))
 
@@ -438,15 +438,15 @@ end
 function love.mousepressed(x, y, c)
 	if c == "m" then
 		-- add light
-		local r = lightWorld.getLightCount() % 3
+		local r = lightWorld:getLightCount() % 3
 		local light
 
 		if r == 0 then
-			light = lightWorld.newLight(x, y, 31, 127, 63, lightRange)
+			light = lightWorld:newLight(x, y, 31, 127, 63, lightRange)
 		elseif r == 1 then
-			light = lightWorld.newLight(x, y, 127, 63, 31, lightRange)
+			light = lightWorld:newLight(x, y, 127, 63, 31, lightRange)
 		else
-			light = lightWorld.newLight(x, y, 31, 63, 127, lightRange)
+			light = lightWorld:newLight(x, y, 31, 63, 127, lightRange)
 		end
 		light:setSmooth(lightSmooth)
 		light:setGlowStrength(0.3)
@@ -454,7 +454,7 @@ function love.mousepressed(x, y, c)
 		-- add rectangle
 		math.randomseed(love.timer.getTime())
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newPolygon()
+		phyLight[phyCnt] = lightWorld:newPolygon()
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, x, y, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -464,7 +464,7 @@ function love.mousepressed(x, y, c)
 		math.randomseed(love.timer.getTime())
 		cRadius = math.random(8, 32)
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newCircle(x, y, cRadius)
+		phyLight[phyCnt] = lightWorld:newCircle(x, y, cRadius)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, x, y, "dynamic")
 		phyShape[phyCnt] = love.physics.newCircleShape(0, 0, cRadius)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
@@ -498,7 +498,7 @@ function love.keypressed(k, u)
 		if shadowBlur > 8.0 then
 			shadowBlur = 0.0
 		end
-		lightWorld.setBlur(shadowBlur)
+		lightWorld:setBlur(shadowBlur)
 	elseif k == "f6" or k == "b" then
 		bloomOn = math.max(0.25, bloomOn * 2.0)
 		if bloomOn > 1.0 then
@@ -513,7 +513,7 @@ function love.keypressed(k, u)
 		if glowBlur > 8.0 then
 			glowBlur = 0.0
 		end
-		lightWorld.setGlowStrength(glowBlur)
+		lightWorld:setGlowStrength(glowBlur)
 	elseif k == "f10" then
 		effectOn = effectOn + 1.0
 		if effectOn > 4.0 then
@@ -521,17 +521,17 @@ function love.keypressed(k, u)
 		end
 	elseif k == "f11" then
 		physicWorld:destroy()
-		lightWorld.clearBodys()
+		lightWorld:clearBodys()
 		initScene()
 	elseif k == "f12" then
-		lightWorld.clearLights()
-		mouseLight = lightWorld.newLight(0, 0, 255, 191, 127, lightRange)
+		lightWorld:clearLights()
+		mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
 		mouseLight:setGlowStrength(0.3)
 		mouseLight:setSmooth(lightSmooth)
 	elseif k == "1" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(circle, mx, my)
+		phyLight[phyCnt] = lightWorld:newImage(circle, mx, my)
 		phyLight[phyCnt]:setNormalMap(circle_normal)
 		phyLight[phyCnt]:setShadowType("circle", 16)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -539,11 +539,11 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "2" then
-		local r = lightWorld.getBodyCount() % 2
+		local r = lightWorld:getBodyCount() % 2
 		if r == 0 then
 			-- add image
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(cone, mx, my, 24, 12, 12, 16)
+			phyLight[phyCnt] = lightWorld:newImage(cone, mx, my, 24, 12, 12, 16)
 			phyLight[phyCnt]:setNormalMap(cone_normal)
 			phyLight[phyCnt]:setShadowType("circle", 12, 0, -8)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -553,7 +553,7 @@ function love.keypressed(k, u)
 		elseif r == 1 then
 			-- add image
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(chest, mx, my, 32, 24, 16, 0)
+			phyLight[phyCnt] = lightWorld:newImage(chest, mx, my, 32, 24, 16, 0)
 			phyLight[phyCnt]:setNormalMap(chest_normal)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 			phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 32, 24)
@@ -562,9 +562,9 @@ function love.keypressed(k, u)
 		end
 	elseif k == "3" then
 		-- add image
-		local r = lightWorld.getBodyCount() % #material
+		local r = lightWorld:getBodyCount() % #material
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(ape, mx, my, 160, 128, 80, 64)
+		phyLight[phyCnt] = lightWorld:newImage(ape, mx, my, 160, 128, 80, 64)
 		phyLight[phyCnt]:setNormalMap(ape_normal)
 		if r == 3 then
 			phyLight[phyCnt]:setGlowMap(ape_glow)
@@ -577,10 +577,10 @@ function love.keypressed(k, u)
 		phyLight[phyCnt]:setShadowType("image", 0, -16, 0.0)
 	elseif k == "4" then
 		-- add glow image
-		local r = lightWorld.getBodyCount() % 5
+		local r = lightWorld:getBodyCount() % 5
 		if r == 0 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(machine, mx, my, 32, 24, 16, 0)
+			phyLight[phyCnt] = lightWorld:newImage(machine, mx, my, 32, 24, 16, 0)
 			phyLight[phyCnt]:setNormalMap(machine_normal)
 			phyLight[phyCnt]:setGlowMap(machine_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -589,7 +589,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 1 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(machine2, mx, my, 24, 12, 12, -4)
+			phyLight[phyCnt] = lightWorld:newImage(machine2, mx, my, 24, 12, 12, -4)
 			phyLight[phyCnt]:setNormalMap(machine2_normal)
 			phyLight[phyCnt]:setGlowMap(machine2_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -598,7 +598,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 2 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led, mx, my, 32, 6, 16, -8)
+			phyLight[phyCnt] = lightWorld:newImage(led, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt]:setNormalMap(led_normal)
 			phyLight[phyCnt]:setGlowMap(led_glow)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -607,7 +607,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 3 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led2, mx, my, 32, 6, 16, -8)
+			phyLight[phyCnt] = lightWorld:newImage(led2, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt]:setNormalMap(led_normal)
 			phyLight[phyCnt]:setGlowMap(led_glow2)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -616,7 +616,7 @@ function love.keypressed(k, u)
 			phyFixture[phyCnt]:setRestitution(0.5)
 		elseif r == 4 then
 			phyCnt = phyCnt + 1
-			phyLight[phyCnt] = lightWorld.newImage(led3, mx, my, 32, 6, 16, -8)
+			phyLight[phyCnt] = lightWorld:newImage(led3, mx, my, 32, 6, 16, -8)
 			phyLight[phyCnt]:setNormalMap(led_normal)
 			phyLight[phyCnt]:setGlowMap(led_glow3)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -627,7 +627,7 @@ function love.keypressed(k, u)
 	elseif k == "5" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(cone_large, mx, my, 24, 128, 12, 64)
+		phyLight[phyCnt] = lightWorld:newImage(cone_large, mx, my, 24, 128, 12, 64)
 		phyLight[phyCnt]:setNormalMap(cone_large_normal)
 		phyLight[phyCnt]:setShadowType("image", 0, -6, 0.0)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -637,7 +637,7 @@ function love.keypressed(k, u)
 	elseif k == "6" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(blopp, mx, my, 42, 16, 21, 0)
+		phyLight[phyCnt] = lightWorld:newImage(blopp, mx, my, 42, 16, 21, 0)
 		phyLight[phyCnt]:generateNormalMapGradient("gradient", "gradient")
 		phyLight[phyCnt]:setAlpha(0.5)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -647,7 +647,7 @@ function love.keypressed(k, u)
 	elseif k == "7" then
 		-- add image
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newImage(tile, mx, my)
+		phyLight[phyCnt] = lightWorld:newImage(tile, mx, my)
 		phyLight[phyCnt]:setHeightMap(tile_normal, 2.0)
 		phyLight[phyCnt]:setGlowMap(tile_glow)
 		phyLight[phyCnt]:setShadow(false)
@@ -659,7 +659,7 @@ function love.keypressed(k, u)
 	elseif k == "8" then
 		-- add rectangle
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newPolygon()
+		phyLight[phyCnt] = lightWorld:newPolygon()
 		phyLight[phyCnt]:setAlpha(0.5)
 		phyLight[phyCnt]:setGlowStrength(1.0)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
@@ -676,7 +676,7 @@ function love.keypressed(k, u)
 		math.randomseed(love.timer.getTime())
 		cRadius = math.random(8, 32)
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newCircle(mx, my, cRadius)
+		phyLight[phyCnt] = lightWorld:newCircle(mx, my, cRadius)
 		phyLight[phyCnt]:setAlpha(0.5)
 		phyLight[phyCnt]:setGlowStrength(1.0)
 		math.randomseed(phyCnt)
@@ -689,19 +689,19 @@ function love.keypressed(k, u)
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif k == "0" then
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld.newRefraction(refraction_normal, mx, my)
+		phyLight[phyCnt] = lightWorld:newRefraction(refraction_normal, mx, my)
 		phyLight[phyCnt]:setReflection(true)
 	elseif k == "l" then
 		-- add light
-		local r = lightWorld.getLightCount() % 3
+		local r = lightWorld:getLightCount() % 3
 		local light
 
 		if r == 0 then
-			light = lightWorld.newLight(mx, my, 31, 127, 63, lightRange)
+			light = lightWorld:newLight(mx, my, 31, 127, 63, lightRange)
 		elseif r == 1 then
-			light = lightWorld.newLight(mx, my, 127, 63, 31, lightRange)
+			light = lightWorld:newLight(mx, my, 127, 63, 31, lightRange)
 		else
-			light = lightWorld.newLight(mx, my, 31, 63, 127, lightRange)
+			light = lightWorld:newLight(mx, my, 31, 63, 127, lightRange)
 		end
 		light.setSmooth(lightSmooth)
 		light.setGlowStrength(0.3)

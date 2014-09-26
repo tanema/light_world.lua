@@ -7,7 +7,7 @@
 -- Updated by Dresenpai
 
 require "lib/postshader"
-require "lib/light_world"
+local LightWorld = require "lib/light_world"
 
 exf = {}
 exf.current = nil
@@ -72,8 +72,8 @@ function exf.draw()
 
     exf.list:draw()
 
-	lightWorld.update()
-	lightWorld.drawShadow()
+	lightWorld:update()
+	lightWorld:drawShadow()
 
 	love.graphics.setColor(255, 255, 255)
     love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
@@ -179,15 +179,15 @@ function exf.resume()
     love.window.setTitle("LOVE Example Browser")
 
 	-- create light world
-	lightWorld = love.light.newWorld()
-	lightWorld.setAmbientColor(127, 127, 127)
+	lightWorld = LightWorld()
+	lightWorld:setAmbientColor(127, 127, 127)
 
 	-- create light
-	lightMouse = lightWorld.newLight(0, 0, 255, 127, 63, 500)
+	lightMouse = lightWorld:newLight(0, 0, 255, 127, 63, 500)
 	lightMouse:setSmooth(2)
 
 	-- create shadow bodys
-	circleTest = lightWorld.newCircle(800 - 128, 600 - 128, 46)
+	circleTest = lightWorld:newCircle(800 - 128, 600 - 128, 46)
 end
 
 function inside(mx, my, x, y, w, h)
