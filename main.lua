@@ -72,7 +72,6 @@ function exf.draw()
 
     exf.list:draw()
 
-	lightWorld:update()
 	lightWorld:drawShadow()
 
 	love.graphics.setColor(255, 255, 255)

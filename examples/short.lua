@@ -47,9 +47,6 @@ function love.update(dt)
 end
 
 function love.draw()
-	-- update lightmap (doesn't need deltatime)
-	lightWorld:update()
-
 	love.postshader.setBuffer("render")
 	
 	-- draw background

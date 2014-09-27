@@ -91,27 +91,12 @@ function light_world:init()
 	self.isReflection = false
 end
 
--- update
-function light_world:update()
-  self.last_buffer = love.graphics.getCanvas()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.setBlendMode("alpha")
-  self:updateShadows()
-  self:updatePixelShadows()
-  self:updateGlow()
-  self:updateRefraction()
-  self:updateRelfection()
-  love.graphics.setShader()
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setStencil()
-  love.graphics.setCanvas(self.last_buffer)
-end
-
 function light_world:updateShadows()
   if not self.optionShadows or not (self.isShadows or self.isLight) then
     return
   end
 
+  self.last_buffer = love.graphics.getCanvas()
   love.graphics.setShader(self.shader)
 
   for i = 1, #self.lights do
@@ -143,12 +128,15 @@ function light_world:updateShadows()
   for i = 1, #self.lights do
     self.lights[i]:drawShine()
   end
+  love.graphics.setCanvas(self.last_buffer)
 end
 
 function light_world:updatePixelShadows()
   if not self.optionPixelShadows or not self.isPixelShadows then
     return
   end
+
+  self.last_buffer = love.graphics.getCanvas()
   -- update pixel shadow
   love.graphics.setBlendMode("alpha")
 
@@ -180,12 +168,16 @@ function light_world:updatePixelShadows()
   love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
   love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
   love.graphics.setBlendMode("alpha")
+
+  love.graphics.setCanvas(self.last_buffer)
 end
 
 function light_world:updateGlow()
   if not self.optionGlow or not self.isGlow then
     return
   end
+
+  self.last_buffer = love.graphics.getCanvas()
   -- create glow map
   self.glowMap:clear(0, 0, 0)
   love.graphics.setCanvas(self.glowMap)
@@ -205,12 +197,15 @@ function light_world:updateGlow()
   for i = 1, #self.body do
     self.body[i]:drawGlow()
   end
+  love.graphics.setCanvas(self.last_buffer)
 end
 
 function light_world:updateRefraction()
   if not self.optionRefraction or not self.isRefraction then
     return
   end
+
+  self.last_buffer = love.graphics.getCanvas()
   love.graphics.setShader()
   -- create refraction map
   self.refractionMap:clear()
@@ -218,18 +213,22 @@ function light_world:updateRefraction()
   for i = 1, #self.body do
     self.body[i]:drawRefraction()
   end
+  love.graphics.setCanvas(self.last_buffer)
 end
 
 function light_world:updateRelfection()
   if not self.optionReflection or not self.isReflection then
     return
   end
+
+  self.last_buffer = love.graphics.getCanvas()
   -- create reflection map
   self.reflectionMap:clear(0, 0, 0)
   love.graphics.setCanvas(self.reflectionMap)
   for i = 1, #self.body do
     self.body[i]:drawReflection()
   end
+  love.graphics.setCanvas(self.last_buffer)
 end
 
 function light_world:refreshScreenSize()
@@ -253,6 +252,8 @@ function light_world:drawShadow()
   if not self.optionShadows or not (self.isShadows or self.isLight) then
     return
   end
+
+  self:updateShadows()
   love.graphics.setColor(255, 255, 255)
   if self.blur then
     self.last_buffer = love.graphics.getCanvas()
@@ -313,6 +314,7 @@ function light_world:drawPixelShadow()
   if not self.optionPixelShadows or not self.isPixelShadows then
     return 
   end
+  self:updatePixelShadows()
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("multiplicative")
   love.graphics.setShader()
@@ -335,6 +337,7 @@ function light_world:drawGlow()
     return
   end
 
+  self:updateGlow()
   love.graphics.setColor(255, 255, 255)
   if self.glowBlur == 0.0 then
     love.graphics.setBlendMode("additive")
@@ -365,6 +368,7 @@ function light_world:drawRefraction()
     return
   end
 
+  self:updateRefraction()
   self.last_buffer = love.graphics.getCanvas()
   if self.last_buffer then
     love.graphics.setColor(255, 255, 255)
@@ -386,6 +390,7 @@ function light_world:drawReflection()
     return
   end
 
+  self:updateRelfection()
   self.last_buffer = love.graphics.getCanvas()
   if self.last_buffer then
     love.graphics.setColor(255, 255, 255)

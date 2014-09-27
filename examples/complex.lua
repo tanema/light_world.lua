@@ -224,11 +224,6 @@ function love.update(dt)
 end
 
 function love.draw()
-	-- update lightmap (don't need deltatime)
-	if lightOn then
-		lightWorld:update()
-	end
-
 	-- set shader buffer
 	if bloomOn then
 		love.postshader.setBuffer("render")

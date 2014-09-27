@@ -610,6 +610,8 @@ function body:drawGlow()
     end
     love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
   end
+
+  love.graphics.setShader()
 end
 
 function body:drawRefraction()
