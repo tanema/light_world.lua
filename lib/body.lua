@@ -168,6 +168,7 @@ function body:refresh()
     self.data[8] = self.y - self.oy + self.height
   end
 end
+
 -- set position
 function body:setPosition(x, y)
   if x ~= self.x or y ~= self.y then
@@ -177,6 +178,7 @@ function body:setPosition(x, y)
     self.world.changed = true
   end
 end
+
 -- set x position
 function body:setX(x)
   if x ~= self.x then
@@ -185,6 +187,7 @@ function body:setX(x)
     self.world.changed = true
   end
 end
+
 -- set y position
 function body:setY(y)
   if y ~= self.y then
@@ -193,30 +196,37 @@ function body:setY(y)
     self.world.changed = true
   end
 end
+
 -- get x position
 function body:getX()
   return self.x
 end
+
 -- get y position
 function body:getY(y)
   return self.y
 end
+
 -- get width
 function body:getWidth()
   return self.width
 end
+
 -- get height
 function body:getHeight()
   return self.height
 end
+
 -- get image width
 function body:getImageWidth()
   return self.imgWidth
 end
+
 -- get image height
 function body:getImageHeight()
   return self.imgHeight
 end
+
 -- set dimension
 function body:setDimension(width, height)
   self.width = width
@@ -224,6 +234,7 @@ function body:setDimension(width, height)
   self:refresh()
   self.world.changed = true
 end
+
 -- set offset
 function body:setOffset(ox, oy)
   if ox ~= self.ox or oy ~= self.oy then
@@ -235,6 +246,7 @@ function body:setOffset(ox, oy)
     self.world.changed = true
   end
 end
+
 -- set offset
 function body:setImageOffset(ix, iy)
   if ix ~= self.ix or iy ~= self.iy then
@@ -244,6 +256,7 @@ function body:setImageOffset(ix, iy)
     self.world.changed = true
   end
 end
+
 -- set offset
 function body:setNormalOffset(nx, ny)
   if nx ~= self.nx or ny ~= self.ny then
@@ -253,6 +266,7 @@ function body:setNormalOffset(nx, ny)
     self.world.changed = true
   end
 end
+
 -- set glow color
 function body:setGlowColor(red, green, blue)
   self.glowRed = red
@@ -260,15 +274,18 @@ function body:setGlowColor(red, green, blue)
   self.glowBlue = blue
   self.world.changed = true
 end
+
 -- set glow alpha
 function body:setGlowStrength(strength)
   self.glowStrength = strength
   self.world.changed = true
 end
+
 -- get radius
 function body:getRadius()
   return self.radius
 end
+
 -- set radius
 function body:setRadius(radius)
   if radius ~= self.radius then
@@ -276,25 +293,30 @@ function body:setRadius(radius)
     self.world.changed = true
   end
 end
+
 -- set polygon data
 function body:setPoints(...)
   self.data = {...}
   self.world.changed = true
 end
+
 -- get polygon data
 function body:getPoints()
   return unpack(self.data)
 end
+
 -- set shadow on/off
 function body:setShadow(b)
   self.castsNoShadow = not b
   self.world.changed = true
 end
+
 -- set shine on/off
 function body:setShine(b)
   self.shine = b
   self.world.changed = true
 end
+
 -- set glass color
 function body:setColor(red, green, blue)
   self.red = red
@@ -302,27 +324,33 @@ function body:setColor(red, green, blue)
   self.blue = blue
   self.world.changed = true
 end
+
 -- set glass alpha
 function body:setAlpha(alpha)
   self.alpha = alpha
   self.world.changed = true
 end
+
 -- set reflection on/off
 function body:setReflection(reflection)
   self.reflection = reflection
 end
+
 -- set refraction on/off
 function body:setRefraction(refraction)
   self.refraction = refraction
 end
+
 -- set reflective on other objects on/off
 function body:setReflective(reflective)
   self.reflective = reflective
 end
+
 -- set refractive on other objects on/off
 function body:setRefractive(refractive)
   self.refractive = refractive
 end
+
 -- set image
 function body:setImage(img)
   if img then
@@ -333,6 +361,7 @@ function body:setImage(img)
     self.iy = self.imgHeight * 0.5
   end
 end
+
 -- set normal
 function body:setNormalMap(normal, width, height, nx, ny)
   if normal then
@@ -355,10 +384,12 @@ function body:setNormalMap(normal, width, height, nx, ny)
     self.normalMesh = nil
   end
 end
+
 -- set height map
 function body:setHeightMap(heightMap, strength)
   self:setNormalMap(height_map_conv.toNormalMap(heightMap, strength))
 end
+
 -- generate flat normal map
 function body:generateNormalMapFlat(mode)
   local imgData = self.img:getData()
@@ -388,6 +419,7 @@ function body:generateNormalMapFlat(mode)
 
   self:setNormalMap(love.graphics.newImage(imgNormalData))
 end
+
 -- generate faded normal map
 function body:generateNormalMapGradient(horizontalGradient, verticalGradient)
   local imgData = self.img:getData()
@@ -428,6 +460,7 @@ function body:generateNormalMapGradient(horizontalGradient, verticalGradient)
 
   self:setNormalMap(love.graphics.newImage(imgNormalData))
 end
+
 -- generate normal map
 function body:generateNormalMap(strength)
   self:setNormalMap(height_map_conv.toNormalMap(self.img, strength))

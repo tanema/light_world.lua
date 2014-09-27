@@ -119,7 +119,6 @@ function light:updateShadow()
     and self.y + self.range > self.world.translate_y and self.y - self.range < love.graphics.getHeight() + self.world.translate_y
   then
     local lightposrange = {self.x, love.graphics.getHeight() - self.y, self.range}
-    local light = self
     self.world.direction = self.world.direction + 0.002
     self.world.shader:send("lightPosition", {self.x - self.world.translate_x, love.graphics.getHeight() - (self.y - self.world.translate_y), self.z})
     self.world.shader:send("lightRange", self.range)
@@ -133,7 +132,7 @@ function light:updateShadow()
     love.graphics.clear()
 
     -- calculate shadows
-    local shadow_geometry = self.calculateShadows(light, self.world.body)
+    local shadow_geometry = self:calculateShadows()
 
     -- draw shadow
     love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, self.world.body))
@@ -187,96 +186,116 @@ function light:drawShine()
   end
 end
 
-function light.calculateShadows(light, body)
+local shadowLength = 100000
+function light:calculateShadows()
 	local shadowGeometry = {}
-	local shadowLength = 100000
+  local body = self.world.body
 
 	for i = 1, #body do
+    local current
 		if body[i].shadowType == "rectangle" or body[i].shadowType == "polygon" then
-			curPolygon = body[i].data
-			if not body[i].castsNoShadow then
-				local edgeFacingTo = {}
-				for k = 1, #curPolygon, 2 do
-					local indexOfNextVertex = (k + 2) % #curPolygon
-					local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
-					local lightToPoint = {curPolygon[k] - light.x, curPolygon[k + 1] - light.y}
-
-					normal = vector.normalize(normal)
-					lightToPoint = vector.normalize(lightToPoint)
-
-					local dotProduct = vector.dot(normal, lightToPoint)
-					if dotProduct > 0 then table.insert(edgeFacingTo, true)
-					else table.insert(edgeFacingTo, false) end
-				end
-
-				local curShadowGeometry = {}
-				for k = 1, #edgeFacingTo do
-					local nextIndex = (k + 1) % #edgeFacingTo
-					if nextIndex == 0 then nextIndex = #edgeFacingTo end
-					if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-						curShadowGeometry[1] = curPolygon[nextIndex*2-1]
-						curShadowGeometry[2] = curPolygon[nextIndex*2]
-
-						local lightVecFrontBack = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
-						curShadowGeometry[3] = curShadowGeometry[1] + lightVecFrontBack[1] * shadowLength
-						curShadowGeometry[4] = curShadowGeometry[2] + lightVecFrontBack[2] * shadowLength
-
-					elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
-						curShadowGeometry[7] = curPolygon[nextIndex*2-1]
-						curShadowGeometry[8] = curPolygon[nextIndex*2]
-
-						local lightVecBackFront = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
-						curShadowGeometry[5] = curShadowGeometry[7] + lightVecBackFront[1] * shadowLength
-						curShadowGeometry[6] = curShadowGeometry[8] + lightVecBackFront[2] * shadowLength
-					end
-				end
-				if  curShadowGeometry[1]
-					and curShadowGeometry[2]
-					and curShadowGeometry[3]
-					and curShadowGeometry[4]
-					and curShadowGeometry[5]
-					and curShadowGeometry[6]
-					and curShadowGeometry[7]
-					and curShadowGeometry[8]
-				then
-					curShadowGeometry.alpha = body[i].alpha
-					curShadowGeometry.red = body[i].red
-					curShadowGeometry.green = body[i].green
-					curShadowGeometry.blue = body[i].blue
-					shadowGeometry[#shadowGeometry + 1] = curShadowGeometry
-				end
-			end
+      current = self:calculatePolyShadow(body[i])
 		elseif body[i].shadowType == "circle" then
-			if not body[i].castsNoShadow then
-				local length = math.sqrt(math.pow(light.x - (body[i].x - body[i].ox), 2) + math.pow(light.y - (body[i].y - body[i].oy), 2))
-				if length >= body[i].radius and length <= light.range then
-					local curShadowGeometry = {}
-					local angle = math.atan2(light.x - (body[i].x - body[i].ox), (body[i].y - body[i].oy) - light.y) + math.pi / 2
-					local x2 = ((body[i].x - body[i].ox) + math.sin(angle) * body[i].radius)
-					local y2 = ((body[i].y - body[i].oy) - math.cos(angle) * body[i].radius)
-					local x3 = ((body[i].x - body[i].ox) - math.sin(angle) * body[i].radius)
-					local y3 = ((body[i].y - body[i].oy) + math.cos(angle) * body[i].radius)
-
-					curShadowGeometry[1] = x2
-					curShadowGeometry[2] = y2
-					curShadowGeometry[3] = x3
-					curShadowGeometry[4] = y3
-
-					curShadowGeometry[5] = x3 - (light.x - x3) * shadowLength
-					curShadowGeometry[6] = y3 - (light.y - y3) * shadowLength
-					curShadowGeometry[7] = x2 - (light.x - x2) * shadowLength
-					curShadowGeometry[8] = y2 - (light.y - y2) * shadowLength
-					curShadowGeometry.alpha = body[i].alpha
-					curShadowGeometry.red = body[i].red
-					curShadowGeometry.green = body[i].green
-					curShadowGeometry.blue = body[i].blue
-					shadowGeometry[#shadowGeometry + 1] = curShadowGeometry
-				end
-			end
+      current = self:calculateCircleShadow(body[i])
 		end
+    if current ~= nil then
+      shadowGeometry[#shadowGeometry + 1] = current
+    end
 	end
 
 	return shadowGeometry
+end
+
+function light:calculatePolyShadow(poly)
+  if poly.castsNoShadow then
+    return nil
+  end
+
+  local curPolygon = poly.data
+  local edgeFacingTo = {}
+  for k = 1, #curPolygon, 2 do
+    local indexOfNextVertex = (k + 2) % #curPolygon
+    local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
+    local selfToPoint = {curPolygon[k] - self.x, curPolygon[k + 1] - self.y}
+
+    normal = vector.normalize(normal)
+    selfToPoint = vector.normalize(selfToPoint)
+
+    local dotProduct = vector.dot(normal, selfToPoint)
+    if dotProduct > 0 then table.insert(edgeFacingTo, true)
+    else table.insert(edgeFacingTo, false) end
+  end
+
+  local curShadowGeometry = {}
+  for k = 1, #edgeFacingTo do
+    local nextIndex = (k + 1) % #edgeFacingTo
+    if nextIndex == 0 then nextIndex = #edgeFacingTo end
+    if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
+      curShadowGeometry[1] = curPolygon[nextIndex*2-1]
+      curShadowGeometry[2] = curPolygon[nextIndex*2]
+
+      local selfVecFrontBack = vector.normalize({curPolygon[nextIndex*2-1] - self.x, curPolygon[nextIndex*2] - self.y})
+      curShadowGeometry[3] = curShadowGeometry[1] + selfVecFrontBack[1] * shadowLength
+      curShadowGeometry[4] = curShadowGeometry[2] + selfVecFrontBack[2] * shadowLength
+
+    elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
+      curShadowGeometry[7] = curPolygon[nextIndex*2-1]
+      curShadowGeometry[8] = curPolygon[nextIndex*2]
+
+      local selfVecBackFront = vector.normalize({curPolygon[nextIndex*2-1] - self.x, curPolygon[nextIndex*2] - self.y})
+      curShadowGeometry[5] = curShadowGeometry[7] + selfVecBackFront[1] * shadowLength
+      curShadowGeometry[6] = curShadowGeometry[8] + selfVecBackFront[2] * shadowLength
+    end
+  end
+  if  curShadowGeometry[1]
+    and curShadowGeometry[2]
+    and curShadowGeometry[3]
+    and curShadowGeometry[4]
+    and curShadowGeometry[5]
+    and curShadowGeometry[6]
+    and curShadowGeometry[7]
+    and curShadowGeometry[8]
+  then
+    curShadowGeometry.alpha = poly.alpha
+    curShadowGeometry.red = poly.red
+    curShadowGeometry.green = poly.green
+    curShadowGeometry.blue = poly.blue
+    return curShadowGeometry
+  else
+    return nil
+  end
+end
+
+function light:calculateCircleShadow(circle)
+  if circle.castsNoShadow then
+    return nil
+  end
+  local length = math.sqrt(math.pow(self.x - (circle.x - circle.ox), 2) + math.pow(self.y - (circle.y - circle.oy), 2))
+  if length >= circle.radius and length <= self.range then
+    local curShadowGeometry = {}
+    local angle = math.atan2(self.x - (circle.x - circle.ox), (circle.y - circle.oy) - self.y) + math.pi / 2
+    local x2 = ((circle.x - circle.ox) + math.sin(angle) * circle.radius)
+    local y2 = ((circle.y - circle.oy) - math.cos(angle) * circle.radius)
+    local x3 = ((circle.x - circle.ox) - math.sin(angle) * circle.radius)
+    local y3 = ((circle.y - circle.oy) + math.cos(angle) * circle.radius)
+
+    curShadowGeometry[1] = x2
+    curShadowGeometry[2] = y2
+    curShadowGeometry[3] = x3
+    curShadowGeometry[4] = y3
+
+    curShadowGeometry[5] = x3 - (self.x - x3) * shadowLength
+    curShadowGeometry[6] = y3 - (self.y - y3) * shadowLength
+    curShadowGeometry[7] = x2 - (self.x - x2) * shadowLength
+    curShadowGeometry[8] = y2 - (self.y - y2) * shadowLength
+    curShadowGeometry.alpha = circle.alpha
+    curShadowGeometry.red = circle.red
+    curShadowGeometry.green = circle.green
+    curShadowGeometry.blue = circle.blue
+    return curShadowGeometry
+  else
+    return nil
+  end
 end
 
 function light:drawPixelShadow()
