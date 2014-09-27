@@ -175,20 +175,21 @@ function love.update(dt)
 	if offsetX ~= offsetOldX or offsetY ~= offsetOldY then
 		offsetChanged = true
 		for i = 2, lightWorld:getLightCount() do
-			lightWorld:setLightPosition(i, lightWorld:getLightX(i) + (offsetX - offsetOldX), lightWorld:getLightY(i) + (offsetY - offsetOldY))
+      local light = lightWorld:getLight(i)
+			light:setPosition(light:getX() + (offsetX - offsetOldX), light:getY() + (offsetY - offsetOldY))
 		end
 	else
 		offsetChanged = false
 	end
 
-    for i = 1, lightWorld:getLightCount() do
-		lightWorld:setLightDirection(i, lightDirection)
-    end
+  for i = 1, lightWorld:getLightCount() do
+		lightWorld:getLight(i):setDirection(lightDirection)
+  end
 
 	tileX = tileX + dt * 32.0
 	tileY = tileY + dt * 8.0
 
-    for i = 1, phyCnt do
+  for i = 1, phyCnt do
 		if phyBody[i] and (phyBody[i]:isAwake() or offsetChanged) then
 			if offsetChanged then
 				phyBody[i]:setX(phyBody[i]:getX() + (offsetX - offsetOldX))
@@ -209,7 +210,7 @@ function love.update(dt)
 				phyLight[i]:setNormalTileOffset(tileX, tileY)
 			--end
 			if offsetChanged then
-				phyLight[i]:setPosition(phyLight[i].getX() + (offsetX - offsetOldX), phyLight[i].getY() + (offsetY - offsetOldY))
+				phyLight[i]:setPosition(phyLight[i]:getX() + (offsetX - offsetOldX), phyLight[i]:getY() + (offsetY - offsetOldY))
 			end
 		end
     end
@@ -703,10 +704,10 @@ function love.keypressed(k, u)
 		else
 			light = lightWorld:newLight(mx, my, 31, 63, 127, lightRange)
 		end
-		light.setSmooth(lightSmooth)
-		light.setGlowStrength(0.3)
+		light:setSmooth(lightSmooth)
+		light:setGlowStrength(0.3)
 		math.randomseed(love.timer.getTime())
-		light.setAngle(math.random(1, 5) * 0.1 * math.pi)
+		light:setAngle(math.random(1, 5) * 0.1 * math.pi)
 	elseif k == "c" then
 		if colorAberration == 0.0 then
 			colorAberration = 3.0

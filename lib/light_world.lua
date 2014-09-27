@@ -25,14 +25,13 @@ local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE..'/class')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
+local height_map_conv = require(_PACKAGE..'/height_map_conv')
 
 local light_world = class()
 
 function light_world:init()
   self.translate_x = 0
   self.translate_y = 0
-  self.translate_x_old = 0
-  self.translate_y_old = 0
   self.direction = 0
 
   self.last_buffer = nil
@@ -78,7 +77,6 @@ function light_world:init()
 
 	self.reflectionStrength = 16.0
 	self.reflectionVisibility = 1.0
-	self.changed = true
 	self.blur = 2.0
 	self.optionShadows = true
 	self.optionPixelShadows = true
@@ -96,13 +94,6 @@ end
 -- update
 function light_world:update()
   self.last_buffer = love.graphics.getCanvas()
-
-  if self.translate_x ~= self.translate_x_old or self.translate_y ~= self.translate_y_old then
-    self.translate_x_old = self.translate_x
-    self.translate_y_old = self.translate_y
-    self.changed = true
-  end
-
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("alpha")
   self:updateShadows()
@@ -114,7 +105,6 @@ function light_world:update()
   love.graphics.setBlendMode("alpha")
   love.graphics.setStencil()
   love.graphics.setCanvas(self.last_buffer)
-  self.changed = false
 end
 
 function light_world:updateShadows()
@@ -137,10 +127,10 @@ function light_world:updateShadows()
   love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("additive")
+
   for i = 1, #self.lights do
     self.lights[i]:drawShadow()
   end
-  self.isShadowBlur = false
 
   -- update shine
   love.graphics.setCanvas(self.shine)
@@ -149,6 +139,7 @@ function light_world:updateShadows()
   love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("additive")
+
   for i = 1, #self.lights do
     self.lights[i]:drawShine()
   end
@@ -234,12 +225,10 @@ function light_world:updateRelfection()
     return
   end
   -- create reflection map
-  if self.changed then
-    self.reflectionMap:clear(0, 0, 0)
-    love.graphics.setCanvas(self.reflectionMap)
-    for i = 1, #self.body do
-      self.body[i]:drawReflection()
-    end
+  self.reflectionMap:clear(0, 0, 0)
+  love.graphics.setCanvas(self.reflectionMap)
+  for i = 1, #self.body do
+    self.body[i]:drawReflection()
   end
 end
 
@@ -424,13 +413,11 @@ end
 function light_world:clearLights()
   self.lights = {}
   self.isLight = false
-  self.changed = true
 end
 
 -- clear objects
 function light_world:clearBodys()
   self.body = {}
-  self.changed = true
   self.isShadows = false
   self.isPixelShadows = false
   self.isGlow = false
@@ -472,13 +459,11 @@ end
 -- set blur
 function light_world:setBlur(blur)
   self.blur = blur
-  self.changed = true
 end
 
 -- set blur
 function light_world:setShadowBlur(blur)
   self.blur = blur
-  self.changed = true
 end
 
 -- set buffer
@@ -493,160 +478,94 @@ function light_world:setBuffer(buffer)
     love.graphics.setCanvas(self.glowMap)
   end
 end
+
 -- set glow blur
 function light_world:setGlowStrength(strength)
   self.glowBlur = strength
-  self.changed = true
 end
+
 -- set refraction blur
 function light_world:setRefractionStrength(strength)
   self.refractionStrength = strength
 end
+
 -- set reflection strength
 function light_world:setReflectionStrength(strength)
   self.reflectionStrength = strength
 end
+
 -- set reflection visibility
 function light_world:setReflectionVisibility(visibility)
   self.reflectionVisibility = visibility
 end
+
 -- new rectangle
 function light_world:newRectangle(x, y, w, h)
   return self:newBody("rectangle", x, y, width, height)
 end
+
 -- new circle
 function light_world:newCircle(x, y, r)
   return self:newBody("circle", x, y, radius)
 end
+
 -- new polygon
 function light_world:newPolygon(...)
   return self:newBody("polygon", ...)
 end
+
 -- new image
 function light_world:newImage(img, x, y, width, height, ox, oy)
   return self:newBody("image", img, x, y, width, height, ox, oy)
 end
+
 -- new refraction
 function light_world:newRefraction(normal, x, y, width, height)
   return self:newBody("refraction", normal, x, y, width, height)
 end
+
 -- new refraction from height map
 function light_world:newRefractionHeightMap(heightMap, x, y, strength)
-  local normal = HeightMapToNormalMap(heightMap, strength)
+  local normal = height_map_conv.toNormalMap(heightMap, strength)
   return self.newRefraction(p, normal, x, y)
 end
+
 -- new reflection
 function light_world:newReflection(normal, x, y, width, height)
   return self:newBody("reflection", normal, x, y, width, height)
 end
+
 -- new reflection from height map
 function light_world:newReflectionHeightMap(heightMap, x, y, strength)
-  local normal = HeightMapToNormalMap(heightMap, strength)
+  local normal = height_map_conv.toNormalMap(heightMap, strength)
   return self.newReflection(p, normal, x, y)
 end
+
 -- new body
 function light_world:newBody(type, ...)
   local id = #self.body + 1
   self.body[id] = Body(self, id, type, ...)
-  self.changed = true
   return self.body[#self.body]
 end
--- set polygon data
-function light_world:setPoints(n, ...)
-  self.body[n].data = {...}
-end
--- get polygon count
+
+-- get body count
 function light_world:getBodyCount()
   return #self.body
 end
--- get polygon
-function light_world:getPoints(n)
-  if self.body[n].data then
-    return unpack(self.body[n].data)
-  end
+
+-- get light
+function light_world:getBody(n)
+  return self.body[n]
 end
--- set light position
-function light_world:setLightPosition(n, x, y, z)
-  self.lights[n]:setPosition(x, y, z)
-end
--- set light x
-function light_world:setLightX(n, x)
-  self.lights[n]:setX(x)
-end
--- set light y
-function light_world:setLightY(n, y)
-  self.lights[n]:setY(y)
-end
--- set light angle
-function light_world:setLightAngle(n, angle)
-  self.lights[n]:setAngle(angle)
-end
--- set light direction
-function light_world:setLightDirection(n, direction)
-  self.lights[n]:setDirection(direction)
-end
+
 -- get light count
 function light_world:getLightCount()
   return #self.lights
 end
--- get light x position
-function light_world:getLightX(n)
-  return self.lights[n].x
-end
--- get light y position
-function light_world:getLightY(n)
-  return self.lights[n].y
-end
--- get type
-function light_world:getType()
-  return "world"
-end
 
-function HeightMapToNormalMap(heightMap, strength)
-	local imgData = heightMap:getData()
-	local imgData2 = love.image.newImageData(heightMap:getWidth(), heightMap:getHeight())
-	local red, green, blue, alpha
-	local x, y
-	local matrix = {}
-	matrix[1] = {}
-	matrix[2] = {}
-	matrix[3] = {}
-	strength = strength or 1.0
-
-	for i = 0, heightMap:getHeight() - 1 do
-		for k = 0, heightMap:getWidth() - 1 do
-			for l = 1, 3 do
-				for m = 1, 3 do
-					if k + (l - 1) < 1 then
-						x = heightMap:getWidth() - 1
-					elseif k + (l - 1) > heightMap:getWidth() - 1 then
-						x = 1
-					else
-						x = k + l - 1
-					end
-
-					if i + (m - 1) < 1 then
-						y = heightMap:getHeight() - 1
-					elseif i + (m - 1) > heightMap:getHeight() - 1 then
-						y = 1
-					else
-						y = i + m - 1
-					end
-
-					local red, green, blue, alpha = imgData:getPixel(x, y)
-					matrix[l][m] = red
-				end
-			end
-
-			red = (255 + ((matrix[1][2] - matrix[2][2]) + (matrix[2][2] - matrix[3][2])) * strength) / 2.0
-			green = (255 + ((matrix[2][2] - matrix[1][1]) + (matrix[2][3] - matrix[2][2])) * strength) / 2.0
-			blue = 192
-
-			imgData2:setPixel(k, i, red, green, blue)
-		end
-	end
-
-	return love.graphics.newImage(imgData2)
+-- get light
+function light_world:getLight(n)
+  return self.lights[n]
 end
 
 return light_world

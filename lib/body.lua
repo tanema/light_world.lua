@@ -1,5 +1,6 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
+local height_map_conv = require(_PACKAGE..'/height_map_conv')
 
 local body = class()
 
@@ -11,6 +12,24 @@ function body:init(world, id, type, ...)
 	self.material = nil
 	self.glow = nil
   self.world = world
+
+  self.reflection = false
+  self.reflective = false
+  self.refraction = false
+  self.refractive = false
+
+	self.shine = true
+	self.red = 0
+	self.green = 0
+	self.blue = 0
+	self.alpha = 1.0
+	self.glowRed = 255
+	self.glowGreen = 255
+	self.glowBlue = 255
+	self.glowStrength = 0.0
+	self.tileX = 0
+	self.tileY = 0
+
 	if self.type == "circle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
@@ -18,10 +37,6 @@ function body:init(world, id, type, ...)
 		self.ox = args[4] or 0
 		self.oy = args[5] or 0
 		self.shadowType = "circle"
-		self.reflection = false
-		self.reflective = false
-		self.refraction = false
-		self.refractive = false
 		world.isShadows = true
 	elseif self.type == "rectangle" then
 		self.x = args[1] or 0
@@ -41,18 +56,10 @@ function body:init(world, id, type, ...)
 			self.x - self.ox,
 			self.y - self.oy + self.height
 		}
-		self.reflection = false
-		self.reflective = false
-		self.refraction = false
-		self.refractive = false
 		world.isShadows = true
 	elseif self.type == "polygon" then
 		self.shadowType = "polygon"
 		self.data = args or {0, 0, 0, 0, 0, 0}
-		self.reflection = false
-		self.reflective = false
-		self.refraction = false
-		self.refractive = false
 		world.isShadows = true
 	elseif self.type == "image" then
 		self.img = args[1]
@@ -89,10 +96,7 @@ function body:init(world, id, type, ...)
 			self.x - self.ox,
 			self.y - self.oy + self.height
 		}
-		self.reflection = false
 		self.reflective = true
-		self.refraction = false
-		self.refractive = false
 		world.isShadows = true
 	elseif self.type == "refraction" then
 		self.normal = args[1]
@@ -119,10 +123,7 @@ function body:init(world, id, type, ...)
 		end
 		self.ox = self.width * 0.5
 		self.oy = self.height * 0.5
-		self.reflection = false
-		self.reflective = false
 		self.refraction = true
-		self.refractive = false
 		world.isRefraction = true
 	elseif self.type == "reflection" then
 		self.normal = args[1]
@@ -150,22 +151,8 @@ function body:init(world, id, type, ...)
 		self.ox = self.width * 0.5
 		self.oy = self.height * 0.5
 		self.reflection = true
-		self.reflective = false
-		self.refraction = false
-		self.refractive = false
 		world.isReflection = true
 	end
-	self.shine = true
-	self.red = 0
-	self.green = 0
-	self.blue = 0
-	self.alpha = 1.0
-	self.glowRed = 255
-	self.glowGreen = 255
-	self.glowBlue = 255
-	self.glowStrength = 0.0
-	self.tileX = 0
-	self.tileY = 0
 end
 
 -- refresh
@@ -370,7 +357,7 @@ function body:setNormalMap(normal, width, height, nx, ny)
 end
 -- set height map
 function body:setHeightMap(heightMap, strength)
-  self:setNormalMap(HeightMapToNormalMap(heightMap, strength))
+  self:setNormalMap(height_map_conv.toNormalMap(heightMap, strength))
 end
 -- generate flat normal map
 function body:generateNormalMapFlat(mode)
@@ -443,14 +430,16 @@ function body:generateNormalMapGradient(horizontalGradient, verticalGradient)
 end
 -- generate normal map
 function body:generateNormalMap(strength)
-  self:setNormalMap(HeightMapToNormalMap(self.img, strength))
+  self:setNormalMap(height_map_conv.toNormalMap(self.img, strength))
 end
+
 -- set material
 function body:setMaterial(material)
   if material then
     self.material = material
   end
 end
+
 -- set normal
 function body:setGlowMap(glow)
   self.glow = glow
@@ -458,6 +447,7 @@ function body:setGlowMap(glow)
 
   self.world.isGlow = true
 end
+
 -- set tile offset
 function body:setNormalTileOffset(tx, ty)
   self.tileX = tx / self.normalWidth
@@ -470,10 +460,12 @@ function body:setNormalTileOffset(tx, ty)
   }
   self.world.changed = true
 end
+
 -- get type
 function body:getType()
   return self.type
 end
+
 -- get type
 function body:setShadowType(type, ...)
   self.shadowType = type
@@ -553,14 +545,12 @@ function body:drawShadow(light)
   end
 end
 
-
 function body:drawPixelShadow()
   if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
   end
 end
-
 
 function body:drawGlow()
   if self.glowStrength > 0.0 then

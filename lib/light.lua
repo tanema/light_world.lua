@@ -22,7 +22,6 @@ function light:init(world, x, y, r, g, b, range)
 	self.smooth = 1.0
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
-	self.changed = true
 	self.visible = true
 end
 
@@ -34,7 +33,6 @@ function light:setPosition(x, y, z)
     if z then
       self.z = z
     end
-    self.changed = true
   end
 end
 
@@ -52,7 +50,6 @@ end
 function light:setX(x)
   if x ~= self.x then
     self.x = x
-    self.changed = true
   end
 end
 
@@ -60,7 +57,6 @@ end
 function light:setY(y)
   if y ~= self.y then
     self.y = y
-    self.changed = true
   end
 end
 -- set color
@@ -74,7 +70,6 @@ end
 function light:setRange(range)
   if range ~= self.range then
     self.range = range
-    self.changed = true
   end
 end
 
@@ -88,9 +83,9 @@ function light:setDirection(direction)
     else
       self.direction = direction
     end
-    self.changed = true
   end
 end
+
 -- set angle
 function light:setAngle(angle)
   if angle ~= self.angle then
@@ -101,91 +96,82 @@ function light:setAngle(angle)
     else
       self.angle = angle
     end
-    self.changed = true
   end
 end
+
 -- set glow size
 function light:setSmooth(smooth)
   self.smooth = smooth
-  self.changed = true
 end
+
 -- set glow size
 function light:setGlowSize(size)
   self.glowSize = size
-  self.changed = true
 end
+
 -- set glow strength
 function light:setGlowStrength(strength)
   self.glowStrength = strength
-  self.changed = true
-end
--- get type
-function light:getType()
-  return "light"
 end
 
 function light:updateShadow()
-  if self.changed or self.changed then
-    if self.x + self.range > self.world.translate_x and self.x - self.range < love.graphics.getWidth() + self.world.translate_x
-      and self.y + self.range > self.world.translate_y and self.y - self.range < love.graphics.getHeight() + self.world.translate_y
-    then
-      local lightposrange = {self.x, love.graphics.getHeight() - self.y, self.range}
-      local light = self
-      self.world.direction = self.world.direction + 0.002
-      self.world.shader:send("lightPosition", {self.x - self.world.translate_x, love.graphics.getHeight() - (self.y - self.world.translate_y), self.z})
-      self.world.shader:send("lightRange", self.range)
-      self.world.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.world.shader:send("lightSmooth", self.smooth)
-      self.world.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-      self.world.shader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.world.shader:send("lightDirection", self.direction)
+  if self.x + self.range > self.world.translate_x and self.x - self.range < love.graphics.getWidth() + self.world.translate_x
+    and self.y + self.range > self.world.translate_y and self.y - self.range < love.graphics.getHeight() + self.world.translate_y
+  then
+    local lightposrange = {self.x, love.graphics.getHeight() - self.y, self.range}
+    local light = self
+    self.world.direction = self.world.direction + 0.002
+    self.world.shader:send("lightPosition", {self.x - self.world.translate_x, love.graphics.getHeight() - (self.y - self.world.translate_y), self.z})
+    self.world.shader:send("lightRange", self.range)
+    self.world.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+    self.world.shader:send("lightSmooth", self.smooth)
+    self.world.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+    self.world.shader:send("lightAngle", math.pi - self.angle / 2.0)
+    self.world.shader:send("lightDirection", self.direction)
 
-      love.graphics.setCanvas(self.shadow)
-      love.graphics.clear()
+    love.graphics.setCanvas(self.shadow)
+    love.graphics.clear()
 
-      -- calculate shadows
-      local shadow_geometry = calculateShadows(light, self.world.body)
+    -- calculate shadows
+    local shadow_geometry = self.calculateShadows(light, self.world.body)
 
-      -- draw shadow
-      love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, self.world.body))
-      love.graphics.setBlendMode("additive")
-      -- FIND THIS TOOOO
-      love.graphics.rectangle("fill", self.world.translate_x, self.world.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+    -- draw shadow
+    love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, self.world.body))
+    love.graphics.setBlendMode("additive")
+    -- FIND THIS TOOOO
+    love.graphics.rectangle("fill", self.world.translate_x, self.world.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
 
-      -- draw color shadows
-      love.graphics.setBlendMode("multiplicative")
-      love.graphics.setShader()
-      for k = 1,#shadow_geometry do
-        if shadow_geometry[k].alpha < 1.0 then
-          love.graphics.setColor(
-            shadow_geometry[k].red * (1.0 - shadow_geometry[k].alpha),
-            shadow_geometry[k].green * (1.0 - shadow_geometry[k].alpha),
-            shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
-          )
-          love.graphics.polygon("fill", unpack(shadow_geometry[k]))
-        end
+    -- draw color shadows
+    love.graphics.setBlendMode("multiplicative")
+    love.graphics.setShader()
+    for k = 1,#shadow_geometry do
+      if shadow_geometry[k].alpha < 1.0 then
+        love.graphics.setColor(
+          shadow_geometry[k].red * (1.0 - shadow_geometry[k].alpha),
+          shadow_geometry[k].green * (1.0 - shadow_geometry[k].alpha),
+          shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
+        )
+        love.graphics.polygon("fill", unpack(shadow_geometry[k]))
       end
-
-      for k = 1, #self.world.body do
-        self.world.body[k]:drawShadow(self)
-      end
-
-      love.graphics.setShader(self.world.shader)
-
-      -- draw shine
-      love.graphics.setCanvas(self.shine)
-      self.shine:clear(255, 255, 255)
-      love.graphics.setBlendMode("alpha")
-      love.graphics.setStencil(stencils.poly(self.world.body))
-      -- WHOA THIS MAY BE THE ISSUE HERE FIND THIS!
-      love.graphics.rectangle("fill", self.world.translate_x, self.world.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
-
-      self.visible = true
-    else
-      self.visible = false
     end
 
-    self.changed = self.world.changed
+    for k = 1, #self.world.body do
+      self.world.body[k]:drawShadow(self)
+    end
+
+    love.graphics.setShader(self.world.shader)
+
+    -- draw shine
+    love.graphics.setCanvas(self.shine)
+    self.shine:clear(255, 255, 255)
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setStencil(stencils.poly(self.world.body))
+    -- WHOA THIS MAY BE THE ISSUE HERE FIND THIS!
+    love.graphics.rectangle("fill", self.world.translate_x, self.world.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+
+    self.visible = true
+  else
+    self.visible = false
   end
 end
 
@@ -201,7 +187,7 @@ function light:drawShine()
   end
 end
 
-function calculateShadows(light, body)
+function light.calculateShadows(light, body)
 	local shadowGeometry = {}
 	local shadowLength = 100000
 
