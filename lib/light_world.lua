@@ -105,123 +105,142 @@ function light_world:update()
 
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("alpha")
-
-  if self.optionShadows and (self.isShadows or self.isLight) then
-    love.graphics.setShader(self.shader)
-
-    for i = 1, #self.lights do
-      self.lights[i]:updateShadow()
-    end
-
-    -- update shadow
-    love.graphics.setShader()
-    love.graphics.setCanvas(self.shadow)
-    love.graphics.setStencil()
-    love.graphics.setColor(unpack(self.ambient))
-    love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.setBlendMode("additive")
-    for i = 1, #self.lights do
-      self.lights[i]:drawShadow()
-    end
-    self.isShadowBlur = false
-
-    -- update shine
-    love.graphics.setCanvas(self.shine)
-    love.graphics.setColor(unpack(self.ambient))
-    love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.setBlendMode("additive")
-    for i = 1, #self.lights do
-      self.lights[i]:drawShine()
-    end
-  end
-
-  if self.optionPixelShadows and self.isPixelShadows then
-    -- update pixel shadow
-    love.graphics.setBlendMode("alpha")
-
-    -- create normal map
-    self.normalMap:clear()
-    love.graphics.setShader()
-    love.graphics.setCanvas(self.normalMap)
-    for i = 1, #self.body do
-      self.body[i]:drawPixelShadow()
-    end
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.setBlendMode("alpha")
-
-    self.pixelShadow2:clear()
-    love.graphics.setCanvas(self.pixelShadow2)
-    love.graphics.setBlendMode("additive")
-    love.graphics.setShader(self.shader2)
-
-    for i = 1, #self.lights do
-      self.lights[i]:drawPixelShadow()
-    end
-
-    love.graphics.setShader()
-    self.pixelShadow:clear(255, 255, 255)
-    love.graphics.setCanvas(self.pixelShadow)
-    love.graphics.setBlendMode("alpha")
-    love.graphics.draw(self.pixelShadow2, self.translate_x, self.translate_y)
-    love.graphics.setBlendMode("additive")
-    love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
-    love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
-    love.graphics.setBlendMode("alpha")
-  end
-
-  if self.optionGlow and self.isGlow then
-    -- create glow map
-    self.glowMap:clear(0, 0, 0)
-    love.graphics.setCanvas(self.glowMap)
-
-    if self.glowDown then
-      self.glowTimer = math.max(0.0, self.glowTimer - love.timer.getDelta())
-      if self.glowTimer == 0.0 then
-        self.glowDown = not self.glowDown
-      end
-    else
-      self.glowTimer = math.min(self.glowTimer + love.timer.getDelta(), 1.0)
-      if self.glowTimer == 1.0 then
-        self.glowDown = not self.glowDown
-      end
-    end
-
-    for i = 1, #self.body do
-      self.body[i]:drawGlow()
-    end
-  end
-
-  if self.optionRefraction and self.isRefraction then
-    love.graphics.setShader()
-    -- create refraction map
-    self.refractionMap:clear()
-    love.graphics.setCanvas(self.refractionMap)
-    for i = 1, #self.body do
-      self.body[i]:drawRefraction()
-    end
-  end
-
-  if self.optionReflection and self.isReflection then
-    -- create reflection map
-    if self.changed then
-      self.reflectionMap:clear(0, 0, 0)
-      love.graphics.setCanvas(self.reflectionMap)
-      for i = 1, #self.body do
-        self.body[i]:drawReflection()
-      end
-    end
-  end
-
+  self:updateShadows()
+  self:updatePixelShadows()
+  self:updateGlow()
+  self:updateRefraction()
+  self:updateRelfection()
   love.graphics.setShader()
   love.graphics.setBlendMode("alpha")
   love.graphics.setStencil()
   love.graphics.setCanvas(self.last_buffer)
-
   self.changed = false
+end
+
+function light_world:updateShadows()
+  if not self.optionShadows or not (self.isShadows or self.isLight) then
+    return
+  end
+
+  love.graphics.setShader(self.shader)
+
+  for i = 1, #self.lights do
+    self.lights[i]:updateShadow()
+  end
+
+  -- update shadow
+  love.graphics.setShader()
+  love.graphics.setCanvas(self.shadow)
+  love.graphics.setStencil()
+  love.graphics.setColor(unpack(self.ambient))
+  love.graphics.setBlendMode("alpha")
+  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.setBlendMode("additive")
+  for i = 1, #self.lights do
+    self.lights[i]:drawShadow()
+  end
+  self.isShadowBlur = false
+
+  -- update shine
+  love.graphics.setCanvas(self.shine)
+  love.graphics.setColor(unpack(self.ambient))
+  love.graphics.setBlendMode("alpha")
+  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.setBlendMode("additive")
+  for i = 1, #self.lights do
+    self.lights[i]:drawShine()
+  end
+end
+
+function light_world:updatePixelShadows()
+  if not self.optionPixelShadows or not self.isPixelShadows then
+    return
+  end
+  -- update pixel shadow
+  love.graphics.setBlendMode("alpha")
+
+  -- create normal map
+  self.normalMap:clear()
+  love.graphics.setShader()
+  love.graphics.setCanvas(self.normalMap)
+  for i = 1, #self.body do
+    self.body[i]:drawPixelShadow()
+  end
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.setBlendMode("alpha")
+
+  self.pixelShadow2:clear()
+  love.graphics.setCanvas(self.pixelShadow2)
+  love.graphics.setBlendMode("additive")
+  love.graphics.setShader(self.shader2)
+
+  for i = 1, #self.lights do
+    self.lights[i]:drawPixelShadow()
+  end
+
+  love.graphics.setShader()
+  self.pixelShadow:clear(255, 255, 255)
+  love.graphics.setCanvas(self.pixelShadow)
+  love.graphics.setBlendMode("alpha")
+  love.graphics.draw(self.pixelShadow2, self.translate_x, self.translate_y)
+  love.graphics.setBlendMode("additive")
+  love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
+  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.setBlendMode("alpha")
+end
+
+function light_world:updateGlow()
+  if not self.optionGlow or not self.isGlow then
+    return
+  end
+  -- create glow map
+  self.glowMap:clear(0, 0, 0)
+  love.graphics.setCanvas(self.glowMap)
+
+  if self.glowDown then
+    self.glowTimer = math.max(0.0, self.glowTimer - love.timer.getDelta())
+    if self.glowTimer == 0.0 then
+      self.glowDown = not self.glowDown
+    end
+  else
+    self.glowTimer = math.min(self.glowTimer + love.timer.getDelta(), 1.0)
+    if self.glowTimer == 1.0 then
+      self.glowDown = not self.glowDown
+    end
+  end
+
+  for i = 1, #self.body do
+    self.body[i]:drawGlow()
+  end
+end
+
+function light_world:updateRefraction()
+  if not self.optionRefraction or not self.isRefraction then
+    return
+  end
+  love.graphics.setShader()
+  -- create refraction map
+  self.refractionMap:clear()
+  love.graphics.setCanvas(self.refractionMap)
+  for i = 1, #self.body do
+    self.body[i]:drawRefraction()
+  end
+end
+
+function light_world:updateRelfection()
+  if not self.optionReflection or not self.isReflection then
+    return
+  end
+  -- create reflection map
+  if self.changed then
+    self.reflectionMap:clear(0, 0, 0)
+    love.graphics.setCanvas(self.reflectionMap)
+    for i = 1, #self.body do
+      self.body[i]:drawReflection()
+    end
+  end
 end
 
 function light_world:refreshScreenSize()
@@ -239,6 +258,7 @@ function light_world:refreshScreenSize()
   self.pixelShadow = love.graphics.newCanvas()
   self.pixelShadow2 = love.graphics.newCanvas()
 end
+
 -- draw shadow
 function light_world:drawShadow()
   if self.optionShadows and (self.isShadows or self.isLight) then
