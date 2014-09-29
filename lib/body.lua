@@ -4,6 +4,9 @@ local height_map_conv = require(_PACKAGE..'/height_map_conv')
 
 local body = class()
 
+body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
+body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
+
 function body:init(world, id, type, ...)
 	local args = {...}
 	self.id = id
@@ -12,11 +15,6 @@ function body:init(world, id, type, ...)
 	self.material = nil
 	self.glow = nil
   self.world = world
-
-  self.reflection = false
-  self.reflective = false
-  self.refraction = false
-  self.refractive = false
 
 	self.shine = true
 	self.red = 0
@@ -600,9 +598,9 @@ function body:drawGlow()
     love.graphics.polygon("fill", unpack(self.data))
   elseif self.type == "image" and self.img then
     if self.glowStrength > 0.0 and self.glow then
-      love.graphics.setShader(self.world.glowShader)
-      self.world.glowShader:send("glowImage", self.glow)
-      self.world.glowShader:send("glowTime", love.timer.getTime() * 0.5)
+      love.graphics.setShader(self.glowShader)
+      self.glowShader:send("glowImage", self.glow)
+      self.glowShader:send("glowTime", love.timer.getTime() * 0.5)
       love.graphics.setColor(255, 255, 255)
     else
       love.graphics.setShader()
@@ -657,9 +655,11 @@ end
 
 function body:drawMaterial()
   if self.material and self.normal then
+    love.graphics.setShader(self.materialShader)
     love.graphics.setColor(255, 255, 255)
-    self.world.materialShader:send("material", self.material)
+    self.materialShader:send("material", self.material)
     love.graphics.draw(self.normal, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    love.graphics.setShader()
   end
 end
 

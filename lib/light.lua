@@ -5,6 +5,10 @@ local vector = require(_PACKAGE..'/vector')
 
 local light = class()
 
+light.shader             = love.graphics.newShader(_PACKAGE.."/shaders/poly_shadow.glsl")
+light.normalShader       = love.graphics.newShader(_PACKAGE.."/shaders/normal.glsl")
+light.normalInvertShader = love.graphics.newShader(_PACKAGE.."/shaders/normal_invert.glsl")
+
 function light:init(world, x, y, r, g, b, range)
   self.world = world
 	self.direction = 0
@@ -115,18 +119,18 @@ function light:setGlowStrength(strength)
 end
 
 function light:updateShadow()
+  love.graphics.setShader(self.shader)
   if self.x + self.range > self.world.translate_x and self.x - self.range < love.graphics.getWidth() + self.world.translate_x
     and self.y + self.range > self.world.translate_y and self.y - self.range < love.graphics.getHeight() + self.world.translate_y
   then
     local lightposrange = {self.x, love.graphics.getHeight() - self.y, self.range}
-    self.world.direction = self.world.direction + 0.002
-    self.world.shader:send("lightPosition", {self.x - self.world.translate_x, love.graphics.getHeight() - (self.y - self.world.translate_y), self.z})
-    self.world.shader:send("lightRange", self.range)
-    self.world.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.world.shader:send("lightSmooth", self.smooth)
-    self.world.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-    self.world.shader:send("lightAngle", math.pi - self.angle / 2.0)
-    self.world.shader:send("lightDirection", self.direction)
+    self.shader:send("lightPosition", {self.x - self.world.translate_x, love.graphics.getHeight() - (self.y - self.world.translate_y), self.z})
+    self.shader:send("lightRange", self.range)
+    self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+    self.shader:send("lightSmooth", self.smooth)
+    self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+    self.shader:send("lightAngle", math.pi - self.angle / 2.0)
+    self.shader:send("lightDirection", self.direction)
 
     love.graphics.setCanvas(self.shadow)
     love.graphics.clear()
@@ -158,7 +162,7 @@ function light:updateShadow()
       self.world.body[k]:drawShadow(self)
     end
 
-    love.graphics.setShader(self.world.shader)
+    love.graphics.setShader(self.shader)
 
     -- draw shine
     love.graphics.setCanvas(self.shine)
@@ -172,6 +176,7 @@ function light:updateShadow()
   else
     self.visible = false
   end
+  love.graphics.setShader()
 end
 
 function light:drawShadow()
@@ -301,23 +306,23 @@ end
 function light:drawPixelShadow()
   if self.visible then
     if self.normalInvert then
-      self.world.normalInvertShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
-      self.world.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.world.normalInvertShader:send('lightPosition',{self.x, love.graphics.getHeight() - self.y, self.z / 255.0})
-      self.world.normalInvertShader:send('lightRange',{self.range})
-      self.world.normalInvertShader:send("lightSmooth", self.smooth)
-      self.world.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.world.normalInvertShader:send("lightDirection", self.direction)
-      love.graphics.setShader(self.world.normalInvertShader)
+      self.normalInvertShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
+      self.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+      self.normalInvertShader:send('lightPosition',{self.x, love.graphics.getHeight() - self.y, self.z / 255.0})
+      self.normalInvertShader:send('lightRange',{self.range})
+      self.normalInvertShader:send("lightSmooth", self.smooth)
+      self.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
+      self.normalInvertShader:send("lightDirection", self.direction)
+      love.graphics.setShader(self.normalInvertShader)
     else
-      self.world.normalShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
-      self.world.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.world.normalShader:send('lightPosition',{self.x, love.graphics.getHeight() - self.y, self.z / 255.0})
-      self.world.normalShader:send('lightRange',{self.range})
-      self.world.normalShader:send("lightSmooth", self.smooth)
-      self.world.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.world.normalShader:send("lightDirection", self.direction)
-      love.graphics.setShader(self.world.normalShader)
+      self.normalShader:send('screenResolution', {love.graphics.getWidth(), love.graphics.getHeight()})
+      self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+      self.normalShader:send('lightPosition',{self.x, love.graphics.getHeight() - self.y, self.z / 255.0})
+      self.normalShader:send('lightRange',{self.range})
+      self.normalShader:send("lightSmooth", self.smooth)
+      self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
+      self.normalShader:send("lightDirection", self.direction)
+      love.graphics.setShader(self.normalShader)
     end
     love.graphics.draw(self.world.normalMap, self.world.translate_x, self.world.translate_y)
   end

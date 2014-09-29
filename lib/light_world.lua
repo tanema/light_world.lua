@@ -29,82 +29,49 @@ local height_map_conv = require(_PACKAGE..'/height_map_conv')
 
 local light_world = class()
 
+light_world.blurv              = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
+light_world.blurh              = love.graphics.newShader(_PACKAGE.."/shaders/blurh.glsl")
+light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."/shaders/refraction.glsl")
+light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."/shaders/reflection.glsl")
+
+light_world.blurv:send("screen",            {love.window.getWidth(), love.window.getHeight()})
+light_world.blurh:send("screen",            {love.window.getWidth(), love.window.getHeight()})
+light_world.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+light_world.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+
 function light_world:init()
   self.translate_x = 0
   self.translate_y = 0
-  self.direction = 0
-
   self.last_buffer = nil
 
 	self.lights = {}
-	self.ambient = {0, 0, 0}
 	self.body = {}
-	self.refraction = {}
-	self.shadow = love.graphics.newCanvas()
-	self.shadow2 = love.graphics.newCanvas()
-	self.shine = love.graphics.newCanvas()
-	self.shine2 = love.graphics.newCanvas()
-	self.normalMap = love.graphics.newCanvas()
-	self.glowMap = love.graphics.newCanvas()
-	self.glowMap2 = love.graphics.newCanvas()
-	self.refractionMap = love.graphics.newCanvas()
-	self.refractionMap2 = love.graphics.newCanvas()
-	self.reflectionMap = love.graphics.newCanvas()
-	self.reflectionMap2 = love.graphics.newCanvas()
-	self.normalInvert = false
-	self.glowBlur = 1.0
-	self.glowTimer = 0.0
-	self.glowDown = false
-	self.refractionStrength = 8.0
 
-	self.pixelShadow = love.graphics.newCanvas()
-	self.pixelShadow2 = love.graphics.newCanvas()
-
-  self.blurv = love.graphics.newShader("shader/blurv.glsl")
-  self.blurh = love.graphics.newShader("shader/blurh.glsl")
-  self.blurv:send("screen", {love.window.getWidth(), love.window.getHeight()})
-  self.blurh:send("screen", {love.window.getWidth(), love.window.getHeight()})
-
-	self.shader = love.graphics.newShader("shader/poly_shadow.glsl")
-	self.glowShader = love.graphics.newShader("shader/glow.glsl")
-	self.normalShader = love.graphics.newShader("shader/normal.glsl")
-	self.normalInvertShader = love.graphics.newShader("shader/normal_invert.glsl")
-	self.materialShader = love.graphics.newShader("shader/material.glsl")
-	self.refractionShader = love.graphics.newShader("shader/refraction.glsl")
-	self.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
-	self.reflectionShader = love.graphics.newShader("shader/reflection.glsl")
-	self.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
-
-	self.reflectionStrength = 16.0
+	self.ambient              = {0, 0, 0}
+	self.normalInvert         = false
+	self.glowBlur             = 1.0
+	self.glowTimer            = 0.0
+	self.glowDown             = false
+	self.refractionStrength   = 8.0
+	self.reflectionStrength   = 16.0
 	self.reflectionVisibility = 1.0
-	self.blur = 2.0
-	self.optionShadows = true
-	self.optionPixelShadows = true
-	self.optionGlow = true
-	self.optionRefraction = true
-	self.optionReflection = true
-	self.isShadows = false
-	self.isLight = false
-	self.isPixelShadows = false
-	self.isGlow = false
-	self.isRefraction = false
-	self.isReflection = false
+	self.blur                 = 2.0
+
+  self:refreshScreenSize()
 end
 
 function light_world:updateShadows()
-  if not self.optionShadows or not (self.isShadows or self.isLight) then
+  if not self.isShadows and not self.isLight then
     return
   end
 
   self.last_buffer = love.graphics.getCanvas()
-  love.graphics.setShader(self.shader)
 
   for i = 1, #self.lights do
     self.lights[i]:updateShadow()
   end
 
   -- update shadow
-  love.graphics.setShader()
   love.graphics.setCanvas(self.shadow)
   love.graphics.setStencil()
   love.graphics.setColor(unpack(self.ambient))
@@ -132,7 +99,7 @@ function light_world:updateShadows()
 end
 
 function light_world:updatePixelShadows()
-  if not self.optionPixelShadows or not self.isPixelShadows then
+  if not self.isPixelShadows then
     return
   end
 
@@ -173,7 +140,7 @@ function light_world:updatePixelShadows()
 end
 
 function light_world:updateGlow()
-  if not self.optionGlow or not self.isGlow then
+  if not self.isGlow then
     return
   end
 
@@ -201,7 +168,7 @@ function light_world:updateGlow()
 end
 
 function light_world:updateRefraction()
-  if not self.optionRefraction or not self.isRefraction then
+  if not self.isRefraction then
     return
   end
 
@@ -217,7 +184,7 @@ function light_world:updateRefraction()
 end
 
 function light_world:updateRelfection()
-  if not self.optionReflection or not self.isReflection then
+  if not self.isReflection then
     return
   end
 
@@ -232,24 +199,24 @@ function light_world:updateRelfection()
 end
 
 function light_world:refreshScreenSize()
-  self.shadow = love.graphics.newCanvas()
-  self.shadow2 = love.graphics.newCanvas()
-  self.shine = love.graphics.newCanvas()
-  self.shine2 = love.graphics.newCanvas()
-  self.normalMap = love.graphics.newCanvas()
-  self.glowMap = love.graphics.newCanvas()
-  self.glowMap2 = love.graphics.newCanvas()
-  self.refractionMap = love.graphics.newCanvas()
-  self.refractionMap2 = love.graphics.newCanvas()
-  self.reflectionMap = love.graphics.newCanvas()
-  self.reflectionMap2 = love.graphics.newCanvas()
-  self.pixelShadow = love.graphics.newCanvas()
-  self.pixelShadow2 = love.graphics.newCanvas()
+	self.shadow           = love.graphics.newCanvas()
+	self.shadow2          = love.graphics.newCanvas()
+	self.pixelShadow      = love.graphics.newCanvas()
+	self.pixelShadow2     = love.graphics.newCanvas()
+	self.shine            = love.graphics.newCanvas()
+	self.shine2           = love.graphics.newCanvas()
+	self.normalMap        = love.graphics.newCanvas()
+	self.glowMap          = love.graphics.newCanvas()
+	self.glowMap2         = love.graphics.newCanvas()
+	self.refractionMap    = love.graphics.newCanvas()
+	self.refractionMap2   = love.graphics.newCanvas()
+	self.reflectionMap    = love.graphics.newCanvas()
+	self.reflectionMap2   = love.graphics.newCanvas()
 end
 
 -- draw shadow
 function light_world:drawShadow()
-  if not self.optionShadows or not (self.isShadows or self.isLight) then
+  if not self.isShadows and not self.isLight then
     return
   end
 
@@ -281,7 +248,7 @@ end
 
 -- draw shine
 function light_world:drawShine()
-  if not self.optionShadows or not self.isShadows then
+  if not self.isShadows then
     return
   end
   love.graphics.setColor(255, 255, 255)
@@ -311,7 +278,7 @@ end
 
 -- draw pixel shadow
 function light_world:drawPixelShadow()
-  if not self.optionPixelShadows or not self.isPixelShadows then
+  if not self.isPixelShadows then
     return 
   end
   self:updatePixelShadows()
@@ -324,16 +291,14 @@ end
 
 -- draw material
 function light_world:drawMaterial()
-  love.graphics.setShader(self.materialShader)
   for i = 1, #self.body do
     self.body[i]:drawMaterial()
   end
-  love.graphics.setShader()
 end
 
 -- draw glow
 function light_world:drawGlow()
-  if not self.optionGlow or not self.isGlow then
+  if not self.isGlow then
     return
   end
 
@@ -364,7 +329,7 @@ function light_world:drawGlow()
 end
 -- draw refraction
 function light_world:drawRefraction()
-  if not self.optionRefraction or not self.isRefraction then
+  if not self.isRefraction then
     return
   end
 
@@ -386,7 +351,7 @@ end
 
 -- draw reflection
 function light_world:drawReflection()
-  if not self.optionReflection or not self.isReflection then
+  if not self.isReflection then
     return
   end
 
