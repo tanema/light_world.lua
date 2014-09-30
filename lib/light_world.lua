@@ -40,8 +40,7 @@ light_world.refractionShader:send("screen", {love.window.getWidth(), love.window
 light_world.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
 
 function light_world:init()
-  self.translate_x = 0
-  self.translate_y = 0
+  self.scale = 1
   self.last_buffer = nil
 
 	self.lights = {}
@@ -60,15 +59,14 @@ function light_world:init()
   self:refreshScreenSize()
 end
 
-function light_world:updateShadows()
+function light_world:updateShadows(l,t,w,h)
   if not self.isShadows and not self.isLight then
     return
   end
-
   self.last_buffer = love.graphics.getCanvas()
 
   for i = 1, #self.lights do
-    self.lights[i]:updateShadow()
+    self.lights[i]:updateShadow(l,t,w,h)
   end
 
   -- update shadow
@@ -76,29 +74,33 @@ function light_world:updateShadows()
   love.graphics.setStencil()
   love.graphics.setColor(unpack(self.ambient))
   love.graphics.setBlendMode("alpha")
-  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.rectangle("fill", l, t, w, h)
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("additive")
 
   for i = 1, #self.lights do
-    self.lights[i]:drawShadow()
-  end
-
-  -- update shine
-  love.graphics.setCanvas(self.shine)
-  love.graphics.setColor(unpack(self.ambient))
-  love.graphics.setBlendMode("alpha")
-  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.setBlendMode("additive")
-
-  for i = 1, #self.lights do
-    self.lights[i]:drawShine()
+    self.lights[i]:drawShadow(l,t,w,h)
   end
   love.graphics.setCanvas(self.last_buffer)
 end
 
-function light_world:updatePixelShadows()
+function light_world:updateShine(l,t,w,h)
+  self.last_buffer = love.graphics.getCanvas()
+  -- update shine
+  love.graphics.setCanvas(self.shine)
+  love.graphics.setColor(unpack(self.ambient))
+  love.graphics.setBlendMode("alpha")
+  love.graphics.rectangle("fill", l, t, w, h)
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.setBlendMode("additive")
+
+  for i = 1, #self.lights do
+    self.lights[i]:drawShine(l,t,w,h)
+  end
+  love.graphics.setCanvas(self.last_buffer)
+end
+
+function light_world:updatePixelShadows(l,t,w,h)
   if not self.isPixelShadows then
     return
   end
@@ -112,7 +114,7 @@ function light_world:updatePixelShadows()
   love.graphics.setShader()
   love.graphics.setCanvas(self.normalMap)
   for i = 1, #self.body do
-    self.body[i]:drawPixelShadow()
+    self.body[i]:drawPixelShadow(l,t,w,h)
   end
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("alpha")
@@ -123,23 +125,23 @@ function light_world:updatePixelShadows()
   love.graphics.setShader(self.shader2)
 
   for i = 1, #self.lights do
-    self.lights[i]:drawPixelShadow()
+    self.lights[i]:drawPixelShadow(l,t,w,h)
   end
 
   love.graphics.setShader()
   self.pixelShadow:clear(255, 255, 255)
   love.graphics.setCanvas(self.pixelShadow)
   love.graphics.setBlendMode("alpha")
-  love.graphics.draw(self.pixelShadow2, self.translate_x, self.translate_y)
+  love.graphics.draw(self.pixelShadow2, l,t)
   love.graphics.setBlendMode("additive")
   love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
-  love.graphics.rectangle("fill", self.translate_x, self.translate_y, love.graphics.getWidth(), love.graphics.getHeight())
+  love.graphics.rectangle("fill", l,t,w,h)
   love.graphics.setBlendMode("alpha")
 
   love.graphics.setCanvas(self.last_buffer)
 end
 
-function light_world:updateGlow()
+function light_world:updateGlow(l,t,w,h)
   if not self.isGlow then
     return
   end
@@ -162,12 +164,12 @@ function light_world:updateGlow()
   end
 
   for i = 1, #self.body do
-    self.body[i]:drawGlow()
+    self.body[i]:drawGlow(l,t,w,h)
   end
   love.graphics.setCanvas(self.last_buffer)
 end
 
-function light_world:updateRefraction()
+function light_world:updateRefraction(l,t,w,h)
   if not self.isRefraction then
     return
   end
@@ -178,12 +180,12 @@ function light_world:updateRefraction()
   self.refractionMap:clear()
   love.graphics.setCanvas(self.refractionMap)
   for i = 1, #self.body do
-    self.body[i]:drawRefraction()
+    self.body[i]:drawRefraction(l,t,w,h)
   end
   love.graphics.setCanvas(self.last_buffer)
 end
 
-function light_world:updateRelfection()
+function light_world:updateRelfection(l,t,w,h)
   if not self.isReflection then
     return
   end
@@ -193,7 +195,7 @@ function light_world:updateRelfection()
   self.reflectionMap:clear(0, 0, 0)
   love.graphics.setCanvas(self.reflectionMap)
   for i = 1, #self.body do
-    self.body[i]:drawReflection()
+    self.body[i]:drawReflection(l,t,w,h)
   end
   love.graphics.setCanvas(self.last_buffer)
 end
@@ -214,13 +216,19 @@ function light_world:refreshScreenSize()
 	self.reflectionMap2   = love.graphics.newCanvas()
 end
 
+function light_world.clampScreen(l,t,w,h)
+  return (l or 0), (t or 0), (w or love.graphics.getWidth()), (h or love.graphics.getHeight())
+end
+
 -- draw shadow
-function light_world:drawShadow()
+function light_world:drawShadow(l,t,w,h)
   if not self.isShadows and not self.isLight then
     return
   end
 
-  self:updateShadows()
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updateShadows(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   if self.blur then
     self.last_buffer = love.graphics.getCanvas()
@@ -229,28 +237,32 @@ function light_world:drawShadow()
     love.graphics.setBlendMode("alpha")
     love.graphics.setCanvas(self.shadow2)
     love.graphics.setShader(self.blurv)
-    love.graphics.draw(self.shadow, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shadow, l, t)
     love.graphics.setCanvas(self.shadow)
     love.graphics.setShader(self.blurh)
-    love.graphics.draw(self.shadow2, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shadow2, l, t)
     love.graphics.setCanvas(self.last_buffer)
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setShader()
-    love.graphics.draw(self.shadow, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shadow, l, t)
     love.graphics.setBlendMode("alpha")
   else
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setShader()
-    love.graphics.draw(self.shadow, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shadow, l, t)
     love.graphics.setBlendMode("alpha")
   end
 end
 
 -- draw shine
-function light_world:drawShine()
+function light_world:drawShine(l,t,w,h)
   if not self.isShadows then
     return
   end
+
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updateShine(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   if self.blur and false then
     self.last_buffer = love.graphics.getCanvas()
@@ -259,55 +271,62 @@ function light_world:drawShine()
     love.graphics.setBlendMode("alpha")
     love.graphics.setCanvas(self.shine2)
     love.graphics.setShader(self.blurv)
-    love.graphics.draw(self.shine, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shine, l, t)
     love.graphics.setCanvas(self.shine)
     love.graphics.setShader(self.blurh)
-    love.graphics.draw(self.shine2, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shine2, l, t)
     love.graphics.setCanvas(self.last_buffer)
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setShader()
-    love.graphics.draw(self.shine, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shine, l, t)
     love.graphics.setBlendMode("alpha")
   else
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setShader()
-    love.graphics.draw(self.shine, self.translate_x, self.translate_y)
+    love.graphics.draw(self.shine, l, t)
     love.graphics.setBlendMode("alpha")
   end
 end
 
 -- draw pixel shadow
-function light_world:drawPixelShadow()
+function light_world:drawPixelShadow(l,t,w,h)
   if not self.isPixelShadows then
     return 
   end
-  self:updatePixelShadows()
+
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updatePixelShadows(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("multiplicative")
   love.graphics.setShader()
-  love.graphics.draw(self.pixelShadow, self.translate_x, self.translate_y)
+  love.graphics.draw(self.pixelShadow, l, t)
   love.graphics.setBlendMode("alpha")
 end
 
 -- draw material
-function light_world:drawMaterial()
+function light_world:drawMaterial(l,t,w,h)
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
   for i = 1, #self.body do
-    self.body[i]:drawMaterial()
+    self.body[i]:drawMaterial(l,t,w,h)
   end
 end
 
 -- draw glow
-function light_world:drawGlow()
+function light_world:drawGlow(l,t,w,h)
   if not self.isGlow then
     return
   end
 
-  self:updateGlow()
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updateGlow(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   if self.glowBlur == 0.0 then
     love.graphics.setBlendMode("additive")
     love.graphics.setShader()
-    love.graphics.draw(self.glowMap, self.translate_x, self.translate_y)
+    love.graphics.draw(self.glowMap, l,t)
     love.graphics.setBlendMode("alpha")
   else
     self.blurv:send("steps", self.glowBlur)
@@ -317,57 +336,61 @@ function light_world:drawGlow()
     self.glowMap2:clear()
     love.graphics.setCanvas(self.glowMap2)
     love.graphics.setShader(self.blurv)
-    love.graphics.draw(self.glowMap, self.translate_x, self.translate_y)
+    love.graphics.draw(self.glowMap, l, t)
     love.graphics.setCanvas(self.glowMap)
     love.graphics.setShader(self.blurh)
-    love.graphics.draw(self.glowMap2, self.translate_x, self.translate_y)
+    love.graphics.draw(self.glowMap2, l, t)
     love.graphics.setCanvas(self.last_buffer)
     love.graphics.setShader()
-    love.graphics.draw(self.glowMap, self.translate_x, self.translate_y)
+    love.graphics.draw(self.glowMap, l, t)
     love.graphics.setBlendMode("alpha")
   end
 end
 -- draw refraction
-function light_world:drawRefraction()
+function light_world:drawRefraction(l,t,w,h)
   if not self.isRefraction then
     return
   end
 
-  self:updateRefraction()
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updateRefraction(l,t,w,h)
   self.last_buffer = love.graphics.getCanvas()
   if self.last_buffer then
     love.graphics.setColor(255, 255, 255)
     love.graphics.setBlendMode("alpha")
     love.graphics.setCanvas(self.refractionMap2)
-    love.graphics.draw(self.last_buffer, self.translate_x, self.translate_y)
+    love.graphics.draw(self.last_buffer, l, t)
     love.graphics.setCanvas(self.last_buffer)
     self.refractionShader:send("backBuffer", self.refractionMap2)
     self.refractionShader:send("refractionStrength", self.refractionStrength)
     love.graphics.setShader(self.refractionShader)
-    love.graphics.draw(self.refractionMap, self.translate_x, self.translate_y)
+    love.graphics.draw(self.refractionMap, l, t)
     love.graphics.setShader()
   end
 end
 
 -- draw reflection
-function light_world:drawReflection()
+function light_world:drawReflection(l,t,w,h)
   if not self.isReflection then
     return
   end
 
-  self:updateRelfection()
+  l,t,w,h = self.clampScreen(l,t,w,h)
+
+  self:updateRelfection(l,t,w,h)
   self.last_buffer = love.graphics.getCanvas()
   if self.last_buffer then
     love.graphics.setColor(255, 255, 255)
     love.graphics.setBlendMode("alpha")
     love.graphics.setCanvas(self.reflectionMap2)
-    love.graphics.draw(self.last_buffer, self.translate_x, self.translate_y)
+    love.graphics.draw(self.last_buffer, l, t)
     love.graphics.setCanvas(self.last_buffer)
     self.reflectionShader:send("backBuffer", self.reflectionMap2)
     self.reflectionShader:send("reflectionStrength", self.reflectionStrength)
     self.reflectionShader:send("reflectionVisibility", self.reflectionVisibility)
     love.graphics.setShader(self.reflectionShader)
-    love.graphics.draw(self.reflectionMap, self.translate_x, self.translate_y)
+    love.graphics.draw(self.reflectionMap, l, t)
     love.graphics.setShader()
   end
 end
@@ -393,12 +416,6 @@ function light_world:clearBodys()
   self.isGlow = false
   self.isRefraction = false
   self.isReflection = false
-end
-
--- set offset
-function light_world:setTranslation(translateX, translateY)
-  self.translate_x = translateX
-  self.translate_y = translateY
 end
 
 -- set ambient color

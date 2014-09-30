@@ -1,8 +1,12 @@
 -- Example: Short Example
 require "lib/postshader"
+
+local gamera     = require "vendor/gamera"
 local LightWorld = require "lib/light_world"
 
 function love.load()
+  scale = 1
+  camera = gamera.new(0,0,2000,2000)
 	-- load images
 	image = love.graphics.newImage("gfx/machine2.png")
 	image_normal = love.graphics.newImage("gfx/cone_normal.png")
@@ -43,43 +47,47 @@ end
 
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
-	lightMouse:setPosition(love.mouse.getX(), love.mouse.getY())
+
+  local x, y = camera:getPosition()
+	if love.keyboard.isDown("up") then
+		y = y - dt * 200
+	elseif love.keyboard.isDown("down") then
+		y = y + dt * 200
+	end
+
+	if love.keyboard.isDown("left") then
+		x = x - dt * 200
+	elseif love.keyboard.isDown("right") then
+		x = x + dt * 200
+	end
+
+	if love.keyboard.isDown("-") then
+		scale = scale - 0.01
+	elseif love.keyboard.isDown("=") then
+		scale = scale + 0.01
+	end
+
+  camera:setPosition(x, y)
+  camera:setScale(scale)
+	lightMouse:setPosition(camera:toWorld(love.mouse.getX(), love.mouse.getY()))
 end
 
 function love.draw()
-	love.postshader.setBuffer("render")
-	
-	-- draw background
-	love.graphics.setColor(255, 255, 255)
-	love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-	--love.graphics.draw(imgFloor, quadScreen, 0, 0)
+  --camera:setScale(scale)
+  camera:draw(function(l,t,w,h)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.rectangle("fill", 0, 0, 2000, 2000)
+    lightWorld:drawShadow(l,t,w,h)
+    love.graphics.setColor(63, 255, 127)
+    love.graphics.circle("fill", circleTest:getX(), circleTest:getY(), circleTest:getRadius())
+    love.graphics.polygon("fill", rectangleTest:getPoints())
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
 
-	-- draw lightmap shadows
-	lightWorld:drawShadow()
-
-	-- draw scene objects
-	love.graphics.setColor(63, 255, 127)
-	love.graphics.circle("fill", circleTest:getX(), circleTest:getY(), circleTest:getRadius())
-	love.graphics.polygon("fill", rectangleTest:getPoints())
-	love.graphics.setColor(255, 255, 255)
-	love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
-
-	--love.graphics.rectangle("fill", 128 - 32, 128 - 32, 64, 64)
-
-	-- draw lightmap shine
-	lightWorld:drawShine()
-
-	-- draw pixel shadow
-	lightWorld:drawPixelShadow()
-
-	-- draw glow
-	lightWorld:drawGlow()
-
-	-- draw refraction
-	lightWorld:drawRefraction()
-
-	-- draw reflection
-	lightWorld:drawReflection()
-
-	love.postshader.draw()
+    lightWorld:drawShine(l,t,w,h)
+    lightWorld:drawPixelShadow(l,t,w,h)
+    lightWorld:drawGlow(l,t,w,h)
+    lightWorld:drawRefraction(l,t,w,h)
+    lightWorld:drawReflection(l,t,w,h)
+  end)
 end

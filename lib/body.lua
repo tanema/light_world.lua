@@ -546,7 +546,7 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:drawShadow(light)
+function body:drawShadow(light, l,t,w,h)
   if self.alpha < 1.0 then
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setColor(self.red, self.green, self.blue)
@@ -572,24 +572,25 @@ function body:drawShadow(light)
     }
 
     self.shadowMesh:setVertices(self.shadowVert)
-    love.graphics.draw(self.shadowMesh, self.x - self.ox + self.world.translate_x, self.y - self.oy + self.world.translate_y)
+    love.graphics.draw(self.shadowMesh, self.x - self.ox + l, self.y - self.oy + t)
   end
 end
 
-function body:drawPixelShadow()
+function body:drawPixelShadow(l,t,w,h)
   if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
-    love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
   end
 end
 
-function body:drawGlow()
+function body:drawGlow(l,t,w,h)
   if self.glowStrength > 0.0 then
     love.graphics.setColor(self.glowRed * self.glowStrength, self.glowGreen * self.glowStrength, self.glowBlue * self.glowStrength)
   else
     love.graphics.setColor(0, 0, 0)
   end
 
+  --glow has no translation compensation?!
   if self.type == "circle" then
     love.graphics.circle("fill", self.x, self.y, self.radius)
   elseif self.type == "rectangle" then
@@ -606,25 +607,26 @@ function body:drawGlow()
       love.graphics.setShader()
       love.graphics.setColor(0, 0, 0)
     end
-    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+    love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
   end
 
   love.graphics.setShader()
 end
 
-function body:drawRefraction()
+function body:drawRefraction(l,t,w,h)
   if self.refraction and self.normal then
     love.graphics.setColor(255, 255, 255)
     if self.tileX == 0.0 and self.tileY == 0.0 then
-      love.graphics.draw(normal, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+      love.graphics.draw(normal, self.x - self.nx + l, self.y - self.ny + t)
     else
       self.normalMesh:setVertices(self.normalVert)
-      love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+      love.graphics.draw(self.normalMesh, self.x - self.nx + l, self.y - self.ny + t)
     end
   end
 
   love.graphics.setColor(0, 0, 0)
 
+  -- no translation compensation again?
   if not self.refractive then
     if self.type == "circle" then
       love.graphics.circle("fill", self.x, self.y, self.radius)
@@ -633,32 +635,32 @@ function body:drawRefraction()
     elseif self.type == "polygon" then
       love.graphics.polygon("fill", unpack(self.data))
     elseif self.type == "image" and self.img then
-      love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+      love.graphics.draw(self.img, self.x - self.ix + l, self.y - self.iy + t)
     end
   end
 end
 
-function body:drawReflection()
+function body:drawReflection(l,t,w,h)
   if self.reflection and self.normal then
     love.graphics.setColor(255, 0, 0)
     self.normalMesh:setVertices(self.normalVert)
-    love.graphics.draw(self.normalMesh, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    love.graphics.draw(self.normalMesh, self.x - self.nx + l, self.y - self.ny + t)
   end
   if self.reflective and self.img then
     love.graphics.setColor(0, 255, 0)
-    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+    love.graphics.draw(self.img, self.x - self.ix + l, self.y - self.iy + t)
   elseif not self.reflection and self.img then
     love.graphics.setColor(0, 0, 0)
-    love.graphics.draw(self.img, self.x - self.ix + self.world.translate_x, self.y - self.iy + self.world.translate_y)
+    love.graphics.draw(self.img, self.x - self.ix + l, self.y - self.iy + t)
   end
 end
 
-function body:drawMaterial()
+function body:drawMaterial(l,t,w,h)
   if self.material and self.normal then
     love.graphics.setShader(self.materialShader)
     love.graphics.setColor(255, 255, 255)
     self.materialShader:send("material", self.material)
-    love.graphics.draw(self.normal, self.x - self.nx + self.world.translate_x, self.y - self.ny + self.world.translate_y)
+    love.graphics.draw(self.normal, self.x - self.nx + l, self.y - self.ny + t)
     love.graphics.setShader()
   end
 end
