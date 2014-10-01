@@ -40,7 +40,6 @@ light_world.refractionShader:send("screen", {love.window.getWidth(), love.window
 light_world.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
 
 function light_world:init()
-  self.scale = 1
   self.last_buffer = nil
 
 	self.lights = {}

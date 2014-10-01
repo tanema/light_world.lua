@@ -73,7 +73,6 @@ function love.update(dt)
 end
 
 function love.draw()
-  --camera:setScale(scale)
   camera:draw(function(l,t,w,h)
     love.graphics.setColor(255, 255, 255)
     love.graphics.rectangle("fill", 0, 0, 2000, 2000)
@@ -83,7 +82,6 @@ function love.draw()
     love.graphics.polygon("fill", rectangleTest:getPoints())
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
-
     lightWorld:drawShine(l,t,w,h)
     lightWorld:drawPixelShadow(l,t,w,h)
     lightWorld:drawGlow(l,t,w,h)

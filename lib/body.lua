@@ -590,7 +590,6 @@ function body:drawGlow(l,t,w,h)
     love.graphics.setColor(0, 0, 0)
   end
 
-  --glow has no translation compensation?!
   if self.type == "circle" then
     love.graphics.circle("fill", self.x, self.y, self.radius)
   elseif self.type == "rectangle" then
@@ -626,7 +625,6 @@ function body:drawRefraction(l,t,w,h)
 
   love.graphics.setColor(0, 0, 0)
 
-  -- no translation compensation again?
   if not self.refractive then
     if self.type == "circle" then
       love.graphics.circle("fill", self.x, self.y, self.radius)
