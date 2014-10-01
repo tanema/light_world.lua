@@ -224,6 +224,7 @@ function love.update(dt)
 end
 
 function love.draw()
+	lightWorld:update()
 	-- set shader buffer
 	if bloomOn then
 		love.postshader.setBuffer("render")

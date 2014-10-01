@@ -72,6 +72,7 @@ function exf.draw()
 
     exf.list:draw()
 
+    lightWorld:update()
 	lightWorld:drawShadow()
 
 	love.graphics.setColor(255, 255, 255)
@@ -329,7 +330,7 @@ end
 
 function List:draw()
     love.graphics.setLineWidth(2)
-	love.graphics.setLineStyle("rough")
+	  love.graphics.setLineStyle("rough")
     love.graphics.setFont(self.font)
 
     love.graphics.setColor(48, 156, 225)
