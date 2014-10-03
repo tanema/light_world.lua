@@ -1,6 +1,6 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
-local height_map_conv = require(_PACKAGE..'/height_map_conv')
+local normal_map = require(_PACKAGE..'/normal_map')
 local vector = require(_PACKAGE..'/vector')
 local shadowLength = 100000
 
@@ -299,83 +299,22 @@ end
 
 -- set height map
 function body:setHeightMap(heightMap, strength)
-  self:setNormalMap(height_map_conv.toNormalMap(heightMap, strength))
+  self:setNormalMap(normal_map.fromHeightMap(heightMap, strength))
 end
 
 -- generate flat normal map
 function body:generateNormalMapFlat(mode)
-  local imgData = self.img:getData()
-  local imgNormalData = love.image.newImageData(self.imgWidth, self.imgHeight)
-  local color
-
-  if mode == "top" then
-    color = {127, 127, 255}
-  elseif mode == "front" then
-    color = {127, 0, 127}
-  elseif mode == "back" then
-    color = {127, 255, 127}
-  elseif mode == "left" then
-    color = {31, 0, 223}
-  elseif mode == "right" then
-    color = {223, 0, 127}
-  end
-
-  for i = 0, self.imgHeight - 1 do
-    for k = 0, self.imgWidth - 1 do
-      local r, g, b, a = imgData:getPixel(k, i)
-      if a > 0 then
-        imgNormalData:setPixel(k, i, color[1], color[2], color[3], 255)
-      end
-    end
-  end
-
-  self:setNormalMap(love.graphics.newImage(imgNormalData))
+  self:setNormalMap(normal_map.generateFlat(self.img, mode))
 end
 
 -- generate faded normal map
 function body:generateNormalMapGradient(horizontalGradient, verticalGradient)
-  local imgData = self.img:getData()
-  local imgNormalData = love.image.newImageData(self.imgWidth, self.imgHeight)
-  local dx = 255.0 / self.imgWidth
-  local dy = 255.0 / self.imgHeight
-  local nx
-  local ny
-  local nz
-
-  for i = 0, self.imgWidth - 1 do
-    for k = 0, self.imgHeight - 1 do
-      local r, g, b, a = imgData:getPixel(i, k)
-      if a > 0 then
-        if horizontalGradient == "gradient" then
-          nx = i * dx
-        elseif horizontalGradient == "inverse" then
-          nx = 255 - i * dx
-        else
-          nx = 127
-        end
-
-        if verticalGradient == "gradient" then
-          ny = 127 - k * dy * 0.5
-          nz = 255 - k * dy * 0.5
-        elseif verticalGradient == "inverse" then
-          ny = 127 + k * dy * 0.5
-          nz = 127 - k * dy * 0.25
-        else
-          ny = 255
-          nz = 127
-        end
-
-        imgNormalData:setPixel(i, k, nx, ny, nz, 255)
-      end
-    end
-  end
-
-  self:setNormalMap(love.graphics.newImage(imgNormalData))
+  self:setNormalMap(normal_map.generateGradient(self.img, horizontalGradient, verticalGradient))
 end
 
 -- generate normal map
 function body:generateNormalMap(strength)
-  self:setNormalMap(height_map_conv.toNormalMap(self.img, strength))
+  self:setNormalMap(normal_map.fromHeightMap(self.img, strength))
 end
 
 -- set material

@@ -25,7 +25,7 @@ local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE..'/class')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
-local height_map_conv = require(_PACKAGE..'/height_map_conv')
+local normal_map = require(_PACKAGE..'/normal_map')
 
 local light_world = class()
 
@@ -456,7 +456,7 @@ end
 
 -- new refraction from height map
 function light_world:newRefractionHeightMap(heightMap, x, y, strength)
-  local normal = height_map_conv.toNormalMap(heightMap, strength)
+  local normal = normal_map.fromHeightMap(heightMap, strength)
   self.isRefraction = true
   return self.newRefraction(p, normal, x, y)
 end
@@ -469,7 +469,7 @@ end
 
 -- new reflection from height map
 function light_world:newReflectionHeightMap(heightMap, x, y, strength)
-  local normal = height_map_conv.toNormalMap(heightMap, strength)
+  local normal = normal_map.fromHeightMap(heightMap, strength)
   self.isReflection = true
   return self.newReflection(p, normal, x, y)
 end
