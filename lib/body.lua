@@ -1,6 +1,8 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 local height_map_conv = require(_PACKAGE..'/height_map_conv')
+local vector = require(_PACKAGE..'/vector')
+local shadowLength = 100000
 
 local body = class()
 
@@ -11,10 +13,6 @@ function body:init(id, type, ...)
 	local args = {...}
 	self.id = id
 	self.type = type
-	self.normal = nil
-	self.material = nil
-	self.glow = nil
-
 	self.shine = true
 	self.red = 0
 	self.green = 0
@@ -30,31 +28,13 @@ function body:init(id, type, ...)
 	if self.type == "circle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
-		self.radius = args[3] or 16
-		self.ox = args[4] or 0
-		self.oy = args[5] or 0
-		self.shadowType = "circle"
+    self:setShadowType('circle', args[3], args[4], args[5])
 	elseif self.type == "rectangle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
-		self.width = args[3] or 64
-		self.height = args[4] or 64
-		self.ox = self.width * 0.5
-		self.oy = self.height * 0.5
-		self.shadowType = "rectangle"
-		self.data = {
-			self.x - self.ox,
-			self.y - self.oy,
-			self.x - self.ox + self.width,
-			self.y - self.oy,
-			self.x - self.ox + self.width,
-			self.y - self.oy + self.height,
-			self.x - self.ox,
-			self.y - self.oy + self.height
-		}
+    self:setShadowType('rectangle', args[3], args[4])
 	elseif self.type == "polygon" then
-		self.shadowType = "polygon"
-		self.data = args or {0, 0, 0, 0, 0, 0}
+    self:setShadowType('polygon', ...)
 	elseif self.type == "image" then
 		self.img = args[1]
 		self.x = args[2] or 0
@@ -62,102 +42,60 @@ function body:init(id, type, ...)
 		if self.img then
 			self.imgWidth = self.img:getWidth()
 			self.imgHeight = self.img:getHeight()
-			self.width = args[4] or self.imgWidth
-			self.height = args[5] or self.imgHeight
 			self.ix = self.imgWidth * 0.5
 			self.iy = self.imgHeight * 0.5
-			self.vert = {
-				{ 0.0, 0.0, 0.0, 0.0 },
-				{ self.width, 0.0, 1.0, 0.0 },
-				{ self.width, self.height, 1.0, 1.0 },
-				{ 0.0, self.height, 0.0, 1.0 },
-			}
-			self.msh = love.graphics.newMesh(self.vert, self.img, "fan")
-		else
-			self.width = args[4] or 64
-			self.height = args[5] or 64
 		end
-		self.ox = args[6] or self.width * 0.5
-		self.oy = args[7] or self.height * 0.5
-		self.shadowType = "rectangle"
-		self.data = {
-			self.x - self.ox,
-			self.y - self.oy,
-			self.x - self.ox + self.width,
-			self.y - self.oy,
-			self.x - self.ox + self.width,
-			self.y - self.oy + self.height,
-			self.x - self.ox,
-			self.y - self.oy + self.height
-		}
+    self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight)
 		self.reflective = true
 	elseif self.type == "refraction" then
-		self.normal = args[1]
-		self.x = args[2] or 0
-		self.y = args[3] or 0
-		if self.normal then
-			self.normalWidth = self.normal:getWidth()
-			self.normalHeight = self.normal:getHeight()
-			self.width = args[4] or self.normalWidth
-			self.height = args[5] or self.normalHeight
-			self.nx = self.normalWidth * 0.5
-			self.ny = self.normalHeight * 0.5
-			self.normal:setWrap("repeat", "repeat")
-			self.normalVert = {
-				{0.0, 0.0, 0.0, 0.0},
-				{self.width, 0.0, 1.0, 0.0},
-				{self.width, self.height, 1.0, 1.0},
-				{0.0, self.height, 0.0, 1.0}
-			}
-			self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
-		else
-			self.width = args[4] or 64
-			self.height = args[5] or 64
-		end
-		self.ox = self.width * 0.5
-		self.oy = self.height * 0.5
+    self:initNormal(...)
 		self.refraction = true
 	elseif self.type == "reflection" then
-		self.normal = args[1]
-		self.x = args[2] or 0
-		self.y = args[3] or 0
-		if self.normal then
-			self.normalWidth = self.normal:getWidth()
-			self.normalHeight = self.normal:getHeight()
-			self.width = args[4] or self.normalWidth
-			self.height = args[5] or self.normalHeight
-			self.nx = self.normalWidth * 0.5
-			self.ny = self.normalHeight * 0.5
-			self.normal:setWrap("repeat", "repeat")
-			self.normalVert = {
-				{0.0, 0.0, 0.0, 0.0},
-				{self.width, 0.0, 1.0, 0.0},
-				{self.width, self.height, 1.0, 1.0},
-				{0.0, self.height, 0.0, 1.0}
-			}
-			self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
-		else
-			self.width = args[4] or 64
-			self.height = args[5] or 64
-		end
-		self.ox = self.width * 0.5
-		self.oy = self.height * 0.5
+    self:initNormal(...)
 		self.reflection = true
 	end
 end
 
+function body:initNormal(...)
+	local args = {...}
+  self.normal = args[1]
+  self.x = args[2] or 0
+  self.y = args[3] or 0
+  if self.normal then
+    self.normalWidth = self.normal:getWidth()
+    self.normalHeight = self.normal:getHeight()
+    self.width = args[4] or self.normalWidth
+    self.height = args[5] or self.normalHeight
+    self.nx = self.normalWidth * 0.5
+    self.ny = self.normalHeight * 0.5
+    self.normal:setWrap("repeat", "repeat")
+    self.normalVert = {
+      {0.0, 0.0, 0.0, 0.0},
+      {self.width, 0.0, 1.0, 0.0},
+      {self.width, self.height, 1.0, 1.0},
+      {0.0, self.height, 0.0, 1.0}
+    }
+    self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
+  else
+    self.width = args[4] or 64
+    self.height = args[5] or 64
+  end
+  self.ox = self.width * 0.5
+  self.oy = self.height * 0.5
+end
+
 -- refresh
 function body:refresh()
-  if self.data then
-    self.data[1] = self.x - self.ox
-    self.data[2] = self.y - self.oy
-    self.data[3] = self.x - self.ox + self.width
-    self.data[4] = self.y - self.oy
-    self.data[5] = self.x - self.ox + self.width
-    self.data[6] = self.y - self.oy + self.height
-    self.data[7] = self.x - self.ox
-    self.data[8] = self.y - self.oy + self.height
-  end
+  self.data = {
+    self.x - self.ox,
+    self.y - self.oy,
+    self.x - self.ox + self.width,
+    self.y - self.oy,
+    self.x - self.ox + self.width,
+    self.y - self.oy + self.height,
+    self.x - self.ox,
+    self.y - self.oy + self.height
+  }
 end
 
 -- set position
@@ -483,16 +421,7 @@ function body:setShadowType(type, ...)
     self.height = args[2] or 64
     self.ox = args[3] or self.width * 0.5
     self.oy = args[4] or self.height * 0.5
-    self.data = {
-      self.x - self.ox,
-      self.y - self.oy,
-      self.x - self.ox + self.width,
-      self.y - self.oy,
-      self.x - self.ox + self.width,
-      self.y - self.oy + self.height,
-      self.x - self.ox,
-      self.y - self.oy + self.height
-    }
+    self:refresh()
   elseif self.shadowType == "polygon" then
     self.data = args or {0, 0, 0, 0, 0, 0}
   elseif self.shadowType == "image" then
@@ -665,6 +594,106 @@ function body:drawMaterial(l,t,w,h)
     self.materialShader:send("material", self.material)
     love.graphics.draw(self.normal, self.x - self.nx + l, self.y - self.ny + t)
     love.graphics.setShader()
+  end
+end
+
+function body:calculateShadow(light)
+  if self.shadowType == "rectangle" or self.shadowType == "polygon" then
+    return self:calculatePolyShadow(light)
+  elseif self.shadowType == "circle" then
+    return self:calculateCircleShadow(light)
+  end
+end
+
+function body:calculatePolyShadow(light)
+  if self.castsNoShadow then
+    return nil
+  end
+
+  local curPolygon = self.data
+  local edgeFacingTo = {}
+  for k = 1, #curPolygon, 2 do
+    local indexOfNextVertex = (k + 2) % #curPolygon
+    local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
+    local lightToPoint = {curPolygon[k] - light.x, curPolygon[k + 1] - light.y}
+
+    normal = vector.normalize(normal)
+    lightToPoint = vector.normalize(lightToPoint)
+
+    local dotProduct = vector.dot(normal, lightToPoint)
+    if dotProduct > 0 then table.insert(edgeFacingTo, true)
+    else table.insert(edgeFacingTo, false) end
+  end
+
+  local curShadowGeometry = {}
+  for k = 1, #edgeFacingTo do
+    local nextIndex = (k + 1) % #edgeFacingTo
+    if nextIndex == 0 then nextIndex = #edgeFacingTo end
+    if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
+      curShadowGeometry[1] = curPolygon[nextIndex*2-1]
+      curShadowGeometry[2] = curPolygon[nextIndex*2]
+
+      local lightVecFrontBack = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
+      curShadowGeometry[3] = curShadowGeometry[1] + lightVecFrontBack[1] * shadowLength
+      curShadowGeometry[4] = curShadowGeometry[2] + lightVecFrontBack[2] * shadowLength
+
+    elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
+      curShadowGeometry[7] = curPolygon[nextIndex*2-1]
+      curShadowGeometry[8] = curPolygon[nextIndex*2]
+
+      local lightVecBackFront = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
+      curShadowGeometry[5] = curShadowGeometry[7] + lightVecBackFront[1] * shadowLength
+      curShadowGeometry[6] = curShadowGeometry[8] + lightVecBackFront[2] * shadowLength
+    end
+  end
+  if  curShadowGeometry[1]
+    and curShadowGeometry[2]
+    and curShadowGeometry[3]
+    and curShadowGeometry[4]
+    and curShadowGeometry[5]
+    and curShadowGeometry[6]
+    and curShadowGeometry[7]
+    and curShadowGeometry[8]
+  then
+    curShadowGeometry.alpha = self.alpha
+    curShadowGeometry.red = self.red
+    curShadowGeometry.green = self.green
+    curShadowGeometry.blue = self.blue
+    return curShadowGeometry
+  else
+    return nil
+  end
+end
+
+function body:calculateCircleShadow(light)
+  if self.castsNoShadow then
+    return nil
+  end
+  local length = math.sqrt(math.pow(light.x - (self.x - self.ox), 2) + math.pow(light.y - (self.y - self.oy), 2))
+  if length >= self.radius and length <= light.range then
+    local curShadowGeometry = {}
+    local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
+    local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
+    local y2 = ((self.y - self.oy) - math.cos(angle) * self.radius)
+    local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
+    local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
+
+    curShadowGeometry[1] = x2
+    curShadowGeometry[2] = y2
+    curShadowGeometry[3] = x3
+    curShadowGeometry[4] = y3
+
+    curShadowGeometry[5] = x3 - (light.x - x3) * shadowLength
+    curShadowGeometry[6] = y3 - (light.y - y3) * shadowLength
+    curShadowGeometry[7] = x2 - (light.x - x2) * shadowLength
+    curShadowGeometry[8] = y2 - (light.y - y2) * shadowLength
+    curShadowGeometry.alpha = self.alpha
+    curShadowGeometry.red = self.red
+    curShadowGeometry.green = self.green
+    curShadowGeometry.blue = self.blue
+    return curShadowGeometry
+  else
+    return nil
   end
 end
 

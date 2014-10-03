@@ -1,7 +1,6 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 local stencils = require(_PACKAGE..'/stencils')
-local vector = require(_PACKAGE..'/vector')
 
 local light = class()
 
@@ -128,7 +127,7 @@ end
 
 function light:updateShadow(l,t,w,h, bodies)
   love.graphics.setShader(self.shader)
-  if self:inRange(l,t,w,h) then
+  if self.visible and self:inRange(l,t,w,h) then
 
     self.shader:send("lightPosition", {self.x - l, h - (self.y - t), self.z})
     self.shader:send("lightRange", self.range)
@@ -141,7 +140,13 @@ function light:updateShadow(l,t,w,h, bodies)
     love.graphics.setCanvas(self.shadow)
 
     -- calculate shadows
-    local shadow_geometry = self:calculateShadows(bodies)
+    local shadow_geometry = {}
+    for i = 1, #bodies do
+      local current = bodies[i]:calculateShadow(self)
+      if current ~= nil then
+        shadow_geometry[#shadow_geometry + 1] = current
+      end
+    end
 
     -- draw shadow
     love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
@@ -166,9 +171,8 @@ function light:updateShadow(l,t,w,h, bodies)
       bodies[k]:drawShadow(self, l,t,w,h)
     end
 
-    love.graphics.setShader(self.shader)
-
     -- draw shine
+    love.graphics.setShader(self.shader)
     love.graphics.setCanvas(self.shine)
     self.shine:clear(255, 255, 255)
     love.graphics.setBlendMode("alpha")
@@ -190,117 +194,6 @@ end
 function light:drawShine(l,t,w,h)
   if self.visible then
     love.graphics.draw(self.shine, l, t)
-  end
-end
-
-local shadowLength = 100000
-function light:calculateShadows(bodies)
-	local shadowGeometry = {}
-
-	for i = 1, #bodies do
-    local current
-		if bodies[i].shadowType == "rectangle" or bodies[i].shadowType == "polygon" then
-      current = self:calculatePolyShadow(bodies[i])
-		elseif bodies[i].shadowType == "circle" then
-      current = self:calculateCircleShadow(bodies[i])
-		end
-    if current ~= nil then
-      shadowGeometry[#shadowGeometry + 1] = current
-    end
-	end
-
-	return shadowGeometry
-end
-
-function light:calculatePolyShadow(poly)
-  if poly.castsNoShadow then
-    return nil
-  end
-
-  local curPolygon = poly.data
-  local edgeFacingTo = {}
-  for k = 1, #curPolygon, 2 do
-    local indexOfNextVertex = (k + 2) % #curPolygon
-    local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
-    local selfToPoint = {curPolygon[k] - self.x, curPolygon[k + 1] - self.y}
-
-    normal = vector.normalize(normal)
-    selfToPoint = vector.normalize(selfToPoint)
-
-    local dotProduct = vector.dot(normal, selfToPoint)
-    if dotProduct > 0 then table.insert(edgeFacingTo, true)
-    else table.insert(edgeFacingTo, false) end
-  end
-
-  local curShadowGeometry = {}
-  for k = 1, #edgeFacingTo do
-    local nextIndex = (k + 1) % #edgeFacingTo
-    if nextIndex == 0 then nextIndex = #edgeFacingTo end
-    if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[1] = curPolygon[nextIndex*2-1]
-      curShadowGeometry[2] = curPolygon[nextIndex*2]
-
-      local selfVecFrontBack = vector.normalize({curPolygon[nextIndex*2-1] - self.x, curPolygon[nextIndex*2] - self.y})
-      curShadowGeometry[3] = curShadowGeometry[1] + selfVecFrontBack[1] * shadowLength
-      curShadowGeometry[4] = curShadowGeometry[2] + selfVecFrontBack[2] * shadowLength
-
-    elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
-      curShadowGeometry[7] = curPolygon[nextIndex*2-1]
-      curShadowGeometry[8] = curPolygon[nextIndex*2]
-
-      local selfVecBackFront = vector.normalize({curPolygon[nextIndex*2-1] - self.x, curPolygon[nextIndex*2] - self.y})
-      curShadowGeometry[5] = curShadowGeometry[7] + selfVecBackFront[1] * shadowLength
-      curShadowGeometry[6] = curShadowGeometry[8] + selfVecBackFront[2] * shadowLength
-    end
-  end
-  if  curShadowGeometry[1]
-    and curShadowGeometry[2]
-    and curShadowGeometry[3]
-    and curShadowGeometry[4]
-    and curShadowGeometry[5]
-    and curShadowGeometry[6]
-    and curShadowGeometry[7]
-    and curShadowGeometry[8]
-  then
-    curShadowGeometry.alpha = poly.alpha
-    curShadowGeometry.red = poly.red
-    curShadowGeometry.green = poly.green
-    curShadowGeometry.blue = poly.blue
-    return curShadowGeometry
-  else
-    return nil
-  end
-end
-
-function light:calculateCircleShadow(circle)
-  if circle.castsNoShadow then
-    return nil
-  end
-  local length = math.sqrt(math.pow(self.x - (circle.x - circle.ox), 2) + math.pow(self.y - (circle.y - circle.oy), 2))
-  if length >= circle.radius and length <= self.range then
-    local curShadowGeometry = {}
-    local angle = math.atan2(self.x - (circle.x - circle.ox), (circle.y - circle.oy) - self.y) + math.pi / 2
-    local x2 = ((circle.x - circle.ox) + math.sin(angle) * circle.radius)
-    local y2 = ((circle.y - circle.oy) - math.cos(angle) * circle.radius)
-    local x3 = ((circle.x - circle.ox) - math.sin(angle) * circle.radius)
-    local y3 = ((circle.y - circle.oy) + math.cos(angle) * circle.radius)
-
-    curShadowGeometry[1] = x2
-    curShadowGeometry[2] = y2
-    curShadowGeometry[3] = x3
-    curShadowGeometry[4] = y3
-
-    curShadowGeometry[5] = x3 - (self.x - x3) * shadowLength
-    curShadowGeometry[6] = y3 - (self.y - y3) * shadowLength
-    curShadowGeometry[7] = x2 - (self.x - x2) * shadowLength
-    curShadowGeometry[8] = y2 - (self.y - y2) * shadowLength
-    curShadowGeometry.alpha = circle.alpha
-    curShadowGeometry.red = circle.red
-    curShadowGeometry.green = circle.green
-    curShadowGeometry.blue = circle.blue
-    return curShadowGeometry
-  else
-    return nil
   end
 end
 
