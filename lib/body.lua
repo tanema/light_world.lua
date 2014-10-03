@@ -538,10 +538,42 @@ function body:drawShadow(light, l,t,w,h)
     local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
 
     self.shadowVert = {
-      {math.sin(shadowRotation) * self.imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 0, 0, self.red, self.green, self.blue, self.alpha * self.fadeStrength * 255},
-      {self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 1, 0, self.red, self.green, self.blue, self.alpha * self.fadeStrength * 255},
-      {self.imgWidth, self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 1, 1, self.red, self.green, self.blue, self.alpha * 255},
-      {0, self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 0, 1, self.red, self.green, self.blue, self.alpha * 255}
+      {
+        math.sin(shadowRotation) * self.imgHeight * length, 
+        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        0, 0, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * self.fadeStrength * 255
+      },
+      {
+        self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, 
+        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        1, 0, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * self.fadeStrength * 255
+      },
+      {
+        self.imgWidth, 
+        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        1, 1, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * 255
+      },
+      {
+        0, 
+        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        0, 1, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * 255
+      }
     }
 
     self.shadowMesh:setVertices(self.shadowVert)

@@ -237,6 +237,7 @@ function light_world:draw(l,t,w,h,s)
 
   local last_buffer = love.graphics.getCanvas()
 	love.graphics.setCanvas(self.render_buffer)
+
   self.drawBackground(l,t,w,h,s)
   self:drawShadow(l,t,w,h,scale)
   self.drawForground(l,t,w,h,s)
@@ -245,12 +246,13 @@ function light_world:draw(l,t,w,h,s)
   self:drawGlow(l,t,w,h,scale)
   self:drawRefraction(l,t,w,h,scale)
   self:drawReflection(l,t,w,h,scale)
+
   love.graphics.setBackgroundColor(0, 0, 0)
   love.graphics.setBlendMode("alpha")
   love.graphics.setCanvas(last_buffer)
   love.graphics.setShader()
   love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.render_buffer)
+  love.graphics.draw(self.render_buffer, l, t)
 end
 
 -- draw shadow

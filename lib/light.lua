@@ -122,10 +122,14 @@ function light:setGlowStrength(strength)
   self.glowStrength = strength
 end
 
+function light:inRange(l,t,w,h)
+  return self.x + self.range > l and self.x - self.range < (l+w) and self.y + self.range > t and self.y - self.range < (t+h)
+end
+
 function light:updateShadow(l,t,w,h, bodies)
   love.graphics.setShader(self.shader)
-  if self.x + self.range > l and self.x - self.range < (l+w) and self.y + self.range > t and self.y - self.range < (t+h) then
-    local lightposrange = {self.x, h - self.y, self.range}
+  if self:inRange(l,t,w,h) then
+
     self.shader:send("lightPosition", {self.x - l, h - (self.y - t), self.z})
     self.shader:send("lightRange", self.range)
     self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
@@ -133,9 +137,8 @@ function light:updateShadow(l,t,w,h, bodies)
     self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
     self.shader:send("lightAngle", math.pi - self.angle / 2.0)
     self.shader:send("lightDirection", self.direction)
-
+    self.shadow:clear()
     love.graphics.setCanvas(self.shadow)
-    love.graphics.clear()
 
     -- calculate shadows
     local shadow_geometry = self:calculateShadows(bodies)
@@ -172,9 +175,6 @@ function light:updateShadow(l,t,w,h, bodies)
     love.graphics.setStencil(stencils.poly(bodies))
     love.graphics.rectangle("fill", l,t,w,h)
     love.graphics.setStencil()
-    self.visible = true
-  else
-    self.visible = false
   end
   love.graphics.setShader()
 end
