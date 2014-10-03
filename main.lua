@@ -58,25 +58,28 @@ function exf.update(dt)
 end
 
 function exf.draw()
-    love.graphics.setBackgroundColor(0, 0, 0)
+	lightWorld:draw(0, 0, love.window.getWidth(), love.window.getHeight(), 1)
+end
 
-	love.graphics.setColor(48, 156, 225)
-	love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
+function exf.drawBackground()
+  love.graphics.setBackgroundColor(0, 0, 0)
 
-    love.graphics.setColor(255, 255, 255, 191)
-    love.graphics.setFont(exf.bigfont)
-    love.graphics.print("Examples:", 50, 50)
+  love.graphics.setColor(48, 156, 225)
+  love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
 
-    love.graphics.setFont(exf.smallfont)
-    love.graphics.print("Browse and click on the example you \nwant to run. To return the the example \nselection screen, press escape.", 500, 80)
+  love.graphics.setColor(255, 255, 255, 191)
+  love.graphics.setFont(exf.bigfont)
+  love.graphics.print("Examples:", 50, 50)
 
-    exf.list:draw()
+  love.graphics.setFont(exf.smallfont)
+  love.graphics.print("Browse and click on the example you \nwant to run. To return the the example \nselection screen, press escape.", 500, 80)
 
-    lightWorld:update()
-	lightWorld:drawShadow()
+  exf.list:draw()
+end
 
-	love.graphics.setColor(255, 255, 255)
-    love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
+function exf.drawForground()
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
 end
 
 function exf.keypressed(k)
@@ -179,7 +182,10 @@ function exf.resume()
     love.window.setTitle("LOVE Example Browser")
 
 	-- create light world
-	lightWorld = LightWorld()
+	lightWorld = LightWorld({
+    drawBackground = exf.drawBackground,
+    drawForground = exf.drawForground
+  })
 	lightWorld:setAmbientColor(127, 127, 127)
 
 	-- create light
@@ -187,7 +193,7 @@ function exf.resume()
 	lightMouse:setSmooth(2)
 
 	-- create shadow bodys
-	circleTest = lightWorld:newCircle(800 - 128, 600 - 128, 46)
+	circleTest = lightWorld:newCircle(800 - 128, 600 - 128, exf.bigball:getWidth()*0.5)
 end
 
 function inside(mx, my, x, y, w, h)

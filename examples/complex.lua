@@ -89,10 +89,15 @@ function love.load()
 	-- light world
 	lightRange = 400
 	lightSmooth = 1.0
-	lightWorld = LightWorld()
-	lightWorld:setAmbientColor(15, 15, 31)
-	lightWorld:setRefractionStrength(16.0)
-	lightWorld:setReflectionVisibility(0.75)
+
+	lightWorld = LightWorld({
+    ambient = {15,15,15},
+    refractionStrength = 16.0,
+    reflectionVisibility = 0.75,
+    drawBackground = drawBackground,
+    drawForground = drawForground
+  })
+
 	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
 	mouseLight:setGlowStrength(0.3)
 	mouseLight:setSmooth(lightSmooth)
@@ -224,95 +229,12 @@ function love.update(dt)
 end
 
 function love.draw()
-	lightWorld:update()
 	-- set shader buffer
 	if bloomOn then
 		love.postshader.setBuffer("render")
 	end
 
-	love.graphics.setBlendMode("alpha")
-	if normalOn then
-		love.graphics.setColor(127, 127, 255)
-		love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-	else
-		love.graphics.setColor(255, 255, 255)
-		if textureOn then
-			love.graphics.draw(imgFloor, quadScreen, offsetX % 32 - 32, offsetY % 24 - 24)
-		else
-			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-		end
-	end
-
-	for i = 1, phyCnt do
-		if phyLight[i]:getType() == "refraction" then
-			if not normalOn then
-				--if math.mod(i, 2) == 0  then
-					love.graphics.setBlendMode("alpha")
-					love.graphics.setColor(255, 255, 255, 191)
-					love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
-				--else
-					--love.graphics.setBlendMode("multiplicative")
-					--math.randomseed(i)
-					--love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-					--love.graphics.rectangle("fill", phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy, 128, 128)
-				--end
-			end
-		end
-	end
-
-	-- draw lightmap shadows
-	if lightOn and not normalOn then
-		lightWorld:drawShadow()
-	end
-
-	for i = 1, phyCnt do
-		math.randomseed(i)
-		love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		if phyLight[i]:getType() == "polygon" then
-			love.graphics.polygon("fill", phyLight[i]:getPoints())
-		elseif phyLight[i]:getType() == "circle" then
-			love.graphics.circle("fill", phyLight[i]:getX(), phyLight[i]:getY(), phyLight[i]:getRadius())
-		end
-	end
-
-	-- draw lightmap shine
-	if lightOn and not normalOn then
-		lightWorld:drawShine()
-	end
-
-	love.graphics.setBlendMode("alpha")
-	for i = 1, phyCnt do
-		if phyLight[i]:getType() == "image" then
-			if normalOn and phyLight[i].normal then
-				love.graphics.setColor(255, 255, 255)
-				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
-			elseif not phyLight[i].material then
-				math.randomseed(i)
-				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
-				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
-			end
-		end
-	end
-
-	if not normalOn then
-		lightWorld:drawMaterial()
-	end
-
-	-- draw pixel shadow
-	if lightOn and not normalOn then
-		lightWorld:drawPixelShadow()
-	end
-
-	-- draw glow
-	if lightOn and not normalOn then
-		lightWorld:drawGlow()
-	end
-
-	-- draw reflection
-	lightWorld:drawReflection()
-
-	-- draw refraction
-	lightWorld:drawRefraction()
+  lightWorld:draw()
 
 	love.graphics.draw(imgLight, mx - 5, (my - 5) - (16.0 + (math.sin(lightDirection) + 1.0) * 64.0))
 
@@ -430,6 +352,61 @@ function love.draw()
 	end
 
 	love.postshader.draw()
+end
+
+function drawBackground(l,t,w,h)
+	love.graphics.setBlendMode("alpha")
+	if normalOn then
+		love.graphics.setColor(127, 127, 255)
+		love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+	else
+		love.graphics.setColor(255, 255, 255)
+		if textureOn then
+			love.graphics.draw(imgFloor, quadScreen, offsetX % 32 - 32, offsetY % 24 - 24)
+		else
+			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+		end
+	end
+
+	for i = 1, phyCnt do
+		if phyLight[i]:getType() == "refraction" then
+			if not normalOn then
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(255, 255, 255, 191)
+        love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
+			end
+		end
+	end
+end
+
+function drawForground(l,t,w,h)
+	for i = 1, phyCnt do
+		math.randomseed(i)
+		love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		if phyLight[i]:getType() == "polygon" then
+			love.graphics.polygon("fill", phyLight[i]:getPoints())
+		elseif phyLight[i]:getType() == "circle" then
+			love.graphics.circle("fill", phyLight[i]:getX(), phyLight[i]:getY(), phyLight[i]:getRadius())
+		end
+	end
+
+	love.graphics.setBlendMode("alpha")
+	for i = 1, phyCnt do
+		if phyLight[i]:getType() == "image" then
+			if normalOn and phyLight[i].normal then
+				love.graphics.setColor(255, 255, 255)
+				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
+			elseif not phyLight[i].material then
+				math.randomseed(i)
+				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
+				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
+			end
+		end
+	end
+
+	if not normalOn then
+		lightWorld:drawMaterial(l,t,w,h)
+	end
 end
 
 function love.mousepressed(x, y, c)

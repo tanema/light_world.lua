@@ -9,13 +9,10 @@ light.shader             = love.graphics.newShader(_PACKAGE.."/shaders/poly_shad
 light.normalShader       = love.graphics.newShader(_PACKAGE.."/shaders/normal.glsl")
 light.normalInvertShader = love.graphics.newShader(_PACKAGE.."/shaders/normal_invert.glsl")
 
-function light:init(world, x, y, r, g, b, range)
-  self.world = world
+function light:init(x, y, r, g, b, range)
 	self.direction = 0
 	self.angle = math.pi * 2.0
 	self.range = 0
-	self.shadow = love.graphics.newCanvas()
-	self.shine = love.graphics.newCanvas()
 	self.x = x or 0
 	self.y = y or 0
 	self.z = 15
@@ -27,6 +24,12 @@ function light:init(world, x, y, r, g, b, range)
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
 	self.visible = true
+  self:refresh()
+end
+
+function light:refresh()
+	self.shadow = love.graphics.newCanvas()
+	self.shine  = love.graphics.newCanvas()
 end
 
 -- set position
@@ -63,6 +66,7 @@ function light:setY(y)
     self.y = y
   end
 end
+
 -- set color
 function light:setColor(red, green, blue)
   self.red = red
@@ -118,7 +122,7 @@ function light:setGlowStrength(strength)
   self.glowStrength = strength
 end
 
-function light:updateShadow(l,t,w,h)
+function light:updateShadow(l,t,w,h, bodies)
   love.graphics.setShader(self.shader)
   if self.x + self.range > l and self.x - self.range < (l+w) and self.y + self.range > t and self.y - self.range < (t+h) then
     local lightposrange = {self.x, h - self.y, self.range}
@@ -134,10 +138,10 @@ function light:updateShadow(l,t,w,h)
     love.graphics.clear()
 
     -- calculate shadows
-    local shadow_geometry = self:calculateShadows()
+    local shadow_geometry = self:calculateShadows(bodies)
 
     -- draw shadow
-    love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, self.world.body))
+    love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
     love.graphics.setBlendMode("additive")
     love.graphics.rectangle("fill", l,t,w,h)
 
@@ -155,8 +159,8 @@ function light:updateShadow(l,t,w,h)
       end
     end
 
-    for k = 1, #self.world.body do
-      self.world.body[k]:drawShadow(self, l,t,w,h)
+    for k = 1, #bodies do
+      bodies[k]:drawShadow(self, l,t,w,h)
     end
 
     love.graphics.setShader(self.shader)
@@ -165,10 +169,9 @@ function light:updateShadow(l,t,w,h)
     love.graphics.setCanvas(self.shine)
     self.shine:clear(255, 255, 255)
     love.graphics.setBlendMode("alpha")
-    love.graphics.setStencil(stencils.poly(self.world.body))
-    -- WHOA THIS MAY BE THE ISSUE HERE FIND THIS!
+    love.graphics.setStencil(stencils.poly(bodies))
     love.graphics.rectangle("fill", l,t,w,h)
-
+    love.graphics.setStencil()
     self.visible = true
   else
     self.visible = false
@@ -178,6 +181,8 @@ end
 
 function light:drawShadow(l,t,w,h)
   if self.visible then
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.setBlendMode("additive")
     love.graphics.draw(self.shadow, l, t)
   end
 end
@@ -189,16 +194,15 @@ function light:drawShine(l,t,w,h)
 end
 
 local shadowLength = 100000
-function light:calculateShadows()
+function light:calculateShadows(bodies)
 	local shadowGeometry = {}
-  local body = self.world.body
 
-	for i = 1, #body do
+	for i = 1, #bodies do
     local current
-		if body[i].shadowType == "rectangle" or body[i].shadowType == "polygon" then
-      current = self:calculatePolyShadow(body[i])
-		elseif body[i].shadowType == "circle" then
-      current = self:calculateCircleShadow(body[i])
+		if bodies[i].shadowType == "rectangle" or bodies[i].shadowType == "polygon" then
+      current = self:calculatePolyShadow(bodies[i])
+		elseif bodies[i].shadowType == "circle" then
+      current = self:calculateCircleShadow(bodies[i])
 		end
     if current ~= nil then
       shadowGeometry[#shadowGeometry + 1] = current
@@ -300,7 +304,7 @@ function light:calculateCircleShadow(circle)
   end
 end
 
-function light:drawPixelShadow(l,t,w,h)
+function light:drawPixelShadow(l,t,w,h, normalMap)
   if self.visible then
     if self.normalInvert then
       self.normalInvertShader:send('screenResolution', {w, h})
@@ -321,7 +325,7 @@ function light:drawPixelShadow(l,t,w,h)
       self.normalShader:send("lightDirection", self.direction)
       love.graphics.setShader(self.normalShader)
     end
-    love.graphics.draw(self.world.normalMap, l, t)
+    love.graphics.draw(normalMap, l, t)
   end
 end
 

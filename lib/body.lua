@@ -7,14 +7,13 @@ local body = class()
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
 
-function body:init(world, id, type, ...)
+function body:init(id, type, ...)
 	local args = {...}
 	self.id = id
 	self.type = type
 	self.normal = nil
 	self.material = nil
 	self.glow = nil
-  self.world = world
 
 	self.shine = true
 	self.red = 0
@@ -35,7 +34,6 @@ function body:init(world, id, type, ...)
 		self.ox = args[4] or 0
 		self.oy = args[5] or 0
 		self.shadowType = "circle"
-		world.isShadows = true
 	elseif self.type == "rectangle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
@@ -54,11 +52,9 @@ function body:init(world, id, type, ...)
 			self.x - self.ox,
 			self.y - self.oy + self.height
 		}
-		world.isShadows = true
 	elseif self.type == "polygon" then
 		self.shadowType = "polygon"
 		self.data = args or {0, 0, 0, 0, 0, 0}
-		world.isShadows = true
 	elseif self.type == "image" then
 		self.img = args[1]
 		self.x = args[2] or 0
@@ -95,7 +91,6 @@ function body:init(world, id, type, ...)
 			self.y - self.oy + self.height
 		}
 		self.reflective = true
-		world.isShadows = true
 	elseif self.type == "refraction" then
 		self.normal = args[1]
 		self.x = args[2] or 0
@@ -122,7 +117,6 @@ function body:init(world, id, type, ...)
 		self.ox = self.width * 0.5
 		self.oy = self.height * 0.5
 		self.refraction = true
-		world.isRefraction = true
 	elseif self.type == "reflection" then
 		self.normal = args[1]
 		self.x = args[2] or 0
@@ -149,7 +143,6 @@ function body:init(world, id, type, ...)
 		self.ox = self.width * 0.5
 		self.oy = self.height * 0.5
 		self.reflection = true
-		world.isReflection = true
 	end
 end
 
@@ -173,7 +166,6 @@ function body:setPosition(x, y)
     self.x = x
     self.y = y
     self:refresh()
-    self.world.changed = true
   end
 end
 
@@ -182,7 +174,6 @@ function body:setX(x)
   if x ~= self.x then
     self.x = x
     self:refresh()
-    self.world.changed = true
   end
 end
 
@@ -191,7 +182,6 @@ function body:setY(y)
   if y ~= self.y then
     self.y = y
     self:refresh()
-    self.world.changed = true
   end
 end
 
@@ -230,7 +220,6 @@ function body:setDimension(width, height)
   self.width = width
   self.height = height
   self:refresh()
-  self.world.changed = true
 end
 
 -- set offset
@@ -241,7 +230,6 @@ function body:setOffset(ox, oy)
     if self.shadowType == "rectangle" then
       self:refresh()
     end
-    self.world.changed = true
   end
 end
 
@@ -251,7 +239,6 @@ function body:setImageOffset(ix, iy)
     self.ix = ix
     self.iy = iy
     self:refresh()
-    self.world.changed = true
   end
 end
 
@@ -261,7 +248,6 @@ function body:setNormalOffset(nx, ny)
     self.nx = nx
     self.ny = ny
     self:refresh()
-    self.world.changed = true
   end
 end
 
@@ -270,13 +256,11 @@ function body:setGlowColor(red, green, blue)
   self.glowRed = red
   self.glowGreen = green
   self.glowBlue = blue
-  self.world.changed = true
 end
 
 -- set glow alpha
 function body:setGlowStrength(strength)
   self.glowStrength = strength
-  self.world.changed = true
 end
 
 -- get radius
@@ -288,14 +272,12 @@ end
 function body:setRadius(radius)
   if radius ~= self.radius then
     self.radius = radius
-    self.world.changed = true
   end
 end
 
 -- set polygon data
 function body:setPoints(...)
   self.data = {...}
-  self.world.changed = true
 end
 
 -- get polygon data
@@ -306,13 +288,11 @@ end
 -- set shadow on/off
 function body:setShadow(b)
   self.castsNoShadow = not b
-  self.world.changed = true
 end
 
 -- set shine on/off
 function body:setShine(b)
   self.shine = b
-  self.world.changed = true
 end
 
 -- set glass color
@@ -320,13 +300,11 @@ function body:setColor(red, green, blue)
   self.red = red
   self.green = green
   self.blue = blue
-  self.world.changed = true
 end
 
 -- set glass alpha
 function body:setAlpha(alpha)
   self.alpha = alpha
-  self.world.changed = true
 end
 
 -- set reflection on/off
@@ -376,8 +354,6 @@ function body:setNormalMap(normal, width, height, nx, ny)
       {0.0, self.normalHeight, 0.0, self.normalHeight / self.normal:getHeight()}
     }
     self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
-
-    self.world.isPixelShadows = true
   else
     self.normalMesh = nil
   end
@@ -475,8 +451,6 @@ end
 function body:setGlowMap(glow)
   self.glow = glow
   self.glowStrength = 1.0
-
-  self.world.isGlow = true
 end
 
 -- set tile offset
@@ -489,7 +463,6 @@ function body:setNormalTileOffset(tx, ty)
     {self.normalWidth, self.normalHeight, self.tileX + 1.0, self.tileY + 1.0},
     {0.0, self.normalHeight, self.tileX, self.tileY + 1.0}
   }
-  self.world.changed = true
 end
 
 -- get type
