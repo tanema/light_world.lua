@@ -26,6 +26,7 @@ local class = require(_PACKAGE..'/class')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
 local normal_map = require(_PACKAGE..'/normal_map')
+local PostShader = require(_PACKAGE..'/postshader')
 require(_PACKAGE..'/postshader')
 
 local light_world = class()
@@ -38,6 +39,7 @@ light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."/shaders/ref
 function light_world:init(options)
 	self.lights = {}
 	self.body = {}
+  self.post_shader = PostShader()
 
 	self.ambient              = {0, 0, 0}
 	self.normalInvert         = false
@@ -257,13 +259,8 @@ function light_world:draw(l,t,w,h,s)
     self:drawRefraction(  sl,st,sw,sh,s)
     self:drawReflection(  sl,st,sw,sh,s)
   love.graphics.pop()
-
-  love.graphics.setBackgroundColor(0, 0, 0)
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(last_buffer)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.render_buffer, l, t)
+ 
+  self.post_shader:drawWith(self.render_buffer)
 end
 
 -- draw shadow

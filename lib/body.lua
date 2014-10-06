@@ -86,16 +86,18 @@ end
 
 -- refresh
 function body:refresh()
-  self.data = {
-    self.x - self.ox,
-    self.y - self.oy,
-    self.x - self.ox + self.width,
-    self.y - self.oy,
-    self.x - self.ox + self.width,
-    self.y - self.oy + self.height,
-    self.x - self.ox,
-    self.y - self.oy + self.height
-  }
+  if self.x and self.y and self.width and self.height and self.ox and self.oy then
+    self.data = {
+      self.x - self.ox,
+      self.y - self.oy,
+      self.x - self.ox + self.width,
+      self.y - self.oy,
+      self.x - self.ox + self.width,
+      self.y - self.oy + self.height,
+      self.x - self.ox,
+      self.y - self.oy + self.height
+    }
+  end
 end
 
 -- set position
@@ -165,9 +167,7 @@ function body:setOffset(ox, oy)
   if ox ~= self.ox or oy ~= self.oy then
     self.ox = ox
     self.oy = oy
-    if self.shadowType == "rectangle" then
-      self:refresh()
-    end
+    self:refresh()
   end
 end
 
