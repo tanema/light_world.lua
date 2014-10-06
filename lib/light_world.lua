@@ -26,6 +26,7 @@ local class = require(_PACKAGE..'/class')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
 local normal_map = require(_PACKAGE..'/normal_map')
+require(_PACKAGE..'/postshader')
 
 local light_world = class()
 
@@ -56,7 +57,7 @@ function light_world:init(options)
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
 
-  self:refreshScreenSize()
+  self:refreshScreenSize(1)
 end
 
 function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h)
@@ -206,39 +207,44 @@ function light_world:updateRelfection(l,t,w,h)
   love.graphics.setCanvas(self.render_buffer)
 end
 
-function light_world:refreshScreenSize()
-	self.render_buffer    = love.graphics.newCanvas()
-	self.shadow           = love.graphics.newCanvas()
-	self.shadow2          = love.graphics.newCanvas()
-	self.pixelShadow      = love.graphics.newCanvas()
-	self.pixelShadow2     = love.graphics.newCanvas()
-	self.shine            = love.graphics.newCanvas()
-	self.shine2           = love.graphics.newCanvas()
-	self.normalMap        = love.graphics.newCanvas()
-	self.glowMap          = love.graphics.newCanvas()
-	self.glowMap2         = love.graphics.newCanvas()
-	self.refractionMap    = love.graphics.newCanvas()
-	self.refractionMap2   = love.graphics.newCanvas()
-	self.reflectionMap    = love.graphics.newCanvas()
-	self.reflectionMap2   = love.graphics.newCanvas()
+function light_world:refreshScreenSize(scale)
+  local w, h = love.window.getWidth(), love.window.getHeight()
+  self.scale = scale
+	self.render_buffer    = love.graphics.newCanvas(w, h)
+	self.shadow           = love.graphics.newCanvas(w, h)
+	self.shadow2          = love.graphics.newCanvas(w, h)
+	self.pixelShadow      = love.graphics.newCanvas(w, h)
+	self.pixelShadow2     = love.graphics.newCanvas(w, h)
+	self.shine            = love.graphics.newCanvas(w, h)
+	self.shine2           = love.graphics.newCanvas(w, h)
+	self.normalMap        = love.graphics.newCanvas(w, h)
+	self.glowMap          = love.graphics.newCanvas(w, h)
+	self.glowMap2         = love.graphics.newCanvas(w, h)
+	self.refractionMap    = love.graphics.newCanvas(w, h)
+	self.refractionMap2   = love.graphics.newCanvas(w, h)
+	self.reflectionMap    = love.graphics.newCanvas(w, h)
+	self.reflectionMap2   = love.graphics.newCanvas(w, h)
 
-  self.blurv:send("screen",            {love.window.getWidth(), love.window.getHeight()})
-  self.blurh:send("screen",            {love.window.getWidth(), love.window.getHeight()})
-  self.refractionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
-  self.reflectionShader:send("screen", {love.window.getWidth(), love.window.getHeight()})
+  self.blurv:send("screen",            {w, h})
+  self.blurh:send("screen",            {w, h})
+  self.refractionShader:send("screen", {w, h})
+  self.reflectionShader:send("screen", {w, h})
 
   for i = 1, #self.lights do
-    self.lights[i]:refresh()
+    self.lights[i]:refresh(scale)
   end
 end
 
 function light_world:draw(l,t,w,h,s)
   l,t,w,h,s = (l or 0), (t or 0), (w or love.graphics.getWidth()), (h or love.graphics.getHeight()), s or 1 
 
+  if s ~= self.scale then
+    --self:refreshScreenSize(s)
+  end
+
   local last_buffer = love.graphics.getCanvas()
 	love.graphics.setCanvas(self.render_buffer)
 
-  print(s)
   love.graphics.push()
     love.graphics.scale(1/s)
     sl, st, sw, sh = (l*s), (t*s), (w*s), (h*s)

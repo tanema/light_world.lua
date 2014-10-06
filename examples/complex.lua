@@ -519,7 +519,7 @@ function love.keypressed(k, u)
 			phyCnt = phyCnt + 1
 			phyLight[phyCnt] = lightWorld:newImage(cone, mx, my, 24, 12, 12, 16)
 			phyLight[phyCnt]:setNormalMap(cone_normal)
-			phyLight[phyCnt]:setShadowType("circle", 12, 0, -8)
+			phyLight[phyCnt]:setShadowType("circle", 12)
 			phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 			phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, 24, 32)
 			phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])

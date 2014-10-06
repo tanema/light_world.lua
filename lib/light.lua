@@ -23,12 +23,13 @@ function light:init(x, y, r, g, b, range)
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
 	self.visible = true
-  self:refresh()
+  self:refresh(1)
 end
 
-function light:refresh()
-	self.shadow = love.graphics.newCanvas()
-	self.shine  = love.graphics.newCanvas()
+function light:refresh(scale)
+  local w, h = love.window.getWidth(), love.window.getHeight()
+	self.shadow = love.graphics.newCanvas(w, h)
+	self.shine  = love.graphics.newCanvas(w, h)
 end
 
 -- set position

@@ -1,4 +1,3 @@
-require 'lib/postshader'
 -- Example: Short Example
 local gamera     = require "vendor/gamera"
 local LightWorld = require "lib/light_world"

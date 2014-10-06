@@ -45,7 +45,7 @@ function body:init(id, type, ...)
 			self.ix = self.imgWidth * 0.5
 			self.iy = self.imgHeight * 0.5
 		end
-    self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight)
+    self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
 		self.reflective = true
 	elseif self.type == "refraction" then
     self:initNormal(...)
