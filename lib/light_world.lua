@@ -249,7 +249,7 @@ function light_world:draw(l,t,w,h,s)
 
   love.graphics.push()
     love.graphics.scale(1/s)
-    sl, st, sw, sh = (l*s), (t*s), (w*s), (h*s)
+    local sl, st, sw, sh = (l*s), (t*s), (w*s), (h*s)
     self.drawBackground(  sl,st,sw,sh,s)
     self:drawShadow(      sl,st,sw,sh,s)
     self.drawForground(   sl,st,sw,sh,s)
@@ -260,7 +260,7 @@ function light_world:draw(l,t,w,h,s)
     self:drawReflection(  sl,st,sw,sh,s)
   love.graphics.pop()
  
-  self.post_shader:drawWith(self.render_buffer)
+  self.post_shader:drawWith(self.render_buffer, l, t)
 end
 
 -- draw shadow

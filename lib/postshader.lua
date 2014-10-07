@@ -64,7 +64,7 @@ function post_shader:toggleEffect(shaderName, ...)
   end
 end
 
-function post_shader:drawWith(canvas)
+function post_shader:drawWith(canvas, l, t)
   for shader, args in pairs(self.effects) do 
     if shader == "bloom" then
       self:drawBloom(canvas, args)
@@ -88,7 +88,7 @@ function post_shader:drawWith(canvas)
   love.graphics.setCanvas()
   love.graphics.setShader()
   love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(canvas)
+  love.graphics.draw(canvas, l or 0, t or 0)
 end
 
 function post_shader:drawBloom(canvas, args)
