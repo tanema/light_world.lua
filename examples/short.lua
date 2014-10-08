@@ -3,6 +3,7 @@ local gamera     = require "vendor/gamera"
 local LightWorld = require "lib/light_world"
 
 function love.load()
+  testShader = 0
   scale = 1
   camera = gamera.new(0,0,2000,2000)
 	-- load images
@@ -14,10 +15,11 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     drawBackground = drawBackground,
-    drawForground = drawForground
+    drawForground = drawForground,
+    ambient = {15,15,15},
+    refractionStrength = 32.0,
+    reflectionVisibility = 0.75,
   })
-	lightWorld:setAmbientColor(15, 15, 31)
-	lightWorld:setRefractionStrength(32.0)
 
 	-- create light
 	lightMouse = lightWorld:newLight(0, 0, 255, 127, 63, 300)
@@ -35,6 +37,26 @@ function love.load()
 	-- create body object
 	objectTest = lightWorld:newRefraction(normal, 64, 64, 128, 128)
 	objectTest:setReflection(true)
+end
+
+function love.keypressed(k)
+  if k == "1" then
+    lightWorld.post_shader:toggleEffect("4colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
+  elseif k == "2" then
+    lightWorld.post_shader:toggleEffect("monochrome")
+  elseif k == "3" then
+    lightWorld.post_shader:toggleEffect("scanlines")
+  elseif k == "4" then
+    lightWorld.post_shader:toggleEffect("tiltshift", 4.0)
+  elseif k == "5" then
+		lightWorld.post_shader:toggleEffect("bloom", 2.0, 0.25)
+  elseif k == "6" then
+		lightWorld.post_shader:toggleEffect("blur", 2.0, 2.0)
+		--lightWorld.post_shader:addEffect("chromatic", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
+  elseif k == "7" then
+    testShader = testShader + 1
+		lightWorld.post_shader:addEffect("test", testShader)
+  end
 end
 
 function love.update(dt)

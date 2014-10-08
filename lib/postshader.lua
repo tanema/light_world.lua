@@ -27,25 +27,30 @@ local class = require(_PACKAGE..'/class')
 local post_shader = class()
 post_shader.blurv                 = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
 post_shader.blurh                 = love.graphics.newShader(_PACKAGE.."/shaders/blurh.glsl")
-post_shader.contrast              = love.graphics.newShader(_PACKAGE.."/shaders/contrast.glsl")
-post_shader.chromatic_aberration  = love.graphics.newShader(_PACKAGE.."/shaders/chromatic_aberration.glsl")
-post_shader.four_color            = love.graphics.newShader(_PACKAGE.."/shaders/four_colors.glsl")
-post_shader.monochrome            = love.graphics.newShader(_PACKAGE.."/shaders/monochrome.glsl")
-post_shader.scanlines             = love.graphics.newShader(_PACKAGE.."/shaders/scanlines.glsl")
-post_shader.tilt_shift            = love.graphics.newShader(_PACKAGE.."/shaders/tilt_shift.glsl")
+post_shader.contrast              = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/contrast.glsl")
+post_shader.chromatic_aberration  = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/chromatic_aberration.glsl")
+post_shader.four_color            = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/four_colors.glsl")
+post_shader.monochrome            = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/monochrome.glsl")
+post_shader.scanlines             = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/scanlines.glsl")
+post_shader.tilt_shift            = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/tilt_shift.glsl")
 
 function post_shader:init()
   self:refreshScreenSize()
   self.effects = {}
 end
 
-function post_shader:refreshScreenSize()
-  self.render_buffer = love.graphics.newCanvas()
-  self.back_buffer = love.graphics.newCanvas()
+function post_shader:refreshScreenSize(w, h)
+  w, h = w or love.window.getWidth(), h or love.window.getHeight()
 
-  post_shader.blurv:send("screen", {love.window.getWidth(), love.window.getHeight()})
-  post_shader.blurh:send("screen", {love.window.getWidth(), love.window.getHeight()})
-  post_shader.scanlines:send("screen", {love.window.getWidth(), love.window.getHeight()})
+  self.render_buffer = love.graphics.newCanvas(w, h)
+  self.back_buffer   = love.graphics.newCanvas(w, h)
+
+  post_shader.blurv:send("screen",     {w, h})
+  post_shader.blurh:send("screen",     {w, h})
+  post_shader.scanlines:send("screen", {w, h})
+
+  self.w = w
+  self.h = h
 end
 
 function post_shader:addEffect(shaderName, ...)
@@ -80,6 +85,8 @@ function post_shader:drawWith(canvas, l, t)
       self:drawScanlines(canvas, args)
     elseif shader == "tiltshift" then
       self:drawTiltshift(canvas, args)
+    elseif shader == "test" then
+      self:drawTest(canvas, args)
     end
   end
 
@@ -224,6 +231,52 @@ function post_shader:drawTiltshift(canvas, args)
   post_shader.tilt_shift:send("imgBuffer", canvas)
   love.graphics.setShader(post_shader.tilt_shift)
   love.graphics.draw(self.back_buffer)
+
+  love.graphics.setBlendMode("alpha")
+  love.graphics.setCanvas(canvas)
+  love.graphics.setShader()
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.draw(self.back_buffer)
+end
+
+local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders/test")
+local testShaders = {}
+	
+for i,v in ipairs(files) do
+  local name = _PACKAGE.."/shaders/postshaders/test".."/"..v
+  if love.filesystem.isFile(name) then
+    local str = love.filesystem.read(name)
+    local effect = love.graphics.newShader(name)
+    local defs = {}
+    for vtype, extern in str:gmatch("extern (%w+) (%w+)") do
+      defs[extern] = true
+    end
+    testShaders[#testShaders+1] = {effect, defs, name}
+  end
+end
+
+function post_shader:drawTest(canvas, args)
+  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+  local scale = 1
+  local defaults = {
+    textureSize = {w, h},
+    inputSize = {w, h},
+    outputSize = {w, h},
+    time = love.timer.getTime()
+  }
+
+  love.graphics.setCanvas(self.back_buffer)
+  love.graphics.setBlendMode("alpha")
+
+  local effect = testShaders[args[1]]
+  for def in pairs(effect[2]) do
+    if defaults[def] then
+      effect[1]:send(def, defaults[def])
+    end
+  end
+  print(effect[3])
+  love.graphics.setShader(effect[1])
+  love.graphics.draw(canvas)
 
   love.graphics.setBlendMode("alpha")
   love.graphics.setCanvas(canvas)

@@ -59,7 +59,7 @@ function light_world:init(options)
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
 
-  self:refreshScreenSize(1)
+  self:refreshScreenSize()
 end
 
 function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h)
@@ -209,9 +209,9 @@ function light_world:updateRelfection(l,t,w,h)
   love.graphics.setCanvas(self.render_buffer)
 end
 
-function light_world:refreshScreenSize(scale)
-  local w, h = love.window.getWidth(), love.window.getHeight()
-  self.scale = scale
+function light_world:refreshScreenSize(w, h)
+  w, h = w or love.window.getWidth(), h or love.window.getHeight()
+
 	self.render_buffer    = love.graphics.newCanvas(w, h)
 	self.shadow           = love.graphics.newCanvas(w, h)
 	self.shadow2          = love.graphics.newCanvas(w, h)
@@ -233,15 +233,18 @@ function light_world:refreshScreenSize(scale)
   self.reflectionShader:send("screen", {w, h})
 
   for i = 1, #self.lights do
-    self.lights[i]:refresh(scale)
+    self.lights[i]:refresh(w, h)
   end
+
+  self.post_shader:refreshScreenSize(w, h)
 end
 
 function light_world:draw(l,t,w,h,s)
   l,t,w,h,s = (l or 0), (t or 0), (w or love.graphics.getWidth()), (h or love.graphics.getHeight()), s or 1 
 
   if s ~= self.scale then
-    --self:refreshScreenSize(s)
+    --self:refreshScreenSize(w, h)
+    self.scale = scale
   end
 
   local last_buffer = love.graphics.getCanvas()
@@ -253,6 +256,7 @@ function light_world:draw(l,t,w,h,s)
     self.drawBackground(  sl,st,sw,sh,s)
     self:drawShadow(      sl,st,sw,sh,s)
     self.drawForground(   sl,st,sw,sh,s)
+		self:drawMaterial(    sl,st,sw,sh,s)
     self:drawShine(       sl,st,sw,sh,s)
     self:drawPixelShadow( sl,st,sw,sh,s)
     self:drawGlow(        sl,st,sw,sh,s)
@@ -260,7 +264,7 @@ function light_world:draw(l,t,w,h,s)
     self:drawReflection(  sl,st,sw,sh,s)
   love.graphics.pop()
  
-  self.post_shader:drawWith(self.render_buffer, l, t)
+  self.post_shader:drawWith(self.render_buffer, l, t, s)
 end
 
 -- draw shadow

@@ -23,11 +23,12 @@ function light:init(x, y, r, g, b, range)
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
 	self.visible = true
-  self:refresh(1)
+  self:refresh()
 end
 
-function light:refresh(scale)
-  local w, h = love.window.getWidth(), love.window.getHeight()
+function light:refresh(w, h)
+  w, h = w or love.window.getWidth(), h or love.window.getHeight()
+
 	self.shadow = love.graphics.newCanvas(w, h)
 	self.shine  = love.graphics.newCanvas(w, h)
 end

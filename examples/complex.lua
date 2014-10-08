@@ -32,7 +32,7 @@ function initScene()
 end
 
 function love.load()
-    love.graphics.setBackgroundColor(0, 0, 0)
+  love.graphics.setBackgroundColor(0, 0, 0)
 	love.graphics.setDefaultFilter("nearest", "nearest")
 
 	-- load image font
@@ -367,19 +367,17 @@ function drawBackground(l,t,w,h)
 end
 
 function drawForground(l,t,w,h)
-	for i = 1, phyCnt do
-		math.randomseed(i)
-		love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		if phyLight[i]:getType() == "polygon" then
-			love.graphics.polygon("fill", phyLight[i]:getPoints())
-		elseif phyLight[i]:getType() == "circle" then
-			love.graphics.circle("fill", phyLight[i]:getX(), phyLight[i]:getY(), phyLight[i]:getRadius())
-		end
-	end
-
 	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
-		if phyLight[i]:getType() == "image" then
+		if phyLight[i]:getType() == "polygon" then
+      math.randomseed(i)
+      love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+			love.graphics.polygon("fill", phyLight[i]:getPoints())
+		elseif phyLight[i]:getType() == "circle" then
+      math.randomseed(i)
+      love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+			love.graphics.circle("fill", phyLight[i]:getX(), phyLight[i]:getY(), phyLight[i]:getRadius())
+    elseif phyLight[i]:getType() == "image" then
 			if normalOn and phyLight[i].normal then
 				love.graphics.setColor(255, 255, 255)
 				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
@@ -389,10 +387,6 @@ function drawForground(l,t,w,h)
 				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
 			end
 		end
-	end
-
-	if not normalOn then
-		lightWorld:drawMaterial(l,t,w,h)
 	end
 end
 
@@ -415,7 +409,12 @@ function love.mousepressed(x, y, c)
 		-- add rectangle
 		math.randomseed(love.timer.getTime())
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld:newPolygon()
+		phyLight[phyCnt] = lightWorld:newPolygon({
+     x, y,
+     x+16, y,
+     x+16, y+16,
+     x, y+16
+    })
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, x, y, "dynamic")
 		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])

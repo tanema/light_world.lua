@@ -363,6 +363,7 @@ function body:setShadowType(type, ...)
     self:refresh()
   elseif self.shadowType == "polygon" then
     self.data = args or {0, 0, 0, 0, 0, 0}
+    print(self.data)
   elseif self.shadowType == "image" then
     if self.img then
       self.width = self.imgWidth
