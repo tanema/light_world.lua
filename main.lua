@@ -58,7 +58,7 @@ function exf.update(dt)
 end
 
 function exf.draw()
-	lightWorld:draw(0, 0, love.window.getWidth(), love.window.getHeight(), 1)
+	lightWorld:draw()
 end
 
 function exf.drawBackground()

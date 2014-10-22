@@ -363,7 +363,6 @@ function body:setShadowType(type, ...)
     self:refresh()
   elseif self.shadowType == "polygon" then
     self.data = args or {0, 0, 0, 0, 0, 0}
-    print(self.data)
   elseif self.shadowType == "image" then
     if self.img then
       self.width = self.imgWidth
@@ -388,7 +387,19 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:drawShadow(light, l,t,w,h)
+function body:shadowStencil()
+  if self.shadowType == "circle" then
+    love.graphics.circle("fill", self.x - self.ox, self.y - self.oy, self.radius)
+  elseif self.shadowType == "rectangle" then
+    love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
+  elseif self.shadowType == "polygon" then
+    love.graphics.polygon("fill", unpack(self.data))
+  elseif self.shadowType == "image" then
+  --love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
+  end
+end
+
+function body:drawShadow(light, l,t,w,h,s)
   if self.alpha < 1.0 then
     love.graphics.setBlendMode("multiplicative")
     love.graphics.setColor(self.red, self.green, self.blue)
@@ -446,7 +457,7 @@ function body:drawShadow(light, l,t,w,h)
     }
 
     self.shadowMesh:setVertices(self.shadowVert)
-    love.graphics.draw(self.shadowMesh, self.x - self.ox + l, self.y - self.oy + t)
+    love.graphics.draw(self.shadowMesh, self.x - self.ox + l, self.y - self.oy + t, 0, s, s)
   end
 end
 

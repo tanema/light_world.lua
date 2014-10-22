@@ -25,6 +25,7 @@ local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE..'/class')
 local Light = require(_PACKAGE..'/light')
 local Body = require(_PACKAGE..'/body')
+local util = require(_PACKAGE..'/util')
 local normal_map = require(_PACKAGE..'/normal_map')
 local PostShader = require(_PACKAGE..'/postshader')
 require(_PACKAGE..'/postshader')
@@ -62,44 +63,19 @@ function light_world:init(options)
   self:refreshScreenSize()
 end
 
-function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h)
+function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h, s)
   if blur <= 0 then
     return
   end
 
-  love.graphics.setColor(255, 255, 255)
+  canvas2:clear()
   self.blurv:send("steps", blur)
   self.blurh:send("steps", blur)
-  love.graphics.setBlendMode(blendmode)
-  canvas2:clear()
-  love.graphics.setCanvas(canvas2)
-  love.graphics.setShader(self.blurv)
-  love.graphics.draw(canvas, l, t)
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader(self.blurh)
-  love.graphics.draw(canvas2, l, t)
+  util.drawCanvasToCanvas(canvas, canvas2, {shader = self.blurv, blendmode = blendmode})
+  util.drawCanvasToCanvas(canvas2, canvas, {shader = self.blurh, blendmode = blendmode})
 end
 
-function light_world:updateShadows(l,t,w,h)
-  for i = 1, #self.lights do
-    self.lights[i]:updateShadow(l,t,w,h, self.body)
-  end
-
-  -- update shadow
-  love.graphics.setCanvas(self.shadow)
-  love.graphics.setColor(unpack(self.ambient))
-  love.graphics.setBlendMode("alpha")
-  love.graphics.rectangle("fill", l, t, w, h)
-
-  for i = 1, #self.lights do
-    self.lights[i]:drawShadow(l,t,w,h)
-  end
-
-  light_world:drawBlur("alpha", self.blur, self.shadow, self.shadow2, l, t, w, h)
-  love.graphics.setCanvas(self.render_buffer)
-end
-
-function light_world:updateShine(l,t,w,h)
+function light_world:updateShine(l,t,w,h,s)
   -- update shine
   love.graphics.setCanvas(self.shine)
   love.graphics.setColor(unpack(self.ambient))
@@ -112,8 +88,7 @@ function light_world:updateShine(l,t,w,h)
     self.lights[i]:drawShine(l,t,w,h)
   end
 
-  --light_world:drawBlur("additive", self.blur, self.shine, self.shine2, l, t, w, h)
-  love.graphics.setCanvas(self.render_buffer)
+  --light_world:drawBlur("additive", self.blur, self.shine, self.shine2, l, t, w, h, s)
 end
 
 function light_world:updatePixelShadows(l,t,w,h)
@@ -148,11 +123,9 @@ function light_world:updatePixelShadows(l,t,w,h)
   love.graphics.setBlendMode("additive")
   love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
   love.graphics.rectangle("fill", l,t,w,h)
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(self.render_buffer)
 end
 
-function light_world:updateGlow(l,t,w,h)
+function light_world:updateGlow(l,t,w,h,s)
   -- create glow map
   self.glowMap:clear(0, 0, 0)
   love.graphics.setCanvas(self.glowMap)
@@ -173,8 +146,7 @@ function light_world:updateGlow(l,t,w,h)
     self.body[i]:drawGlow(l,t,w,h)
   end
 
-  light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h)
-  love.graphics.setCanvas(self.render_buffer)
+  light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h, s)
 end
 
 function light_world:updateRefraction(l,t,w,h)
@@ -189,8 +161,6 @@ function light_world:updateRefraction(l,t,w,h)
   love.graphics.setBlendMode("alpha")
   love.graphics.setCanvas(self.refractionMap2)
   love.graphics.draw(self.render_buffer, l, t)
-  love.graphics.setShader()
-  love.graphics.setCanvas(self.render_buffer)
 end
 
 function light_world:updateRelfection(l,t,w,h)
@@ -205,8 +175,6 @@ function light_world:updateRelfection(l,t,w,h)
   love.graphics.setBlendMode("alpha")
   love.graphics.setCanvas(self.reflectionMap2)
   love.graphics.draw(self.render_buffer, l, t)
-  love.graphics.setShader()
-  love.graphics.setCanvas(self.render_buffer)
 end
 
 function light_world:refreshScreenSize(w, h)
@@ -239,32 +207,24 @@ function light_world:refreshScreenSize(w, h)
   self.post_shader:refreshScreenSize(w, h)
 end
 
-function light_world:draw(l,t,w,h,s)
-  l,t,w,h,s = (l or 0), (t or 0), (w or love.graphics.getWidth()), (h or love.graphics.getHeight()), s or 1 
+function light_world:draw(l,t,s)
+  l,t,s = (l or 0), (t or 0), s or 1 
+  local w, h = (love.graphics.getWidth() / s), (love.graphics.getHeight() / s)
 
-  if s ~= self.scale then
-    --self:refreshScreenSize(w, h)
-    self.scale = scale
-  end
+  util.drawto(self.render_buffer, l, t, s, function()
+    self.drawBackground( l,t,w,h,s)
+    self:drawShadow(     l,t,w,h,s)
+    self.drawForground(  l,t,w,h,s)
+		--self:drawMaterial(   l,t,w,h,s)
+    --self:drawShine(      l,t,w,h,s)
+    --self:drawPixelShadow(l,t,w,h,s)
+    --self:drawGlow(       l,t,w,h,s)
+    --self:drawRefraction( l,t,w,h,s)
+    --self:drawReflection( l,t,w,h,s)
+  end)
 
-  local last_buffer = love.graphics.getCanvas()
-	love.graphics.setCanvas(self.render_buffer)
-
-  love.graphics.push()
-    love.graphics.scale(1/s)
-    local sl, st, sw, sh = (l*s), (t*s), (w*s), (h*s)
-    self.drawBackground(  sl,st,sw,sh,s)
-    self:drawShadow(      sl,st,sw,sh,s)
-    self.drawForground(   sl,st,sw,sh,s)
-		self:drawMaterial(    sl,st,sw,sh,s)
-    self:drawShine(       sl,st,sw,sh,s)
-    self:drawPixelShadow( sl,st,sw,sh,s)
-    self:drawGlow(        sl,st,sw,sh,s)
-    self:drawRefraction(  sl,st,sw,sh,s)
-    self:drawReflection(  sl,st,sw,sh,s)
-  love.graphics.pop()
- 
-  self.post_shader:drawWith(self.render_buffer, l, t, s)
+  util.drawCanvasToCanvas(self.render_buffer)
+  --self.post_shader:drawWith(self.render_buffer, l, t, s)
 end
 
 -- draw shadow
@@ -272,12 +232,19 @@ function light_world:drawShadow(l,t,w,h,s)
   if not self.isShadows and not self.isLight then
     return
   end
-  self:updateShadows(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.setBlendMode("multiplicative")
-  love.graphics.setShader()
-  love.graphics.draw(self.shadow, l, t)
-  love.graphics.setBlendMode("alpha")
+
+  -- draw ambient
+  util.drawto(self.shadow, l, t, s, function()
+    love.graphics.setColor(unpack(self.ambient))
+    love.graphics.setBlendMode("alpha")
+    love.graphics.rectangle("fill", l, t, w, h)
+    for i = 1, #self.lights do
+      self.lights[i]:drawShadow(l,t,w,h,s,self.body, self.shadow)
+    end
+  end)
+
+  light_world:drawBlur("alpha", self.blur, self.shadow, self.shadow2, l, t, w, h, s)
+  util.drawCanvasToCanvas(self.shadow, self.render_buffer, {blendmode = "multiplicative"})
 end
 
 -- draw shine
@@ -286,6 +253,7 @@ function light_world:drawShine(l,t,w,h,s)
     return
   end
   self:updateShine(l,t,w,h)
+  love.graphics.setCanvas(self.render_buffer)
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("multiplicative")
   love.graphics.setShader()
@@ -299,6 +267,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
     return 
   end
   self:updatePixelShadows(l,t,w,h)
+  love.graphics.setCanvas(self.render_buffer)
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("multiplicative")
   love.graphics.setShader()
@@ -319,6 +288,7 @@ function light_world:drawGlow(l,t,w,h,s)
     return
   end
   self:updateGlow(l,t,w,h)
+  love.graphics.setCanvas(self.render_buffer)
   love.graphics.setColor(255, 255, 255)
   love.graphics.setBlendMode("additive")
   love.graphics.setShader()
@@ -331,6 +301,7 @@ function light_world:drawRefraction(l,t,w,h,s)
     return
   end
   self:updateRefraction(l,t,w,h)
+  love.graphics.setCanvas(self.render_buffer)
   self.refractionShader:send("backBuffer", self.refractionMap2)
   self.refractionShader:send("refractionStrength", self.refractionStrength)
   love.graphics.setShader(self.refractionShader)
@@ -344,6 +315,7 @@ function light_world:drawReflection(l,t,w,h,s)
     return
   end
   self:updateRelfection(l,t,w,h)
+  love.graphics.setCanvas(self.render_buffer)
   self.reflectionShader:send("backBuffer", self.reflectionMap2)
   self.reflectionShader:send("reflectionStrength", self.reflectionStrength)
   self.reflectionShader:send("reflectionVisibility", self.reflectionVisibility)

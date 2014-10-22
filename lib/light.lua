@@ -1,6 +1,7 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 local stencils = require(_PACKAGE..'/stencils')
+local util = require(_PACKAGE..'/util')
 
 local light = class()
 
@@ -127,20 +128,8 @@ function light:inRange(l,t,w,h)
   return self.x + self.range > l and self.x - self.range < (l+w) and self.y + self.range > t and self.y - self.range < (t+h)
 end
 
-function light:updateShadow(l,t,w,h, bodies)
-  love.graphics.setShader(self.shader)
+function light:drawShadow(l,t,w,h,s,bodies, canvas)
   if self.visible and self:inRange(l,t,w,h) then
-
-    self.shader:send("lightPosition", {self.x - l, h - (self.y - t), self.z})
-    self.shader:send("lightRange", self.range)
-    self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.shader:send("lightSmooth", self.smooth)
-    self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-    self.shader:send("lightAngle", math.pi - self.angle / 2.0)
-    self.shader:send("lightDirection", self.direction)
-    self.shadow:clear()
-    love.graphics.setCanvas(self.shadow)
-
     -- calculate shadows
     local shadow_geometry = {}
     for i = 1, #bodies do
@@ -150,46 +139,54 @@ function light:updateShadow(l,t,w,h, bodies)
       end
     end
 
+    self.shadow:clear()
+    self.shader:send("lightPosition", {self.x - l, h - (self.y - t), self.z})
+    self.shader:send("lightRange", self.range)
+    self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+    self.shader:send("lightSmooth", self.smooth)
+    self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+    self.shader:send("lightAngle", math.pi - self.angle / 2.0)
+    self.shader:send("lightDirection", self.direction)
+
     -- draw shadow
-    love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
-    love.graphics.setBlendMode("additive")
-    love.graphics.rectangle("fill", l,t,w,h)
+    util.drawto(self.shadow, l, t, s, function()
+      love.graphics.setShader(self.shader)
+      love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
+      love.graphics.setBlendMode("additive")
+      love.graphics.rectangle("fill", l,t,w,h)
 
-    -- draw color shadows
-    love.graphics.setBlendMode("multiplicative")
-    love.graphics.setShader()
-    for k = 1,#shadow_geometry do
-      if shadow_geometry[k].alpha < 1.0 then
-        love.graphics.setColor(
-          shadow_geometry[k].red * (1.0 - shadow_geometry[k].alpha),
-          shadow_geometry[k].green * (1.0 - shadow_geometry[k].alpha),
-          shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
-        )
-        love.graphics.polygon("fill", unpack(shadow_geometry[k]))
+      -- draw color shadows
+      love.graphics.setBlendMode("multiplicative")
+      love.graphics.setShader()
+      for k = 1,#shadow_geometry do
+        if shadow_geometry[k].alpha < 1.0 then
+          love.graphics.setColor(
+            shadow_geometry[k].red * (1.0 - shadow_geometry[k].alpha),
+            shadow_geometry[k].green * (1.0 - shadow_geometry[k].alpha),
+            shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
+          )
+          love.graphics.polygon("fill", unpack(shadow_geometry[k]))
+        end
       end
-    end
 
-    for k = 1, #bodies do
-      bodies[k]:drawShadow(self, l,t,w,h)
-    end
+      for k = 1, #bodies do
+        bodies[k]:drawShadow(self,l,t,w,h,s)
+      end
+    end)
 
     -- draw shine
-    love.graphics.setShader(self.shader)
-    love.graphics.setCanvas(self.shine)
-    self.shine:clear(255, 255, 255)
-    love.graphics.setBlendMode("alpha")
-    love.graphics.setStencil(stencils.poly(bodies))
-    love.graphics.rectangle("fill", l,t,w,h)
-    love.graphics.setStencil()
-  end
-  love.graphics.setShader()
-end
+    util.drawto(self.shine, l, t, s, function()
+      love.graphics.setShader(self.shader)
+      self.shine:clear(255, 255, 255)
+      love.graphics.setBlendMode("alpha")
+      love.graphics.setStencil(stencils.colorShadow(bodies))
+      love.graphics.rectangle("fill", 0,0,w,h)
+    end)
 
-function light:drawShadow(l,t,w,h)
-  if self.visible then
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.setBlendMode("additive")
-    love.graphics.draw(self.shadow, l, t)
+    love.graphics.setStencil()
+    love.graphics.setShader()
+
+    util.drawCanvasToCanvas(self.shadow, canvas, {blendmode = "additive"})
   end
 end
 

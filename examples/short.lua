@@ -1,11 +1,11 @@
 -- Example: Short Example
-local gamera     = require "vendor/gamera"
 local LightWorld = require "lib/light_world"
 
 function love.load()
   testShader = 0
+  x = 0
+  y = 0
   scale = 1
-  camera = gamera.new(0,0,2000,2000)
 	-- load images
 	image = love.graphics.newImage("gfx/machine2.png")
 	image_normal = love.graphics.newImage("gfx/cone_normal.png")
@@ -62,7 +62,6 @@ end
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
 
-  local x, y = camera:getPosition()
 	if love.keyboard.isDown("up") then
 		y = y - dt * 200
 	elseif love.keyboard.isDown("down") then
@@ -81,20 +80,23 @@ function love.update(dt)
 		scale = scale + 0.01
 	end
 
-  camera:setPosition(x, y)
-  camera:setScale(scale)
-	lightMouse:setPosition(camera:toWorld(love.mouse.getX(), love.mouse.getY()))
+	lightMouse:setPosition(love.mouse.getX(), love.mouse.getY())
 end
 
 function love.draw()
-  camera:draw(function(l,t,w,h)
-    lightWorld:draw(l,t,w,h,scale)
-  end)
+  love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.scale(scale)
+    lightWorld:draw(x,y,scale)
+  love.graphics.pop()
 end
 
 function drawBackground(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle("fill", 0, 0, 2000, 2000)
+  love.graphics.push()
+    love.graphics.origin()
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+  love.graphics.pop()
 end
 
 function drawForground(l,t,w,h)
