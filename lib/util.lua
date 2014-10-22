@@ -13,6 +13,9 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
       if options["shader"] then
         love.graphics.setShader(options["shader"])
       end
+      if options["color"] then
+        love.graphics.setColor(unpack(options["color"]))
+      end
       love.graphics.setColor(255,255,255)
       love.graphics.draw(canvas,0,0)
     love.graphics.setCanvas(last_buffer)

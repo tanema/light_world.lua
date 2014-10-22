@@ -23,6 +23,7 @@ SOFTWARE.
 ]]
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE..'/class')
+local util = require(_PACKAGE..'/util')
 
 local post_shader = class()
 post_shader.blurv                 = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
@@ -69,7 +70,7 @@ function post_shader:toggleEffect(shaderName, ...)
   end
 end
 
-function post_shader:drawWith(canvas, l, t, scale)
+function post_shader:drawWith(canvas)
   for shader, args in pairs(self.effects) do 
     if shader == "bloom" then
       self:drawBloom(canvas, args)
@@ -89,154 +90,72 @@ function post_shader:drawWith(canvas, l, t, scale)
       self:drawTest(canvas, args)
     end
   end
-
-  love.graphics.setBackgroundColor(0, 0, 0)
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas()
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(canvas, l or 0, t or 0)
+  util.drawCanvasToCanvas(canvas)
 end
 
 function post_shader:drawBloom(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   post_shader.blurv:send("steps", args[1] or 2.0)
   post_shader.blurh:send("steps", args[1] or 2.0)
-
-  love.graphics.setShader(post_shader.blurv)
-  love.graphics.draw(canvas)
-
-  love.graphics.setShader(post_shader.blurh)
-  love.graphics.draw(self.back_buffer)
-
-  love.graphics.setShader(post_shader.contrast)
-  love.graphics.draw(self.back_buffer)
-
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(canvas)
-  love.graphics.setBlendMode("additive")
-  love.graphics.setColor(255, 255, 255, (args[2] or 0.25) * 255)
-  love.graphics.draw(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.blurv})
+  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.blurh})
+  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.contrast})
+  util.drawCanvasToCanvas(canvas, canvas, {shader = post_shader.contrast})
+  util.drawCanvasToCanvas(self.back_buffer, canvas, {blendmode = "additive", color = {255, 255, 255, (args[2] or 0.25) * 255}})
 end
 
 function post_shader:drawBlur(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   post_shader.blurv:send("steps", args[1] or 2.0)
   post_shader.blurh:send("steps", args[2] or 2.0)
-
-  love.graphics.setShader(post_shader.blurv)
-  love.graphics.draw(canvas)
-
-  love.graphics.setShader(post_shader.blurh)
-  love.graphics.draw(self.back_buffer)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.blurv})
+  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.blurh})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 function post_shader:drawChromatic(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   post_shader.chromatic_aberration:send("redStrength", {args[1] or 0.0, args[2] or 0.0})
   post_shader.chromatic_aberration:send("greenStrength", {args[3] or 0.0, args[4] or 0.0})
   post_shader.chromatic_aberration:send("blueStrength", {args[5] or 0.0, args[6] or 0.0})
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setShader(post_shader.chromatic_aberration)
-  love.graphics.draw(canvas)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.chromatic_aberration})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 function post_shader:draw4Color(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-  
   local palette = {{unpack(args[1])}, {unpack(args[2])}, {unpack(args[3])}, {unpack(args[4])}}
   for i = 1, 4 do
     for k = 1, 3 do
       palette[i][k] = args[i][k] / 255.0
     end
   end
-
   self.four_color:send("palette", palette[1], palette[2], palette[3], palette[4])
-  love.graphics.setShader(self.four_color)
-  love.graphics.draw(canvas)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.four_color})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 function post_shader:drawMonochome(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   local tint = {args[1], args[2], args[3]}
   for i = 1, 3 do
     if tint[i] then
       tint[i] = tint[i] / 255.0
     end
   end
-
   post_shader.monochrome:send("tint", {tint[1] or 1.0, tint[2] or 1.0, tint[3] or 1.0})
   post_shader.monochrome:send("fudge", args[4] or 0.1)
   post_shader.monochrome:send("time", args[5] or love.timer.getTime())
-  love.graphics.setShader(post_shader.monochrome)
-  love.graphics.draw(canvas)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.monochrome})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 function post_shader:drawScanlines(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   post_shader.scanlines:send("strength", args[1] or 2.0)
   post_shader.scanlines:send("time", args[2] or love.timer.getTime())
-  love.graphics.setShader(post_shader.scanlines)
-  love.graphics.draw(canvas)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.scanlines})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 function post_shader:drawTiltshift(canvas, args)
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   post_shader.tilt_shift:send("imgBuffer", canvas)
-  love.graphics.setShader(post_shader.tilt_shift)
-  love.graphics.draw(self.back_buffer)
-
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.tilt_shift})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders/test")
@@ -265,23 +184,15 @@ function post_shader:drawTest(canvas, args)
     time = love.timer.getTime()
   }
 
-  love.graphics.setCanvas(self.back_buffer)
-  love.graphics.setBlendMode("alpha")
-
   local effect = testShaders[args[1]]
   for def in pairs(effect[2]) do
     if defaults[def] then
       effect[1]:send(def, defaults[def])
     end
   end
-  love.graphics.setShader(effect[1])
-  love.graphics.draw(canvas)
 
-  love.graphics.setBlendMode("alpha")
-  love.graphics.setCanvas(canvas)
-  love.graphics.setShader()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.back_buffer)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = effect[1]})
+  util.drawCanvasToCanvas(self.back_buffer, canvas)
 end
 
 return post_shader

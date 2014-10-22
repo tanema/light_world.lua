@@ -190,13 +190,13 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
   end
 end
 
-function light:drawShine(l,t,w,h)
+function light:drawShine(canvas)
   if self.visible then
-    love.graphics.draw(self.shine, l, t)
+    util.drawCanvasToCanvas(self.shine, canvas)
   end
 end
 
-function light:drawPixelShadow(l,t,w,h, normalMap)
+function light:drawPixelShadow(l,t,w,h, normalMap, canvas)
   if self.visible then
     if self.normalInvert then
       self.normalInvertShader:send('screenResolution', {w, h})
@@ -206,7 +206,7 @@ function light:drawPixelShadow(l,t,w,h, normalMap)
       self.normalInvertShader:send("lightSmooth", self.smooth)
       self.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
       self.normalInvertShader:send("lightDirection", self.direction)
-      love.graphics.setShader(self.normalInvertShader)
+      util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalInvertShader})
     else
       self.normalShader:send('screenResolution', {w, h})
       self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
@@ -215,9 +215,8 @@ function light:drawPixelShadow(l,t,w,h, normalMap)
       self.normalShader:send("lightSmooth", self.smooth)
       self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
       self.normalShader:send("lightDirection", self.direction)
-      love.graphics.setShader(self.normalShader)
+      util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalShader})
     end
-    love.graphics.draw(normalMap, l, t)
   end
 end
 
