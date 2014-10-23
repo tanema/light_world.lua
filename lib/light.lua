@@ -155,7 +155,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       love.graphics.setShader(self.shader)
       love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
       love.graphics.setBlendMode("additive")
-      love.graphics.rectangle("fill", -l,-t,w,h)
+      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
 
       -- draw color shadows
       love.graphics.setBlendMode("multiplicative")
@@ -182,7 +182,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       love.graphics.setShader(self.shader)
       love.graphics.setBlendMode("alpha")
       love.graphics.setStencil(stencils.colorShadow(bodies))
-      love.graphics.rectangle("fill", -l,-t,w,h)
+      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
     end)
 
     love.graphics.setStencil()
