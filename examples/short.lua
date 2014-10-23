@@ -80,7 +80,7 @@ function love.update(dt)
 		scale = scale + 0.01
 	end
 
-	lightMouse:setPosition(love.mouse.getX(), love.mouse.getY())
+	lightMouse:setPosition(love.mouse.getX()/scale, love.mouse.getY()/scale)
 end
 
 function love.draw()

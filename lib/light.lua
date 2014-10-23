@@ -145,7 +145,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
     -- draw shadow
     self.shadow:clear()
     util.drawto(self.shadow, l, t, s, function()
-      self.shader:send("lightPosition", {self.x + l, h - (self.y + t), self.z})
+      self.shader:send("lightPosition", {self.x*s, (h/s - self.y)*s, self.z})
       self.shader:send("lightRange", self.range)
       self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
       self.shader:send("lightSmooth", self.smooth)
