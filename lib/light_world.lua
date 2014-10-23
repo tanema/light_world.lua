@@ -131,7 +131,7 @@ function light_world:drawShadow(l,t,w,h,s)
   util.drawto(self.shadow, l, t, s, function()
     love.graphics.setColor(unpack(self.ambient))
     love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", l, t, w, h)
+    love.graphics.rectangle("fill", -l, -t, w, h)
     for i = 1, #self.lights do
       self.lights[i]:drawShadow(l,t,w,h,s,self.body, self.shadow)
     end
@@ -151,7 +151,7 @@ function light_world:drawShine(l,t,w,h,s)
   util.drawto(self.shine, l, t, s, function()
     love.graphics.setColor(unpack(self.ambient))
     love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", l, t, w, h)
+    love.graphics.rectangle("fill", -l, -t, w, h)
     love.graphics.setColor(255, 255, 255)
     love.graphics.setBlendMode("additive")
     for i = 1, #self.lights do

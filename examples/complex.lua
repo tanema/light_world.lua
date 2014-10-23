@@ -120,6 +120,7 @@ function love.load()
 
 	offsetX = 0.0
 	offsetY = 0.0
+  scale = 1.0
 	offsetOldX = 0.0
 	offsetOldY = 0.0
 	offsetChanged = false
@@ -176,14 +177,10 @@ function love.update(dt)
 		offsetX = offsetX - dt * 200
 	end
 
-	if offsetX ~= offsetOldX or offsetY ~= offsetOldY then
-		offsetChanged = true
-		for i = 2, lightWorld:getLightCount() do
-      local light = lightWorld:getLight(i)
-			light:setPosition(light:getX() + (offsetX - offsetOldX), light:getY() + (offsetY - offsetOldY))
-		end
-	else
-		offsetChanged = false
+	if love.keyboard.isDown("-") then
+		scale = scale - 0.01
+	elseif love.keyboard.isDown("=") then
+		scale = scale + 0.01
 	end
 
   for i = 1, lightWorld:getLightCount() do
@@ -195,10 +192,6 @@ function love.update(dt)
 
   for i = 1, phyCnt do
 		if phyBody[i] and (phyBody[i]:isAwake() or offsetChanged) then
-			if offsetChanged then
-				phyBody[i]:setX(phyBody[i]:getX() + (offsetX - offsetOldX))
-				phyBody[i]:setY(phyBody[i]:getY() + (offsetY - offsetOldY))
-			end
 			if phyLight[i]:getType() == "polygon" then
 				phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
 			elseif phyLight[i]:getType() == "circle" then
@@ -213,18 +206,12 @@ function love.update(dt)
 			--if math.mod(i, 2) == 0  then
 				phyLight[i]:setNormalTileOffset(tileX, tileY)
 			--end
-			if offsetChanged then
-				phyLight[i]:setPosition(phyLight[i]:getX() + (offsetX - offsetOldX), phyLight[i]:getY() + (offsetY - offsetOldY))
-			end
 		end
-    end
+  end
 
 	if physicOn then
 		physicWorld:update(dt)
 	end
-
-	offsetOldX = offsetX
-	offsetOldY = offsetY
 
 	-- draw shader
 	if colorAberration > 0.0 then
@@ -246,7 +233,11 @@ end
 
 function love.draw()
 	-- set shader buffer
-  lightWorld:draw()
+  love.graphics.push()
+    love.graphics.translate(offsetX, offsetY)
+    love.graphics.scale(scale)
+    lightWorld:draw(offsetX,offsetY, scale)
+  love.graphics.pop()
 
 	love.graphics.draw(imgLight, mx - 5, (my - 5) - (16.0 + (math.sin(lightDirection) + 1.0) * 64.0))
 
@@ -349,7 +340,7 @@ function drawBackground(l,t,w,h)
 	else
 		love.graphics.setColor(255, 255, 255)
 		if textureOn then
-			love.graphics.draw(imgFloor, quadScreen, offsetX % 32 - 32, offsetY % 24 - 24)
+			love.graphics.draw(imgFloor, quadScreen, 0,0)
 		else
 			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 		end

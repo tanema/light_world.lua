@@ -142,17 +142,16 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       end
     end
 
-    self.shadow:clear()
-    self.shader:send("lightPosition", {self.x - l, h - (self.y - t), self.z})
-    self.shader:send("lightRange", self.range)
-    self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.shader:send("lightSmooth", self.smooth)
-    self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-    self.shader:send("lightAngle", math.pi - self.angle / 2.0)
-    self.shader:send("lightDirection", self.direction)
-
     -- draw shadow
+    self.shadow:clear()
     util.drawto(self.shadow, l, t, s, function()
+      self.shader:send("lightPosition", {self.x + l, h - (self.y + t), self.z})
+      self.shader:send("lightRange", self.range)
+      self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+      self.shader:send("lightSmooth", self.smooth)
+      self.shader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+      self.shader:send("lightAngle", math.pi - self.angle / 2.0)
+      self.shader:send("lightDirection", self.direction)
       love.graphics.setShader(self.shader)
       love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
       love.graphics.setBlendMode("additive")
@@ -178,9 +177,9 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
     end)
 
     -- update shine
+    self.shine:clear(255, 255, 255)
     util.drawto(self.shine, l, t, s, function()
       love.graphics.setShader(self.shader)
-      self.shine:clear(255, 255, 255)
       love.graphics.setBlendMode("alpha")
       love.graphics.setStencil(stencils.colorShadow(bodies))
       love.graphics.rectangle("fill", -l,-t,w,h)
