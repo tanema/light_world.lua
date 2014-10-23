@@ -96,7 +96,6 @@ end
 function light_world:draw(l,t,s)
   l,t,s = (l or 0), (t or 0), s or 1 
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-
   util.drawto(self.render_buffer, l, t, s, function()
     self.drawBackground( l,t,w,h,s)
     self:drawShadow(     l,t,w,h,s)

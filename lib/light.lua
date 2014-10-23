@@ -125,7 +125,10 @@ function light:setGlowStrength(strength)
 end
 
 function light:inRange(l,t,w,h)
-  return self.x + self.range > l and self.x - self.range < (l+w) and self.y + self.range > t and self.y - self.range < (t+h)
+  return self.x + self.range > l     and 
+         self.x - self.range < (l+w) and 
+         self.y + self.range > t     and 
+         self.y - self.range < (t+h)
 end
 
 function light:drawShadow(l,t,w,h,s,bodies, canvas)
@@ -153,7 +156,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       love.graphics.setShader(self.shader)
       love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
       love.graphics.setBlendMode("additive")
-      love.graphics.rectangle("fill", l,t,w,h)
+      love.graphics.rectangle("fill", -l,-t,w,h)
 
       -- draw color shadows
       love.graphics.setBlendMode("multiplicative")
@@ -174,13 +177,13 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       end
     end)
 
-    -- draw shine
+    -- update shine
     util.drawto(self.shine, l, t, s, function()
       love.graphics.setShader(self.shader)
       self.shine:clear(255, 255, 255)
       love.graphics.setBlendMode("alpha")
       love.graphics.setStencil(stencils.colorShadow(bodies))
-      love.graphics.rectangle("fill", 0,0,w,h)
+      love.graphics.rectangle("fill", -l,-t,w,h)
     end)
 
     love.graphics.setStencil()

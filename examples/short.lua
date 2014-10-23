@@ -92,11 +92,8 @@ function love.draw()
 end
 
 function drawBackground(l,t,w,h)
-  love.graphics.push()
-    love.graphics.origin()
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.rectangle("fill", 0, 0, w, h)
-  love.graphics.pop()
+  love.graphics.setColor(255, 255, 255)
+  love.graphics.rectangle("fill", -l, -t, w, h)
 end
 
 function drawForground(l,t,w,h)
