@@ -119,6 +119,12 @@ function love.draw()
     love.graphics.scale(scale)
     lightWorld:draw(x,y,scale)
   love.graphics.pop()
+
+  love.graphics.setBlendMode("alpha")
+  love.graphics.setColor(0, 0, 0, 191)
+  love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), 24)
+  love.graphics.setColor(0, 255, 0)
+  love.graphics.print("To toggle postshaders, use 0-9 and q->y, to scale use - and =, and to translate use arrows")
 end
 
 function drawBackground(l,t,w,h)
