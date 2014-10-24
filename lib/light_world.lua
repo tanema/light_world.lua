@@ -173,7 +173,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawPixelShadow(l,t,w,h)
+      self.body[i]:drawPixelShadow()
     end
   end)
 
@@ -196,7 +196,7 @@ end
 -- draw material
 function light_world:drawMaterial(l,t,w,h,s)
   for i = 1, #self.body do
-    self.body[i]:drawMaterial(l,t,w,h)
+    self.body[i]:drawMaterial()
   end
 end
 
@@ -222,7 +222,7 @@ function light_world:drawGlow(l,t,w,h,s)
     end
 
     for i = 1, #self.body do
-      self.body[i]:drawGlow(l,t,w,h)
+      self.body[i]:drawGlow()
     end
   end)
 
@@ -239,7 +239,7 @@ function light_world:drawRefraction(l,t,w,h,s)
   self.refractionMap:clear()
   util.drawto(self.refractionMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawRefraction(l,t,w,h)
+      self.body[i]:drawRefraction()
     end
   end)
 
@@ -259,7 +259,7 @@ function light_world:drawReflection(l,t,w,h,s)
   self.reflectionMap:clear(0, 0, 0)
   util.drawto(self.reflectionMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawReflection(l,t,w,h)
+      self.body[i]:drawReflection()
     end
   end)
 

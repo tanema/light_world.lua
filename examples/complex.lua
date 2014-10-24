@@ -112,7 +112,7 @@ function love.load()
 	lightOn = true
 	gravityOn = 1
 	shadowBlur = 2.0
-	bloomOn = 0.25
+	bloomOn = 0.0
 	textureOn = true
 	normalOn = false
 	glowBlur = 1.0
@@ -217,10 +217,10 @@ function love.update(dt)
 	if colorAberration > 0.0 then
 		-- vert / horz blur
 		lightWorld.post_shader:addEffect("blur", 2.0, 2.0)
-		lightWorld.post_shader:addEffect("chromatic", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
+		lightWorld.post_shader:addEffect("chromatic_aberration", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
   else
 		lightWorld.post_shader:removeEffect("blur")
-		lightWorld.post_shader:removeEffect("chromatic")
+		lightWorld.post_shader:removeEffect("chromatic_aberration")
 	end
 
 	if bloomOn > 0.0 then
@@ -472,10 +472,10 @@ function love.keypressed(k, u)
 		end
 
     if effectOn == 1.0 then
-      lightWorld.post_shader:addEffect("4colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
+      lightWorld.post_shader:addEffect("four_colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
       --lightWorld.post_shader:addEffect("4colors", {108, 108, 78}, {142, 139, 87}, {195, 196, 165}, {227, 230, 201})
     else
-      lightWorld.post_shader:removeEffect("4colors")
+      lightWorld.post_shader:removeEffect("four_colors")
     end
 
     if effectOn == 2.0 then
@@ -491,9 +491,9 @@ function love.keypressed(k, u)
     end
 
     if effectOn == 4.0 then
-      lightWorld.post_shader:addEffect("tiltshift", 4.0)
+      lightWorld.post_shader:addEffect("tilt_shift", 4.0)
     else
-      lightWorld.post_shader:removeEffect("tiltshift")
+      lightWorld.post_shader:removeEffect("tilt_shift")
     end
 
 	elseif k == "f11" then

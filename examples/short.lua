@@ -6,6 +6,7 @@ function love.load()
   x = 0
   y = 0
   scale = 1
+  colorAberration = 0.0
 	-- load images
 	image = love.graphics.newImage("gfx/machine2.png")
 	image_normal = love.graphics.newImage("gfx/cone_normal.png")
@@ -41,21 +42,41 @@ end
 
 function love.keypressed(k)
   if k == "1" then
-    lightWorld.post_shader:toggleEffect("4colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
+    lightWorld.post_shader:toggleEffect("four_colors", {15, 56, 15}, {48, 98, 48}, {139, 172, 15}, {155, 188, 15})
   elseif k == "2" then
     lightWorld.post_shader:toggleEffect("monochrome")
   elseif k == "3" then
     lightWorld.post_shader:toggleEffect("scanlines")
   elseif k == "4" then
-    lightWorld.post_shader:toggleEffect("tiltshift", 4.0)
+    lightWorld.post_shader:toggleEffect("tilt_shift", 4.0)
   elseif k == "5" then
 		lightWorld.post_shader:toggleEffect("bloom", 2.0, 0.25)
   elseif k == "6" then
 		lightWorld.post_shader:toggleEffect("blur", 2.0, 2.0)
-		--lightWorld.post_shader:addEffect("chromatic", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
   elseif k == "7" then
-    testShader = testShader + 1
-		lightWorld.post_shader:addEffect("test", testShader)
+		lightWorld.post_shader:toggleEffect("black_and_white")
+  elseif k == "8" then
+		lightWorld.post_shader:toggleEffect("curvature")
+  elseif k == "9" then
+		lightWorld.post_shader:toggleEffect("edges")
+  elseif k == "0" then
+		lightWorld.post_shader:toggleEffect("hdr_tv")
+  elseif k == "q" then
+		lightWorld.post_shader:toggleEffect("phosphor")
+  elseif k == "w" then
+		lightWorld.post_shader:toggleEffect("phosphorish")
+  elseif k == "e" then
+		lightWorld.post_shader:toggleEffect("pip")
+  elseif k == "r" then
+		lightWorld.post_shader:toggleEffect("pixellate")
+  elseif k == "t" then
+		lightWorld.post_shader:toggleEffect("radialblur")
+  elseif k == "y" then
+		lightWorld.post_shader:toggleEffect("waterpaint")
+	elseif k == "c" then
+		if colorAberration == 0.0 then
+			colorAberration = 3.0
+		end
   end
 end
 
@@ -78,6 +99,15 @@ function love.update(dt)
 		scale = scale - 0.01
 	elseif love.keyboard.isDown("=") then
 		scale = scale + 0.01
+	end
+                                                                       
+	colorAberration = math.max(0.0, colorAberration - dt * 10.0)
+	if colorAberration > 0.0 then
+		lightWorld.post_shader:addEffect("blur", 2.0, 2.0)
+		lightWorld.post_shader:addEffect("chromatic_aberration")
+  else
+		lightWorld.post_shader:removeEffect("blur")
+		lightWorld.post_shader:removeEffect("chromatic_aberration")
 	end
 
 	lightMouse:setPosition(love.mouse.getX()/scale, love.mouse.getY()/scale)
