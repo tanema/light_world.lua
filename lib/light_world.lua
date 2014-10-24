@@ -152,10 +152,8 @@ function light_world:drawShine(l,t,w,h,s)
     love.graphics.setColor(unpack(self.ambient))
     love.graphics.setBlendMode("alpha")
     love.graphics.rectangle("fill", -l/s, -t/s, w/s, h/s)
-    love.graphics.setColor(255, 255, 255)
-    love.graphics.setBlendMode("additive")
     for i = 1, #self.lights do
-      self.lights[i]:drawShine(self.shine)
+      self.lights[i]:drawShine(l,t,w,h,s,self.body,self.shine)
     end
   end)
 

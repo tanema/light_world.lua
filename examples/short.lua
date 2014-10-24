@@ -17,7 +17,7 @@ function love.load()
 	lightWorld = LightWorld({
     drawBackground = drawBackground,
     drawForground = drawForground,
-    ambient = {15,15,15},
+    ambient = {55,55,55},
     refractionStrength = 32.0,
     reflectionVisibility = 0.75,
   })

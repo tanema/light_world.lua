@@ -387,7 +387,7 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:shadowStencil()
+function body:stencil()
   if self.shadowType == "circle" then
     love.graphics.circle("fill", self.x - self.ox, self.y - self.oy, self.radius)
   elseif self.shadowType == "rectangle" then

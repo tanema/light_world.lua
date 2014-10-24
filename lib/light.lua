@@ -176,25 +176,25 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
       end
     end)
 
-    -- update shine
-    self.shine:clear(255, 255, 255)
-    util.drawto(self.shine, l, t, s, function()
-      love.graphics.setShader(self.shader)
-      love.graphics.setBlendMode("alpha")
-      love.graphics.setStencil(stencils.colorShadow(bodies))
-      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
-    end)
-
     love.graphics.setStencil()
     love.graphics.setShader()
-
     util.drawCanvasToCanvas(self.shadow, canvas, {blendmode = "additive"})
   end
 end
 
-function light:drawShine(canvas)
+function light:drawShine(l,t,w,h,s,bodies,canvas)
   if self.visible then
-    util.drawCanvasToCanvas(self.shine, canvas)
+    --update shine
+    self.shine:clear(255, 255, 255)
+    util.drawto(self.shine, l, t, s, function()
+      love.graphics.setShader(self.shader)
+      love.graphics.setBlendMode("alpha")
+      love.graphics.setStencil(stencils.shine(bodies))
+      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
+    end)
+    love.graphics.setStencil()
+    love.graphics.setShader()
+    util.drawCanvasToCanvas(self.shine, canvas, {blendmode = "additive"})
   end
 end
 
