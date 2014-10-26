@@ -46,27 +46,8 @@ function light:setPosition(x, y, z)
 end
 
 -- get x
-function light:getX()
-  return self.x
-end
-
--- get y
-function light:getY()
-  return self.y
-end
-
--- set x
-function light:setX(x)
-  if x ~= self.x then
-    self.x = x
-  end
-end
-
--- set y
-function light:setY(y)
-  if y ~= self.y then
-    self.y = y
-  end
+function light:getPosition()
+  return self.x, self.y
 end
 
 -- set color
