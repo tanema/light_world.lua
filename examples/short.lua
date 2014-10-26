@@ -134,7 +134,8 @@ end
 
 function drawForground(l,t,w,h)
   love.graphics.setColor(63, 255, 127)
-  love.graphics.circle("fill", circleTest:getX(), circleTest:getY(), circleTest:getRadius())
+  local cx, cy = circleTest:getPosition()
+  love.graphics.circle("fill", cx, cy, circleTest:getRadius())
   love.graphics.polygon("fill", rectangleTest:getPoints())
   love.graphics.setColor(255, 255, 255)
   love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)

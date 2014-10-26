@@ -109,30 +109,9 @@ function body:setPosition(x, y)
   end
 end
 
--- set x position
-function body:setX(x)
-  if x ~= self.x then
-    self.x = x
-    self:refresh()
-  end
-end
-
--- set y position
-function body:setY(y)
-  if y ~= self.y then
-    self.y = y
-    self:refresh()
-  end
-end
-
 -- get x position
-function body:getX()
-  return self.x
-end
-
--- get y position
-function body:getY(y)
-  return self.y
+function body:getPosition()
+  return self.x, self.y
 end
 
 -- get width

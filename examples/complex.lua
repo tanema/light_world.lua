@@ -195,11 +195,11 @@ function love.update(dt)
 			if phyLight[i]:getType() == "polygon" then
 				phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
 			elseif phyLight[i]:getType() == "circle" then
-				phyLight[i]:setPosition(phyBody[i]:getX(), phyBody[i]:getY())
+				phyLight[i]:setPosition(phyBody[i]:getPosition())
 			elseif phyLight[i]:getType() == "image" then
-				phyLight[i]:setPosition(phyBody[i]:getX(), phyBody[i]:getY())
+				phyLight[i]:setPosition(phyBody[i]:getPosition())
 			elseif phyLight[i]:getType() == "refraction" then
-				--phyLight[i]:setPosition(phyBody[i]:getX(), phyBody[i]:getY())
+				--phyLight[i]:setPosition(phyBody[i]:getPosition())
 			end
 		end
 		if phyLight[i]:getType() == "refraction" then
@@ -367,7 +367,8 @@ function drawForground(l,t,w,h)
 		elseif phyLight[i]:getType() == "circle" then
       math.randomseed(i)
       love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-			love.graphics.circle("fill", phyLight[i]:getX(), phyLight[i]:getY(), phyLight[i]:getRadius())
+      local cx, cy = phyLight[i]:getPosition()
+			love.graphics.circle("fill", cx, cy, phyLight[i]:getRadius())
     elseif phyLight[i]:getType() == "image" then
 			if normalOn and phyLight[i].normal then
 				love.graphics.setColor(255, 255, 255)
