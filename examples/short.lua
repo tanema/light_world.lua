@@ -83,15 +83,15 @@ end
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
 
-	if love.keyboard.isDown("up") then
+	if love.keyboard.isDown("down") then
 		y = y - dt * 200
-	elseif love.keyboard.isDown("down") then
+	elseif love.keyboard.isDown("up") then
 		y = y + dt * 200
 	end
 
-	if love.keyboard.isDown("left") then
+	if love.keyboard.isDown("right") then
 		x = x - dt * 200
-	elseif love.keyboard.isDown("right") then
+	elseif love.keyboard.isDown("left") then
 		x = x + dt * 200
 	end
 
