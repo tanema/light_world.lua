@@ -1,5 +1,5 @@
 -- Example: Complex Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function initScene()
 	-- physic world
