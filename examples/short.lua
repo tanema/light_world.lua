@@ -1,5 +1,5 @@
 -- Example: Short Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function love.load()
   testShader = 0

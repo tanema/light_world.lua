@@ -1,5 +1,5 @@
 -- Example: Normal map Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function love.load()
   x = 0

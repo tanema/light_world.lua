@@ -7,7 +7,7 @@
 -- Updated by Dresenpai
 
 require "lib/postshader"
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 exf = {}
 exf.current = nil

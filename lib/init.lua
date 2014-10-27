@@ -21,21 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
-local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
-local class = require(_PACKAGE..'/class')
-local Light = require(_PACKAGE..'/light')
-local Body = require(_PACKAGE..'/body')
-local util = require(_PACKAGE..'/util')
-local normal_map = require(_PACKAGE..'/normal_map')
-local PostShader = require(_PACKAGE..'/postshader')
-require(_PACKAGE..'/postshader')
+local _PACKAGE = string.gsub(...,"%.","/") or ""
+if string.len(_PACKAGE) > 0 then
+  _PACKAGE = _PACKAGE .. "/"
+end
+local class = require(_PACKAGE..'class')
+local Light = require(_PACKAGE..'light')
+local Body = require(_PACKAGE..'body')
+local util = require(_PACKAGE..'util')
+local normal_map = require(_PACKAGE..'normal_map')
+local PostShader = require(_PACKAGE..'postshader')
+require(_PACKAGE..'postshader')
 
 local light_world = class()
 
-light_world.blurv              = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
-light_world.blurh              = love.graphics.newShader(_PACKAGE.."/shaders/blurh.glsl")
-light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."/shaders/refraction.glsl")
-light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."/shaders/reflection.glsl")
+light_world.blurv              = love.graphics.newShader(_PACKAGE.."shaders/blurv.glsl")
+light_world.blurh              = love.graphics.newShader(_PACKAGE.."shaders/blurh.glsl")
+light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
+light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
 function light_world:init(options)
 	self.lights = {}
