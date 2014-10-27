@@ -28,7 +28,7 @@ function love.draw()
 end
 ```
 
-	For more information please check out the (wiki)[https://github.com/tanema/light_world.lua/wiki] and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action. 
+For more information please check out the (wiki)[https://github.com/tanema/light_world.lua/wiki] and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action. 
 
 ## Features ##
 * **[Preview (Video)](https://www.youtube.com/watch?v=6V5Dtsa6Nd4)**
