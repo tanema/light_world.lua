@@ -43,7 +43,6 @@ function light_world:init(options)
   self.post_shader = PostShader()
 
 	self.ambient              = {0, 0, 0}
-	self.normalInvert         = false
 
 	self.refractionStrength   = 8.0
 	self.reflectionStrength   = 16.0
@@ -51,6 +50,7 @@ function light_world:init(options)
 
 	self.blur                 = 2.0
 	self.glowBlur             = 1.0
+
 	self.glowTimer            = 0.0
 	self.glowDown             = false
 
@@ -275,6 +275,11 @@ function light_world:newLight(x, y, red, green, blue, range)
   return self.lights[#self.lights]
 end
 
+function light_world:clear()
+  light_world:clearLights()
+  light_world:clearBodys()
+end
+
 -- clear lights
 function light_world:clearLights()
   self.lights = {}
@@ -300,26 +305,6 @@ end
 -- set ambient color
 function light_world:setAmbientColor(red, green, blue)
   self.ambient = {red, green, blue}
-end
-
--- set ambient red
-function light_world:setAmbientRed(red)
-  self.ambient[1] = red
-end
-
--- set ambient green
-function light_world:setAmbientGreen(green)
-  self.ambient[2] = green
-end
-
--- set ambient blue
-function light_world:setAmbientBlue(blue)
-  self.ambient[3] = blue
-end
-
--- set normal invert
-function light_world:setNormalInvert(invert)
-  self.normalInvert = invert
 end
 
 -- set blur
