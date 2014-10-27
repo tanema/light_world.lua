@@ -5,7 +5,7 @@ only it has been largely refactored and edited to allow for scaling and proper t
  
 ## Installation
    
-  copy the lib folder into your project at any path
+  Copy and rename the lib folder into your project.
     
 ## How to use
 
