@@ -343,7 +343,7 @@ end
 -- new rectangle
 function light_world:newRectangle(x, y, w, h)
   self.isShadows = true
-  return self:newBody("rectangle", x, y, width, height)
+  return self:newBody("rectangle", x, y, w, h)
 end
 
 -- new circle
