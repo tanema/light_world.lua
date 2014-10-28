@@ -10,7 +10,7 @@ only it has been largely refactored and edited to allow for scaling and proper t
 ## How to use
 
 ```lua
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib" --the path to where light_world is (in this repo "lib")
 
 -- create light world
 lightWorld = LightWorld({
