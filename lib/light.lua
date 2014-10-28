@@ -47,7 +47,7 @@ end
 
 -- get x
 function light:getPosition()
-  return self.x, self.y
+  return self.x, self.y, self.z
 end
 
 -- set color
