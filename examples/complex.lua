@@ -94,7 +94,7 @@ function love.load()
     refractionStrength = 16.0,
     reflectionVisibility = 0.75,
     drawBackground = drawBackground,
-    drawForground = drawForground
+    drawForeground = drawForeground
   })
 
 	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
@@ -357,7 +357,7 @@ function drawBackground(l,t,w,h)
 	end
 end
 
-function drawForground(l,t,w,h)
+function drawForeground(l,t,w,h)
 	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
 		if phyLight[i]:getType() == "polygon" then

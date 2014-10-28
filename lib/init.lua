@@ -58,7 +58,7 @@ function light_world:init(options)
 	self.glowDown             = false
 
   self.drawBackground       = function() end
-  self.drawForground        = function() end
+  self.drawForeground        = function() end
 
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
@@ -102,7 +102,7 @@ function light_world:draw(l,t,s)
   util.drawto(self.render_buffer, l, t, s, function()
     self.drawBackground( l,t,w,h,s)
     self:drawShadow(     l,t,w,h,s)
-    self.drawForground(  l,t,w,h,s)
+    self.drawForeground(  l,t,w,h,s)
 		self:drawMaterial(   l,t,w,h,s)
     self:drawShine(      l,t,w,h,s)
     self:drawPixelShadow(l,t,w,h,s)
@@ -280,7 +280,7 @@ end
 
 function light_world:clear()
   light_world:clearLights()
-  light_world:clearBodys()
+  light_world:clearBodies()
 end
 
 -- clear lights
@@ -290,7 +290,7 @@ function light_world:clearLights()
 end
 
 -- clear objects
-function light_world:clearBodys()
+function light_world:clearBodies()
   self.body = {}
   self.isShadows = false
   self.isRefraction = false
@@ -302,7 +302,7 @@ function light_world:setBackgroundMethod(fn)
 end
 
 function light_world:setForegroundMethod(fn)
-  self.drawForground = fn or function() end
+  self.drawForeground = fn or function() end
 end
 
 -- set ambient color

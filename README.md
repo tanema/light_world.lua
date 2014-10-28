@@ -15,7 +15,7 @@ local LightWorld = require "lib/light_world"
 -- create light world
 lightWorld = LightWorld({
   drawBackground = drawBackground, --the callback to use for drawing the background
-  drawForground = drawForground, --the callback to use for drawing the foreground
+  drawForeground = drawForeground, --the callback to use for drawing the foreground
   ambient = {55,55,55},         --the general ambient light in the environment
 })
 

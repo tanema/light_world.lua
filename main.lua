@@ -77,7 +77,7 @@ function exf.drawBackground()
   exf.list:draw()
 end
 
-function exf.drawForground()
+function exf.drawForeground()
   love.graphics.setColor(255, 255, 255)
   love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
 end
@@ -184,7 +184,7 @@ function exf.resume()
 	-- create light world
 	lightWorld = LightWorld({
     drawBackground = exf.drawBackground,
-    drawForground = exf.drawForground
+    drawForeground = exf.drawForeground
   })
 	lightWorld:setAmbientColor(127, 127, 127)
 

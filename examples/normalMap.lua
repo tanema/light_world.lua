@@ -12,7 +12,7 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     drawBackground = drawBackground,
-    drawForground = drawForground,
+    drawForeground = drawForeground,
     ambient = {55,55,55},
     refractionStrength = 32.0,
     reflectionVisibility = 0.75,
@@ -65,7 +65,7 @@ function drawBackground(l,t,w,h)
   love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
 end
 
-function drawForground(l,t,w,h)
+function drawForeground(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   love.graphics.draw(image, w/2-(image:getWidth()/2), h/2-(image:getHeight()/2))
