@@ -109,6 +109,17 @@ function body:setPosition(x, y)
   end
 end
 
+-- move position
+function body:move(x, y)
+  if x then
+    self.x = self.x + x
+  end
+  if y then
+    self.y = self.y + y
+  end
+  self:refresh()
+end
+
 -- get x position
 function body:getPosition()
   return self.x, self.y
