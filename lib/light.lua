@@ -129,7 +129,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
     self.shadow:clear()
     util.drawto(self.shadow, l, t, s, function()
  
-      self.shader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z})
+      self.shader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z/255.0})
       self.shader:send("lightRange", self.range*s)
       self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
       self.shader:send("lightSmooth", self.smooth)
@@ -182,11 +182,11 @@ function light:drawShine(l,t,w,h,s,bodies,canvas)
   end
 end
 
-function light:drawPixelShadow(l,t,w,h, normalMap, canvas)
+function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
   if self.visible then
     if self.normalInvert then
       self.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalInvertShader:send('lightPosition',{self.x, h - self.y, self.z / 255.0})
+      self.normalInvertShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
       self.normalInvertShader:send('lightRange',{self.range})
       self.normalInvertShader:send("lightSmooth", self.smooth)
       self.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
@@ -194,7 +194,7 @@ function light:drawPixelShadow(l,t,w,h, normalMap, canvas)
       util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalInvertShader})
     else
       self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalShader:send('lightPosition',{self.x, h - self.y, self.z / 255.0})
+      self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
       self.normalShader:send('lightRange',{self.range})
       self.normalShader:send("lightSmooth", self.smooth)
       self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)

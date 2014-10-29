@@ -180,7 +180,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
 
   self.pixelShadow2:clear()
   for i = 1, #self.lights do
-    self.lights[i]:drawPixelShadow(l,t,w,h, self.normalMap, self.pixelShadow2)
+    self.lights[i]:drawPixelShadow(l,t,w,h,s, self.normalMap, self.pixelShadow2)
   end
 
   self.pixelShadow:clear(255, 255, 255)
