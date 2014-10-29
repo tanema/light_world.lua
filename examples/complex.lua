@@ -131,9 +131,11 @@ end
 
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
-	mouseLight:setPosition(love.mouse.getX(), love.mouse.getY(), 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
-	mx = love.mouse.getX()
-	my = love.mouse.getY()
+
+  mx, my = (love.mouse.getX() - offsetX)/scale, (love.mouse.getY() - offsetY)/scale
+
+	mouseLight:setPosition(mx, my, 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
+
 	lightDirection = lightDirection + dt
 	colorAberration = math.max(0.0, colorAberration - dt * 10.0)
 

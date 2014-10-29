@@ -6,8 +6,8 @@ function love.load()
   y = 0
   scale = 1
 	-- load images
-	image = love.graphics.newImage("gfx/crossColor.jpg")
-	image_normal = love.graphics.newImage("gfx/crossnrm.jpg")
+	image = love.graphics.newImage("gfx/rock.png")
+	image_normal = love.graphics.newImage("gfx/rock_n.png")
 
 	-- create light world
 	lightWorld = LightWorld({
@@ -21,6 +21,7 @@ function love.load()
 	-- create light
 	lightMouse = lightWorld:newLight(0, 0, 160, 160, 160, 300)
 	lightMouse:setGlowStrength(0.3)
+  --lightMouse.normalInvert = true
 
 	-- create shadow bodys
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()

@@ -617,10 +617,12 @@ function body:calculateCircleShadow(light)
     curShadowGeometry[6] = y3 - (light.y - y3) * shadowLength
     curShadowGeometry[7] = x2 - (light.x - x2) * shadowLength
     curShadowGeometry[8] = y2 - (light.y - y2) * shadowLength
-    curShadowGeometry.alpha = self.alpha
+
     curShadowGeometry.red = self.red
     curShadowGeometry.green = self.green
     curShadowGeometry.blue = self.blue
+    curShadowGeometry.alpha = self.alpha
+
     return curShadowGeometry
   else
     return nil

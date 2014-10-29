@@ -110,7 +110,7 @@ function love.update(dt)
 		lightWorld.post_shader:removeEffect("chromatic_aberration")
 	end
 
-	lightMouse:setPosition(love.mouse.getX()/scale, love.mouse.getY()/scale)
+	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale)
 end
 
 function love.draw()
