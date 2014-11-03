@@ -77,6 +77,12 @@ function love.keypressed(k)
 		if colorAberration == 0.0 then
 			colorAberration = 3.0
 		end
+	elseif k == "f" then
+    lightWorld:remove(lightMouse)
+	elseif k == "g" then
+    lightWorld:remove(circleTest)
+	elseif k == "h" then
+    lightWorld:remove(rectangleTest)
   end
 end
 

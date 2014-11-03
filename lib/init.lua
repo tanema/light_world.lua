@@ -417,4 +417,25 @@ function light_world:getLight(n)
   return self.lights[n]
 end
 
+function light_world:remove(to_kill)
+  if to_kill:is_a(Body) then
+    for i = 1, #self.body do
+      if self.body[i] == to_kill then
+        table.remove(self.body, i)
+        return true
+      end
+    end
+  elseif to_kill:is_a(Light) then
+    for i = 1, #self.lights do
+      if self.lights[i] == to_kill then
+        table.remove(self.lights, i)
+        return true
+      end
+    end
+  end
+
+  -- failed to find it
+  return false
+end
+
 return light_world
