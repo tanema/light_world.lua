@@ -206,4 +206,8 @@ function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
   end
 end
 
+function light:setVisible(visible)
+  self.visible = visible
+end
+
 return light
