@@ -107,15 +107,17 @@ function light:setGlowStrength(strength)
   self.glowStrength = strength
 end
 
-function light:inRange(l,t,w,h)
-  return self.x + self.range > l     and 
-         self.x - self.range < (l+w) and 
-         self.y + self.range > t     and 
-         self.y - self.range < (t+h)
+function light:inRange(l,t,w,h,s)
+  local lx, ly, rs = (self.x + l/s) * s, (self.y + t/s) * s, self.range * s
+
+  return (lx + rs) > 0 and 
+         (lx - rs) < w/s and 
+         (ly + rs) > 0 and 
+         (ly - rs) < h/s
 end
 
 function light:drawShadow(l,t,w,h,s,bodies, canvas)
-  if self.visible and self:inRange(l,t,w,h) then
+  if self.visible and self:inRange(l,t,w,h,s) then
     -- calculate shadows
     local shadow_geometry = {}
     for i = 1, #bodies do
@@ -167,7 +169,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
 end
 
 function light:drawShine(l,t,w,h,s,bodies,canvas)
-  if self.visible then
+  if self.visible and self:inRange(l,t,w,h,s) then
     --update shine
     self.shine:clear(255, 255, 255)
     util.drawto(self.shine, l, t, s, function()
@@ -183,7 +185,7 @@ function light:drawShine(l,t,w,h,s,bodies,canvas)
 end
 
 function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
-  if self.visible then
+  if self.visible and self:inRange(l,t,w,h,s) then
     if self.normalInvert then
       self.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
       self.normalInvertShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
