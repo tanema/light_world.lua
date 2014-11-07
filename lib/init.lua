@@ -188,7 +188,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
   util.drawto(self.pixelShadow, l, t, s, function()
     love.graphics.setBlendMode("additive")
     love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
-    love.graphics.rectangle("fill", l/s,t/s,w/s,h/s)
+    love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
   end)
 
   util.drawCanvasToCanvas(self.pixelShadow, self.render_buffer, {blendmode = "multiplicative"})
