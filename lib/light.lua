@@ -47,6 +47,19 @@ function light:setPosition(x, y, z)
   end
 end
 
+-- move position
+function light:move(x, y, z)
+  if x then
+    self.x = self.x + x
+  end
+  if y then
+    self.y = self.y + y
+  end
+  if z then
+    self.z = self.z + z
+  end
+end
+
 -- get x
 function light:getPosition()
   return self.x, self.y, self.z
