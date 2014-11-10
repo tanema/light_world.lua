@@ -1,5 +1,4 @@
 extern Image glowImage;
-
 extern float glowTime;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {

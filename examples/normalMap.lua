@@ -1,18 +1,18 @@
 -- Example: Normal map Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function love.load()
   x = 0
   y = 0
   scale = 1
 	-- load images
-	image = love.graphics.newImage("gfx/crossColor.jpg")
-	image_normal = love.graphics.newImage("gfx/crossnrm.jpg")
+	image = love.graphics.newImage("gfx/rock.png")
+	image_normal = love.graphics.newImage("gfx/rock_n.png")
 
 	-- create light world
 	lightWorld = LightWorld({
     drawBackground = drawBackground,
-    drawForground = drawForground,
+    drawForeground = drawForeground,
     ambient = {55,55,55},
     refractionStrength = 32.0,
     reflectionVisibility = 0.75,
@@ -21,6 +21,7 @@ function love.load()
 	-- create light
 	lightMouse = lightWorld:newLight(0, 0, 160, 160, 160, 300)
 	lightMouse:setGlowStrength(0.3)
+  --lightMouse.normalInvert = true
 
 	-- create shadow bodys
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
@@ -65,7 +66,7 @@ function drawBackground(l,t,w,h)
   love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
 end
 
-function drawForground(l,t,w,h)
+function drawForeground(l,t,w,h)
   love.graphics.setColor(255, 255, 255)
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   love.graphics.draw(image, w/2-(image:getWidth()/2), h/2-(image:getHeight()/2))

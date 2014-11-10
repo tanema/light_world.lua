@@ -32,6 +32,8 @@ function light:refresh(w, h)
 
 	self.shadow = love.graphics.newCanvas(w, h)
 	self.shine  = love.graphics.newCanvas(w, h)
+  self.normalInvertShader:send('screenResolution', {w, h})
+  self.normalShader:send('screenResolution', {w, h})
 end
 
 -- set position
@@ -47,7 +49,7 @@ end
 
 -- get x
 function light:getPosition()
-  return self.x, self.y
+  return self.x, self.y, self.z
 end
 
 -- set color
@@ -105,15 +107,17 @@ function light:setGlowStrength(strength)
   self.glowStrength = strength
 end
 
-function light:inRange(l,t,w,h)
-  return self.x + self.range > l     and 
-         self.x - self.range < (l+w) and 
-         self.y + self.range > t     and 
-         self.y - self.range < (t+h)
+function light:inRange(l,t,w,h,s)
+  local lx, ly, rs = (self.x + l/s) * s, (self.y + t/s) * s, self.range * s
+
+  return (lx + rs) > 0 and 
+         (lx - rs) < w/s and 
+         (ly + rs) > 0 and 
+         (ly - rs) < h/s
 end
 
 function light:drawShadow(l,t,w,h,s,bodies, canvas)
-  if self.visible and self:inRange(l,t,w,h) then
+  if self.visible and self:inRange(l,t,w,h,s) then
     -- calculate shadows
     local shadow_geometry = {}
     for i = 1, #bodies do
@@ -126,7 +130,8 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
     -- draw shadow
     self.shadow:clear()
     util.drawto(self.shadow, l, t, s, function()
-      self.shader:send("lightPosition", {self.x*s, (h/s - self.y)*s, self.z})
+ 
+      self.shader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z/255.0})
       self.shader:send("lightRange", self.range*s)
       self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
       self.shader:send("lightSmooth", self.smooth)
@@ -164,7 +169,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
 end
 
 function light:drawShine(l,t,w,h,s,bodies,canvas)
-  if self.visible then
+  if self.visible and self:inRange(l,t,w,h,s) then
     --update shine
     self.shine:clear(255, 255, 255)
     util.drawto(self.shine, l, t, s, function()
@@ -179,21 +184,19 @@ function light:drawShine(l,t,w,h,s,bodies,canvas)
   end
 end
 
-function light:drawPixelShadow(l,t,w,h, normalMap, canvas)
-  if self.visible then
+function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
+  if self.visible and self:inRange(l,t,w,h,s) then
     if self.normalInvert then
-      self.normalInvertShader:send('screenResolution', {w, h})
       self.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalInvertShader:send('lightPosition',{self.x, lh - self.y, self.z / 255.0})
+      self.normalInvertShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
       self.normalInvertShader:send('lightRange',{self.range})
       self.normalInvertShader:send("lightSmooth", self.smooth)
       self.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
       self.normalInvertShader:send("lightDirection", self.direction)
       util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalInvertShader})
     else
-      self.normalShader:send('screenResolution', {w, h})
       self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalShader:send('lightPosition',{self.x, h - self.y, self.z / 255.0})
+      self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
       self.normalShader:send('lightRange',{self.range})
       self.normalShader:send("lightSmooth", self.smooth)
       self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
@@ -201,6 +204,10 @@ function light:drawPixelShadow(l,t,w,h, normalMap, canvas)
       util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalShader})
     end
   end
+end
+
+function light:setVisible(visible)
+  self.visible = visible
 end
 
 return light

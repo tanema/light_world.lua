@@ -1,5 +1,5 @@
 -- Example: Complex Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function initScene()
 	-- physic world
@@ -94,7 +94,7 @@ function love.load()
     refractionStrength = 16.0,
     reflectionVisibility = 0.75,
     drawBackground = drawBackground,
-    drawForground = drawForground
+    drawForeground = drawForeground
   })
 
 	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
@@ -131,9 +131,11 @@ end
 
 function love.update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
-	mouseLight:setPosition(love.mouse.getX(), love.mouse.getY(), 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
-	mx = love.mouse.getX()
-	my = love.mouse.getY()
+
+  mx, my = (love.mouse.getX() - offsetX)/scale, (love.mouse.getY() - offsetY)/scale
+
+	mouseLight:setPosition(mx, my, 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
+
 	lightDirection = lightDirection + dt
 	colorAberration = math.max(0.0, colorAberration - dt * 10.0)
 
@@ -357,7 +359,7 @@ function drawBackground(l,t,w,h)
 	end
 end
 
-function drawForground(l,t,w,h)
+function drawForeground(l,t,w,h)
 	love.graphics.setBlendMode("alpha")
 	for i = 1, phyCnt do
 		if phyLight[i]:getType() == "polygon" then

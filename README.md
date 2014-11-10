@@ -10,12 +10,12 @@ only it has been largely refactored and edited to allow for scaling and proper t
 ## How to use
 
 ```lua
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib" --the path to where light_world is (in this repo "lib")
 
 -- create light world
 lightWorld = LightWorld({
   drawBackground = drawBackground, --the callback to use for drawing the background
-  drawForground = drawForground, --the callback to use for drawing the foreground
+  drawForeground = drawForeground, --the callback to use for drawing the foreground
   ambient = {55,55,55},         --the general ambient light in the environment
 })
 

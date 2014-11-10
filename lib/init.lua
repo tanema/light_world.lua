@@ -21,21 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
-local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
-local class = require(_PACKAGE..'/class')
-local Light = require(_PACKAGE..'/light')
-local Body = require(_PACKAGE..'/body')
-local util = require(_PACKAGE..'/util')
-local normal_map = require(_PACKAGE..'/normal_map')
-local PostShader = require(_PACKAGE..'/postshader')
-require(_PACKAGE..'/postshader')
+local _PACKAGE = string.gsub(...,"%.","/") or ""
+if string.len(_PACKAGE) > 0 then
+  _PACKAGE = _PACKAGE .. "/"
+end
+local class = require(_PACKAGE..'class')
+local Light = require(_PACKAGE..'light')
+local Body = require(_PACKAGE..'body')
+local util = require(_PACKAGE..'util')
+local normal_map = require(_PACKAGE..'normal_map')
+local PostShader = require(_PACKAGE..'postshader')
+require(_PACKAGE..'postshader')
 
 local light_world = class()
 
-light_world.blurv              = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
-light_world.blurh              = love.graphics.newShader(_PACKAGE.."/shaders/blurh.glsl")
-light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."/shaders/refraction.glsl")
-light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."/shaders/reflection.glsl")
+light_world.blurv              = love.graphics.newShader(_PACKAGE.."shaders/blurv.glsl")
+light_world.blurh              = love.graphics.newShader(_PACKAGE.."shaders/blurh.glsl")
+light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
+light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
 function light_world:init(options)
 	self.lights = {}
@@ -55,7 +58,7 @@ function light_world:init(options)
 	self.glowDown             = false
 
   self.drawBackground       = function() end
-  self.drawForground        = function() end
+  self.drawForeground        = function() end
 
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
@@ -99,7 +102,7 @@ function light_world:draw(l,t,s)
   util.drawto(self.render_buffer, l, t, s, function()
     self.drawBackground( l,t,w,h,s)
     self:drawShadow(     l,t,w,h,s)
-    self.drawForground(  l,t,w,h,s)
+    self.drawForeground(  l,t,w,h,s)
 		self:drawMaterial(   l,t,w,h,s)
     self:drawShine(      l,t,w,h,s)
     self:drawPixelShadow(l,t,w,h,s)
@@ -177,7 +180,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
 
   self.pixelShadow2:clear()
   for i = 1, #self.lights do
-    self.lights[i]:drawPixelShadow(l,t,w,h, self.normalMap, self.pixelShadow2)
+    self.lights[i]:drawPixelShadow(l,t,w,h,s, self.normalMap, self.pixelShadow2)
   end
 
   self.pixelShadow:clear(255, 255, 255)
@@ -185,7 +188,7 @@ function light_world:drawPixelShadow(l,t,w,h,s)
   util.drawto(self.pixelShadow, l, t, s, function()
     love.graphics.setBlendMode("additive")
     love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
-    love.graphics.rectangle("fill", l/s,t/s,w/s,h/s)
+    love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
   end)
 
   util.drawCanvasToCanvas(self.pixelShadow, self.render_buffer, {blendmode = "multiplicative"})
@@ -277,7 +280,7 @@ end
 
 function light_world:clear()
   light_world:clearLights()
-  light_world:clearBodys()
+  light_world:clearBodies()
 end
 
 -- clear lights
@@ -287,7 +290,7 @@ function light_world:clearLights()
 end
 
 -- clear objects
-function light_world:clearBodys()
+function light_world:clearBodies()
   self.body = {}
   self.isShadows = false
   self.isRefraction = false
@@ -299,7 +302,7 @@ function light_world:setBackgroundMethod(fn)
 end
 
 function light_world:setForegroundMethod(fn)
-  self.drawForground = fn or function() end
+  self.drawForeground = fn or function() end
 end
 
 -- set ambient color
@@ -340,7 +343,7 @@ end
 -- new rectangle
 function light_world:newRectangle(x, y, w, h)
   self.isShadows = true
-  return self:newBody("rectangle", x, y, width, height)
+  return self:newBody("rectangle", x, y, w, h)
 end
 
 -- new circle
@@ -412,6 +415,27 @@ end
 -- get light
 function light_world:getLight(n)
   return self.lights[n]
+end
+
+function light_world:remove(to_kill)
+  if to_kill:is_a(Body) then
+    for i = 1, #self.body do
+      if self.body[i] == to_kill then
+        table.remove(self.body, i)
+        return true
+      end
+    end
+  elseif to_kill:is_a(Light) then
+    for i = 1, #self.lights do
+      if self.lights[i] == to_kill then
+        table.remove(self.lights, i)
+        return true
+      end
+    end
+  end
+
+  -- failed to find it
+  return false
 end
 
 return light_world

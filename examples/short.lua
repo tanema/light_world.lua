@@ -1,5 +1,5 @@
 -- Example: Short Example
-local LightWorld = require "lib/light_world"
+local LightWorld = require "lib"
 
 function love.load()
   testShader = 0
@@ -16,7 +16,7 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     drawBackground = drawBackground,
-    drawForground = drawForground,
+    drawForeground = drawForeground,
     ambient = {55,55,55},
     refractionStrength = 32.0,
     reflectionVisibility = 0.75,
@@ -77,6 +77,12 @@ function love.keypressed(k)
 		if colorAberration == 0.0 then
 			colorAberration = 3.0
 		end
+	elseif k == "f" then
+    lightWorld:remove(lightMouse)
+	elseif k == "g" then
+    lightWorld:remove(circleTest)
+	elseif k == "h" then
+    lightWorld:remove(rectangleTest)
   end
 end
 
@@ -110,7 +116,7 @@ function love.update(dt)
 		lightWorld.post_shader:removeEffect("chromatic_aberration")
 	end
 
-	lightMouse:setPosition(love.mouse.getX()/scale, love.mouse.getY()/scale)
+	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale)
 end
 
 function love.draw()
@@ -132,7 +138,7 @@ function drawBackground(l,t,w,h)
   love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
 end
 
-function drawForground(l,t,w,h)
+function drawForeground(l,t,w,h)
   love.graphics.setColor(63, 255, 127)
   local cx, cy = circleTest:getPosition()
   love.graphics.circle("fill", cx, cy, circleTest:getRadius())
