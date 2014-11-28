@@ -9,10 +9,10 @@ function love.load()
   scale = 1
   colorAberration = 0.0
 	-- load images
-	image = love.graphics.newImage("gfx/machine2.png")
-	image_normal = love.graphics.newImage("gfx/cone_normal.png")
-	normal = love.graphics.newImage("gfx/refraction_normal.png")
-	glow = love.graphics.newImage("gfx/machine2_glow.png")
+	image = love.graphics.newImage("examples/gfx/machine2.png")
+	image_normal = love.graphics.newImage("examples/gfx/cone_normal.png")
+	normal = love.graphics.newImage("examples/gfx/refraction_normal.png")
+	glow = love.graphics.newImage("examples/gfx/machine2_glow.png")
 
 	-- create light world
 	lightWorld = LightWorld({

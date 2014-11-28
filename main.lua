@@ -20,23 +20,26 @@ function love.load()
   exf.bigfont = love.graphics.newFont(love._vera_ttf, 24)
   exf.list.font = exf.smallfont
 
-  exf.bigball = love.graphics.newImage("gfx/love-big-ball.png")
+  exf.bigball = love.graphics.newImage("examples/gfx/love-big-ball.png")
 
   -- Find available demos.
   local files =  love.filesystem.getDirectoryItems("examples")
 	local n = 0
 
   for i, v in ipairs(files) do
-  n = n + 1
-  table.insert(exf.available, v);
-    local file = love.filesystem.newFile(v, love.file_read)
-    file:open("r")
-    local contents = love.filesystem.read("examples/" .. v, 100)
-    local s, e, c = string.find(contents, "Example: ([%a%p ]-)[\r\n]")
-    file:close(file)
-    if not c then c = "Untitled" end
-    local title = exf.getn(n) .. " " .. c .. " (" .. v .. ")"
-    exf.list:add(title, v)
+    is_file = love.filesystem.isFile("examples/".. v )
+    if is_file then
+      n = n + 1
+      table.insert(exf.available, v);
+      local file = love.filesystem.newFile(v, love.file_read)
+      file:open("r")
+      local contents = love.filesystem.read("examples/" .. v, 100)
+      local s, e, c = string.find(contents, "Example: ([%a%p ]-)[\r\n]")
+      file:close(file)
+      if not c then c = "Untitled" end
+      local title = exf.getn(n) .. " " .. c .. " (" .. v .. ")"
+      exf.list:add(title, v)
+    end
   end
 
   exf.list:done()

@@ -8,9 +8,9 @@ function love.load()
   scale = 1
   colorAberration = 0.0
 	-- load images
-	image = love.graphics.newImage("gfx/machine2.png")
+	image = love.graphics.newImage("examples/gfx/machine2.png")
 	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth() + 32, love.window.getHeight() + 24, 32, 24)
-	imgFloor = love.graphics.newImage("gfx/floor.png")
+	imgFloor = love.graphics.newImage("examples/gfx/floor.png")
 	imgFloor:setWrap("repeat", "repeat")
 
   post_shader = PostShader()

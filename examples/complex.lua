@@ -36,53 +36,53 @@ function love.load()
 	love.graphics.setDefaultFilter("nearest", "nearest")
 
 	-- load image font
-	font = love.graphics.newImageFont("gfx/font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
+	font = love.graphics.newImageFont("examples/gfx/font.png", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-+/():;%&`'*#=[]\"")
 	love.graphics.setFont(font)
 
 	-- set background
 	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth() + 32, love.window.getHeight() + 24, 32, 24)
-	imgFloor = love.graphics.newImage("gfx/floor.png")
+	imgFloor = love.graphics.newImage("examples/gfx/floor.png")
 	imgFloor:setWrap("repeat", "repeat")
 
 	-- load image examples
-	circle = love.graphics.newImage("gfx/circle.png")
-	circle_normal = love.graphics.newImage("gfx/circle_normal.png")
-	cone = love.graphics.newImage("gfx/cone.png")
-	cone_large = love.graphics.newImage("gfx/cone_large.png")
-	cone_large_normal = love.graphics.newImage("gfx/cone_large_normal.png")
-	cone_normal = love.graphics.newImage("gfx/cone_normal.png")
-	chest = love.graphics.newImage("gfx/chest.png")
-	chest_normal = love.graphics.newImage("gfx/chest_normal.png")
-	machine = love.graphics.newImage("gfx/machine.png")
-	machine_normal = love.graphics.newImage("gfx/machine_normal.png")
-	machine_glow = love.graphics.newImage("gfx/machine_glow.png")
-	machine2 = love.graphics.newImage("gfx/machine2.png")
-	machine2_normal = love.graphics.newImage("gfx/machine2_normal.png")
-	machine2_glow = love.graphics.newImage("gfx/machine2_glow.png")
-	blopp = love.graphics.newImage("gfx/blopp.png")
-	tile = love.graphics.newImage("gfx/tile.png")
-	tile_normal = love.graphics.newImage("gfx/tile_normal.png")
-	tile_glow = love.graphics.newImage("gfx/tile_glow.png")
-	refraction_normal = love.graphics.newImage("gfx/refraction_normal.png")
-	water = love.graphics.newImage("gfx/water.png")
-	led = love.graphics.newImage("gfx/led.png")
-	led2 = love.graphics.newImage("gfx/led2.png")
-	led3 = love.graphics.newImage("gfx/led3.png")
-	led_normal = love.graphics.newImage("gfx/led_normal.png")
-	led_glow = love.graphics.newImage("gfx/led_glow.png")
-	led_glow2 = love.graphics.newImage("gfx/led_glow2.png")
-	led_glow3 = love.graphics.newImage("gfx/led_glow3.png")
-	ape = love.graphics.newImage("gfx/ape.png")
-	ape_normal = love.graphics.newImage("gfx/ape_normal.png")
-	ape_glow = love.graphics.newImage("gfx/ape_glow.png")
-	imgLight = love.graphics.newImage("gfx/light.png")
+	circle = love.graphics.newImage("examples/gfx/circle.png")
+	circle_normal = love.graphics.newImage("examples/gfx/circle_normal.png")
+	cone = love.graphics.newImage("examples/gfx/cone.png")
+	cone_large = love.graphics.newImage("examples/gfx/cone_large.png")
+	cone_large_normal = love.graphics.newImage("examples/gfx/cone_large_normal.png")
+	cone_normal = love.graphics.newImage("examples/gfx/cone_normal.png")
+	chest = love.graphics.newImage("examples/gfx/chest.png")
+	chest_normal = love.graphics.newImage("examples/gfx/chest_normal.png")
+	machine = love.graphics.newImage("examples/gfx/machine.png")
+	machine_normal = love.graphics.newImage("examples/gfx/machine_normal.png")
+	machine_glow = love.graphics.newImage("examples/gfx/machine_glow.png")
+	machine2 = love.graphics.newImage("examples/gfx/machine2.png")
+	machine2_normal = love.graphics.newImage("examples/gfx/machine2_normal.png")
+	machine2_glow = love.graphics.newImage("examples/gfx/machine2_glow.png")
+	blopp = love.graphics.newImage("examples/gfx/blopp.png")
+	tile = love.graphics.newImage("examples/gfx/tile.png")
+	tile_normal = love.graphics.newImage("examples/gfx/tile_normal.png")
+	tile_glow = love.graphics.newImage("examples/gfx/tile_glow.png")
+	refraction_normal = love.graphics.newImage("examples/gfx/refraction_normal.png")
+	water = love.graphics.newImage("examples/gfx/water.png")
+	led = love.graphics.newImage("examples/gfx/led.png")
+	led2 = love.graphics.newImage("examples/gfx/led2.png")
+	led3 = love.graphics.newImage("examples/gfx/led3.png")
+	led_normal = love.graphics.newImage("examples/gfx/led_normal.png")
+	led_glow = love.graphics.newImage("examples/gfx/led_glow.png")
+	led_glow2 = love.graphics.newImage("examples/gfx/led_glow2.png")
+	led_glow3 = love.graphics.newImage("examples/gfx/led_glow3.png")
+	ape = love.graphics.newImage("examples/gfx/ape.png")
+	ape_normal = love.graphics.newImage("examples/gfx/ape_normal.png")
+	ape_glow = love.graphics.newImage("examples/gfx/ape_glow.png")
+	imgLight = love.graphics.newImage("examples/gfx/light.png")
 
 	-- materials
 	material = {}
 
-	local files = love.filesystem.getDirectoryItems("gfx/sphere")
+	local files = love.filesystem.getDirectoryItems("examples/gfx/sphere")
 	for i, file in ipairs(files) do
-		material[i] = love.graphics.newImage("gfx/sphere/" .. file)
+		material[i] = love.graphics.newImage("examples/gfx/sphere/" .. file)
 	end
 
 	-- light world
@@ -134,7 +134,7 @@ function love.update(dt)
 
   mx, my = (love.mouse.getX() - offsetX)/scale, (love.mouse.getY() - offsetY)/scale
 
-	mouseLight:setPosition(mx, my, 1 + (math.sin(lightDirection) + 1.0) * 64.0)
+	mouseLight:setPosition(mx, my, 1 + (math.sin(lightDirection) + 1.0))
 
 	lightDirection = lightDirection + dt
 	colorAberration = math.max(0.0, colorAberration - dt * 10.0)

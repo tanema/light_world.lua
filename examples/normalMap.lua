@@ -6,8 +6,8 @@ function love.load()
   y = 0
   scale = 1
 	-- load images
-	image = love.graphics.newImage("gfx/rock.png")
-	image_normal = love.graphics.newImage("gfx/rock_n.png")
+	image = love.graphics.newImage("examples/gfx/rock.png")
+	image_normal = love.graphics.newImage("examples/gfx/rock_n.png")
 
 	-- create light world
 	lightWorld = LightWorld({

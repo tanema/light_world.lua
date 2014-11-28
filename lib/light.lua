@@ -142,7 +142,7 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
     self.shadow:clear()
     util.drawto(self.shadow, l, t, s, function()
  
-      self.shader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z/255.0})
+      self.shader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10)/255.0})
       self.shader:send("lightRange", self.range*s)
       self.shader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
       self.shader:send("lightSmooth", self.smooth)
@@ -198,7 +198,7 @@ end
 function light:drawNormalShading(l,t,w,h,s, normalMap, canvas)
   if self.visible and self:inRange(l,t,w,h,s) then
     self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
+    self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
     self.normalShader:send('lightRange',{self.range})
     self.normalShader:send("lightSmooth", self.smooth)
     self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
