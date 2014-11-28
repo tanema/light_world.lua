@@ -447,7 +447,7 @@ function body:drawShadow(light)
   end
 end
 
-function body:drawPixelShadow()
+function body:drawNormalShading()
   if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)

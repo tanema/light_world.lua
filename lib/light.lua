@@ -195,7 +195,7 @@ function light:drawShine(l,t,w,h,s,bodies,canvas)
   end
 end
 
-function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
+function light:drawNormalShading(l,t,w,h,s, normalMap, canvas)
   if self.visible and self:inRange(l,t,w,h,s) then
     self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
     self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})

@@ -72,8 +72,8 @@ function light_world:refreshScreenSize(w, h)
 	self.render_buffer    = love.graphics.newCanvas(w, h)
 	self.shadow           = love.graphics.newCanvas(w, h)
 	self.shadow2          = love.graphics.newCanvas(w, h)
-	self.pixelShadow      = love.graphics.newCanvas(w, h)
-	self.pixelShadow2     = love.graphics.newCanvas(w, h)
+	self.normal           = love.graphics.newCanvas(w, h)
+	self.normal2          = love.graphics.newCanvas(w, h)
 	self.shine            = love.graphics.newCanvas(w, h)
 	self.shine2           = love.graphics.newCanvas(w, h)
 	self.normalMap        = love.graphics.newCanvas(w, h)
@@ -105,7 +105,7 @@ function light_world:draw(l,t,s)
     self.drawForeground(  l,t,w,h,s)
 		self:drawMaterial(   l,t,w,h,s)
     self:drawShine(      l,t,w,h,s)
-    self:drawPixelShadow(l,t,w,h,s)
+    self:drawNormalShading(l,t,w,h,s)
     self:drawGlow(       l,t,w,h,s)
     self:drawRefraction( l,t,w,h,s)
     self:drawReflection( l,t,w,h,s)
@@ -164,34 +164,33 @@ function light_world:drawShine(l,t,w,h,s)
   util.drawCanvasToCanvas(self.shine, self.render_buffer, {blendmode = "multiplicative"})
 end
 
--- draw pixel shadow
-function light_world:drawPixelShadow(l,t,w,h,s)
+-- draw normal shading
+function light_world:drawNormalShading(l,t,w,h,s)
   if not self.isShadows then
     return 
   end
-  -- update pixel shadow
   -- create normal map
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawPixelShadow()
+      self.body[i]:drawNormalShading()
     end
   end)
 
-  self.pixelShadow2:clear()
+  self.normal2:clear()
   for i = 1, #self.lights do
-    self.lights[i]:drawPixelShadow(l,t,w,h,s, self.normalMap, self.pixelShadow2)
+    self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.normal2)
   end
 
-  self.pixelShadow:clear(255, 255, 255)
-  util.drawCanvasToCanvas(self.pixelShadow2, self.pixelShadow, {blendmode = "alpha"})
-  util.drawto(self.pixelShadow, l, t, s, function()
+  self.normal:clear(255, 255, 255)
+  util.drawCanvasToCanvas(self.normal2, self.normal, {blendmode = "alpha"})
+  util.drawto(self.normal, l, t, s, function()
     love.graphics.setBlendMode("additive")
     love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
     love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
   end)
 
-  util.drawCanvasToCanvas(self.pixelShadow, self.render_buffer, {blendmode = "multiplicative"})
+  util.drawCanvasToCanvas(self.normal, self.render_buffer, {blendmode = "multiplicative"})
 end
 
 -- draw material
