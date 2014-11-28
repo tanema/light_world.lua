@@ -165,6 +165,9 @@ function light:drawShadow(l,t,w,h,s,bodies, canvas)
             shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
           )
           love.graphics.polygon("fill", unpack(shadow_geometry[k]))
+          if shadow_geometry[k].circle then
+            love.graphics.arc("fill", unpack(shadow_geometry[k].circle))
+          end
         end
       end
 

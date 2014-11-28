@@ -636,7 +636,20 @@ function body:calculateCircleShadow(light)
 
   local radius = math.sqrt(math.pow(curShadowGeometry[7] - curShadowGeometry[5], 2) + math.pow(curShadowGeometry[8]-curShadowGeometry[6], 2)) / 2
   local cx, cy = (curShadowGeometry[5] + curShadowGeometry[7])/2, (curShadowGeometry[6] + curShadowGeometry[8])/2
-  curShadowGeometry.circle = {cx, cy, radius}
+  local angle1 = math.atan2(curShadowGeometry[6] - cy, curShadowGeometry[5] - cx)
+  local angle2 = math.atan2(curShadowGeometry[8] - cy, curShadowGeometry[7] - cx)
+  local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) / 2 
+  local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) / 2 
+
+  if distance1 <= self.radius then
+    curShadowGeometry.circle = {cx, cy, radius, 0, (math.pi * 2)}
+  elseif distance2 < light.range then -- dont draw circle if way off screen
+    if angle1 > angle2 then
+      curShadowGeometry.circle = {cx, cy, radius, angle1, angle2}
+    else
+      curShadowGeometry.circle = {cx, cy, radius, angle1 - math.pi, angle2 - math.pi}
+    end
+  end
 
   curShadowGeometry.red = self.red
   curShadowGeometry.green = self.green

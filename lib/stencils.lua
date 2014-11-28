@@ -7,7 +7,7 @@ function stencils.shadow(geometry, bodies)
       if geometry[i].alpha == 1.0 then
         love.graphics.polygon("fill", unpack(geometry[i]))
         if geometry[i].circle then
-          love.graphics.circle("fill", unpack(geometry[i].circle))
+          love.graphics.arc("fill", unpack(geometry[i].circle))
         end
       end
     end
