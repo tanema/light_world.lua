@@ -7,6 +7,7 @@ extern float lightRange;
 extern float lightSmooth;
 extern float lightDirection;
 extern float lightAngle;
+extern bool  invert_normal;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
     vec4 pixelColor = Texel(texture, texture_coords);
@@ -25,7 +26,12 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 			}
 		}
 
-		vec3 normal = pixelColor.rgb;
+		vec3 normal;
+    if(invert_normal == true) {
+      normal = vec3(pixelColor.r, 1 - pixelColor.g, pixelColor.b); 
+    } else {
+      normal = pixelColor.rgb;
+    }
 		float dist = distance(lightPosition, vec3(pixel_coords, normal.b));
 
 		if(dist < lightRange) {

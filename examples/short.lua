@@ -5,6 +5,7 @@ function love.load()
   testShader = 0
   x = 0
   y = 0
+  z = 1
   scale = 1
   colorAberration = 0.0
 	-- load images
@@ -116,7 +117,15 @@ function love.update(dt)
 		lightWorld.post_shader:removeEffect("chromatic_aberration")
 	end
 
-	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale)
+	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale, z)
+end
+
+function love.mousepressed(x, y, c)
+	if c == "wu" then
+    z = z + 1
+	elseif c == "wd" then
+    z = z - 1
+	end
 end
 
 function love.draw()
@@ -131,6 +140,7 @@ function love.draw()
   love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), 24)
   love.graphics.setColor(0, 255, 0)
   love.graphics.print("To toggle postshaders, use 0-9 and q->y, to scale use - and =, and to translate use arrows")
+  love.graphics.print("light z: " .. lightMouse.z, 0, 50)
 end
 
 function drawBackground(l,t,w,h)

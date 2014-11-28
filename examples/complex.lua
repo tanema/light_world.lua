@@ -134,7 +134,7 @@ function love.update(dt)
 
   mx, my = (love.mouse.getX() - offsetX)/scale, (love.mouse.getY() - offsetY)/scale
 
-	mouseLight:setPosition(mx, my, 16.0 + (math.sin(lightDirection) + 1.0) * 64.0)
+	mouseLight:setPosition(mx, my, 1 + (math.sin(lightDirection) + 1.0) * 64.0)
 
 	lightDirection = lightDirection + dt
 	colorAberration = math.max(0.0, colorAberration - dt * 10.0)

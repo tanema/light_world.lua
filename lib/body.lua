@@ -1,9 +1,8 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 local normal_map = require(_PACKAGE..'/normal_map')
-local vector = require(_PACKAGE..'/vector')
-local shadowLength = 100000
-
+local vec2 = require(_PACKAGE..'/vec2')
+local vec3 = require(_PACKAGE..'/vec3')
 local body = class()
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
@@ -24,6 +23,7 @@ function body:init(id, type, ...)
 	self.glowStrength = 0.0
 	self.tileX = 0
 	self.tileY = 0
+  self.zheight = 1
 
 	if self.type == "circle" then
 		self.x = args[1] or 0
@@ -88,14 +88,10 @@ end
 function body:refresh()
   if self.x and self.y and self.width and self.height and self.ox and self.oy then
     self.data = {
-      self.x - self.ox,
-      self.y - self.oy,
-      self.x - self.ox + self.width,
-      self.y - self.oy,
-      self.x - self.ox + self.width,
-      self.y - self.oy + self.height,
-      self.x - self.ox,
-      self.y - self.oy + self.height
+      self.x - self.ox, self.y - self.oy,
+      self.x - self.ox + self.width, self.y - self.oy,
+      self.x - self.ox + self.width, self.y - self.oy + self.height,
+      self.x - self.ox, self.y - self.oy + self.height
     }
   end
 end
@@ -452,7 +448,7 @@ function body:drawShadow(light)
 end
 
 function body:drawPixelShadow()
-  if self.normalMesh then
+  if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
   end
@@ -546,56 +542,57 @@ function body:calculateShadow(light)
   end
 end
 
+--using shadow point calculations from this article
+--http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:calculatePolyShadow(light)
-  if self.castsNoShadow then
+  if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return nil
   end
 
-  local curPolygon = self.data
   local edgeFacingTo = {}
-  for k = 1, #curPolygon, 2 do
-    local indexOfNextVertex = (k + 2) % #curPolygon
-    local normal = {-curPolygon[indexOfNextVertex+1] + curPolygon[k + 1], curPolygon[indexOfNextVertex] - curPolygon[k]}
-    local lightToPoint = {curPolygon[k] - light.x, curPolygon[k + 1] - light.y}
+  for k = 1, #self.data, 2 do
+    local indexOfNextVertex = (k + 2) % #self.data
+    local normal = vec2(-self.data[indexOfNextVertex+1] + self.data[k + 1], self.data[indexOfNextVertex] - self.data[k]):normalize()
+    local lightToPoint = vec2(self.data[k] - light.x, self.data[k + 1] - light.y):normalize()
 
-    normal = vector.normalize(normal)
-    lightToPoint = vector.normalize(lightToPoint)
-
-    local dotProduct = vector.dot(normal, lightToPoint)
-    if dotProduct > 0 then table.insert(edgeFacingTo, true)
-    else table.insert(edgeFacingTo, false) end
+    local dotProduct = normal:dot(lightToPoint)
+    if dotProduct > 0 then 
+      table.insert(edgeFacingTo, true)
+    else 
+      table.insert(edgeFacingTo, false) 
+    end
   end
 
   local curShadowGeometry = {}
+  local lxh = (light.x * self.zheight)
+  local lyh = (light.y * self.zheight)
+  local height_diff = (self.zheight - light.z) 
+  if height_diff == 0 then -- prevent inf
+    height_diff = -0.001
+  end
   for k = 1, #edgeFacingTo do
     local nextIndex = (k + 1) % #edgeFacingTo
     if nextIndex == 0 then nextIndex = #edgeFacingTo end
+
+    local x, y = self.data[nextIndex*2-1], self.data[nextIndex*2]
+    local xs, ys = (lxh - (x * light.z))/height_diff, (lyh - (y * light.z))/height_diff
+
     if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[1] = curPolygon[nextIndex*2-1]
-      curShadowGeometry[2] = curPolygon[nextIndex*2]
-
-      local lightVecFrontBack = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
-      curShadowGeometry[3] = curShadowGeometry[1] + lightVecFrontBack[1] * shadowLength
-      curShadowGeometry[4] = curShadowGeometry[2] + lightVecFrontBack[2] * shadowLength
-
+      curShadowGeometry[#curShadowGeometry+1] = x
+      curShadowGeometry[#curShadowGeometry+1] = y
+      curShadowGeometry[#curShadowGeometry+1] = xs
+      curShadowGeometry[#curShadowGeometry+1] = ys
+    elseif not edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
+      curShadowGeometry[#curShadowGeometry+1] = xs
+      curShadowGeometry[#curShadowGeometry+1] = ys
     elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
-      curShadowGeometry[7] = curPolygon[nextIndex*2-1]
-      curShadowGeometry[8] = curPolygon[nextIndex*2]
-
-      local lightVecBackFront = vector.normalize({curPolygon[nextIndex*2-1] - light.x, curPolygon[nextIndex*2] - light.y})
-      curShadowGeometry[5] = curShadowGeometry[7] + lightVecBackFront[1] * shadowLength
-      curShadowGeometry[6] = curShadowGeometry[8] + lightVecBackFront[2] * shadowLength
+      curShadowGeometry[#curShadowGeometry+1] = xs
+      curShadowGeometry[#curShadowGeometry+1] = ys
+      curShadowGeometry[#curShadowGeometry+1] = x
+      curShadowGeometry[#curShadowGeometry+1] = y
     end
   end
-  if  curShadowGeometry[1]
-    and curShadowGeometry[2]
-    and curShadowGeometry[3]
-    and curShadowGeometry[4]
-    and curShadowGeometry[5]
-    and curShadowGeometry[6]
-    and curShadowGeometry[7]
-    and curShadowGeometry[8]
-  then
+  if #curShadowGeometry >= 6 then
     curShadowGeometry.alpha = self.alpha
     curShadowGeometry.red = self.red
     curShadowGeometry.green = self.green
@@ -606,38 +603,47 @@ function body:calculatePolyShadow(light)
   end
 end
 
+--using shadow point calculations from this article
+--http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:calculateCircleShadow(light)
-  if self.castsNoShadow then
+  if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return nil
   end
-  local length = math.sqrt(math.pow(light.x - (self.x - self.ox), 2) + math.pow(light.y - (self.y - self.oy), 2))
-  if length >= self.radius and length <= light.range then
-    local curShadowGeometry = {}
-    local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
-    local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
-    local y2 = ((self.y - self.oy) - math.cos(angle) * self.radius)
-    local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
-    local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
 
-    curShadowGeometry[1] = x2
-    curShadowGeometry[2] = y2
-    curShadowGeometry[3] = x3
-    curShadowGeometry[4] = y3
+  local curShadowGeometry = {}
+  local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
+  local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
+  local y2 = ((self.y - self.oy) - math.cos(angle) * self.radius)
+  local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
+  local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
 
-    curShadowGeometry[5] = x3 - (light.x - x3) * shadowLength
-    curShadowGeometry[6] = y3 - (light.y - y3) * shadowLength
-    curShadowGeometry[7] = x2 - (light.x - x2) * shadowLength
-    curShadowGeometry[8] = y2 - (light.y - y2) * shadowLength
+  curShadowGeometry[1] = x2
+  curShadowGeometry[2] = y2
+  curShadowGeometry[3] = x3
+  curShadowGeometry[4] = y3
 
-    curShadowGeometry.red = self.red
-    curShadowGeometry.green = self.green
-    curShadowGeometry.blue = self.blue
-    curShadowGeometry.alpha = self.alpha
-
-    return curShadowGeometry
-  else
-    return nil
+  local lxh = (light.x * self.zheight)
+  local lyh = (light.y * self.zheight)
+  local height_diff = (self.zheight - light.z) 
+  if height_diff == 0 then -- prevent inf
+    height_diff = -0.001
   end
+  
+  curShadowGeometry[5] = (lxh - (x3 * light.z))/height_diff 
+  curShadowGeometry[6] = (lyh - (y3 * light.z))/height_diff 
+  curShadowGeometry[7] = (lxh - (x2 * light.z))/height_diff  
+  curShadowGeometry[8] = (lyh - (y2 * light.z))/height_diff  
+
+  local radius = math.sqrt(math.pow(curShadowGeometry[7] - curShadowGeometry[5], 2) + math.pow(curShadowGeometry[8]-curShadowGeometry[6], 2)) / 2
+  local cx, cy = (curShadowGeometry[5] + curShadowGeometry[7])/2, (curShadowGeometry[6] + curShadowGeometry[8])/2
+  curShadowGeometry.circle = {cx, cy, radius}
+
+  curShadowGeometry.red = self.red
+  curShadowGeometry.green = self.green
+  curShadowGeometry.blue = self.blue
+  curShadowGeometry.alpha = self.alpha
+
+  return curShadowGeometry
 end
 
 return body

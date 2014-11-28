@@ -7,7 +7,6 @@ local light = class()
 
 light.shader             = love.graphics.newShader(_PACKAGE.."/shaders/poly_shadow.glsl")
 light.normalShader       = love.graphics.newShader(_PACKAGE.."/shaders/normal.glsl")
-light.normalInvertShader = love.graphics.newShader(_PACKAGE.."/shaders/normal_invert.glsl")
 
 function light:init(x, y, r, g, b, range)
 	self.direction = 0
@@ -15,7 +14,7 @@ function light:init(x, y, r, g, b, range)
 	self.range = 0
 	self.x = x or 0
 	self.y = y or 0
-	self.z = 15
+	self.z = 1
 	self.red = r or 255
 	self.green = g or 255
 	self.blue = b or 255
@@ -32,7 +31,6 @@ function light:refresh(w, h)
 
 	self.shadow = love.graphics.newCanvas(w, h)
 	self.shine  = love.graphics.newCanvas(w, h)
-  self.normalInvertShader:send('screenResolution', {w, h})
   self.normalShader:send('screenResolution', {w, h})
 end
 
@@ -199,23 +197,14 @@ end
 
 function light:drawPixelShadow(l,t,w,h,s, normalMap, canvas)
   if self.visible and self:inRange(l,t,w,h,s) then
-    if self.normalInvert then
-      self.normalInvertShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalInvertShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
-      self.normalInvertShader:send('lightRange',{self.range})
-      self.normalInvertShader:send("lightSmooth", self.smooth)
-      self.normalInvertShader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.normalInvertShader:send("lightDirection", self.direction)
-      util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalInvertShader})
-    else
-      self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
-      self.normalShader:send('lightRange',{self.range})
-      self.normalShader:send("lightSmooth", self.smooth)
-      self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.normalShader:send("lightDirection", self.direction)
-      util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalShader})
-    end
+    self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+    self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, self.z / 255.0})
+    self.normalShader:send('lightRange',{self.range})
+    self.normalShader:send("lightSmooth", self.smooth)
+    self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
+    self.normalShader:send("lightDirection", self.direction)
+    self.normalShader:send("invert_normal", self.normalInvert == true)
+    util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalShader})
   end
 end
 

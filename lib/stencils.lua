@@ -6,6 +6,9 @@ function stencils.shadow(geometry, bodies)
     for i = 1,#geometry do
       if geometry[i].alpha == 1.0 then
         love.graphics.polygon("fill", unpack(geometry[i]))
+        if geometry[i].circle then
+          love.graphics.circle("fill", unpack(geometry[i].circle))
+        end
       end
     end
     -- underneath shadows
