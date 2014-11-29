@@ -64,12 +64,10 @@ function normal_map.generateFlat(img, mode)
     color = {223, 0, 127}
   end
 
-  for i = 0, self.imgHeight - 1 do
-    for k = 0, self.imgWidth - 1 do
+  for i = 0, img:getHeight() - 1 do
+    for k = 0, img:getWidth() - 1 do
       local r, g, b, a = imgData:getPixel(k, i)
-      if a > 0 then
-        imgNormalData:setPixel(k, i, color[1], color[2], color[3], 255)
-      end
+      imgNormalData:setPixel(k, i, color[1], color[2], color[3], a)
     end
   end
 

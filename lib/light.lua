@@ -7,6 +7,7 @@ local light = class()
 
 light.shineShader  = love.graphics.newShader(_PACKAGE.."/shaders/shine.glsl")
 light.normalShader = love.graphics.newShader(_PACKAGE.."/shaders/normal.glsl")
+light.shadowShader = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 
 function light:init(x, y, r, g, b, range)
 	self.direction = 0
@@ -32,6 +33,7 @@ function light:refresh(w, h)
 	self.shadow = love.graphics.newCanvas(w, h)
 	self.shine  = love.graphics.newCanvas(w, h)
   self.normalShader:send('screenResolution', {w, h})
+  self.shadowShader:send('screenResolution', {w, h})
 end
 
 -- set position
@@ -200,14 +202,15 @@ end
 
 function light:drawNormalShading(l,t,w,h,s, normalMap, canvas)
   if self.visible and self:inRange(l,t,w,h,s) then
-    self.normalShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.normalShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
-    self.normalShader:send('lightRange',{self.range})
-    self.normalShader:send("lightSmooth", self.smooth)
-    self.normalShader:send("lightAngle", math.pi - self.angle / 2.0)
-    self.normalShader:send("lightDirection", self.direction)
-    self.normalShader:send("invert_normal", self.normalInvert == true)
-    util.drawCanvasToCanvas(normalMap, canvas, {shader = self.normalShader})
+    self.shadowShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+    self.shadowShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
+    self.shadowShader:send('lightRange',{self.range})
+    self.shadowShader:send("lightSmooth", self.smooth)
+    self.shadowShader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+    self.shadowShader:send("lightAngle", math.pi - self.angle / 2.0)
+    self.shadowShader:send("lightDirection", self.direction)
+    self.shadowShader:send("invert_normal", self.normalInvert == true)
+    util.drawCanvasToCanvas(normalMap, canvas, {shader = self.shadowShader})
   end
 end
 
