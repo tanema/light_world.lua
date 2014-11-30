@@ -29,7 +29,6 @@ local class = require(_PACKAGE..'class')
 local Light = require(_PACKAGE..'light')
 local Body = require(_PACKAGE..'body')
 local util = require(_PACKAGE..'util')
-local normal_map = require(_PACKAGE..'normal_map')
 local PostShader = require(_PACKAGE..'postshader')
 require(_PACKAGE..'postshader')
 
@@ -323,24 +322,10 @@ function light_world:newRefraction(normal, x, y, width, height)
   return self:newBody("refraction", normal, x, y, width, height)
 end
 
--- new refraction from height map
-function light_world:newRefractionHeightMap(heightMap, x, y, strength)
-  local normal = normal_map.fromHeightMap(heightMap, strength)
-  self.isRefraction = true
-  return self.newRefraction(p, normal, x, y)
-end
-
 -- new reflection
 function light_world:newReflection(normal, x, y, width, height)
   self.isReflection = true
   return self:newBody("reflection", normal, x, y, width, height)
-end
-
--- new reflection from height map
-function light_world:newReflectionHeightMap(heightMap, x, y, strength)
-  local normal = normal_map.fromHeightMap(heightMap, strength)
-  self.isReflection = true
-  return self.newReflection(p, normal, x, y)
 end
 
 -- new body
