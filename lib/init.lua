@@ -44,6 +44,8 @@ function light_world:init(options)
 	self.body = {}
   self.post_shader = PostShader()
 
+  self.l, self.t, self.s    =  0, 0, 1 
+
 	self.ambient              = {0, 0, 0}
 
 	self.refractionStrength   = 8.0
@@ -68,6 +70,7 @@ end
 function light_world:refreshScreenSize(w, h)
   w, h = w or love.window.getWidth(), h or love.window.getHeight()
 
+  self.w, self.h        = w, h
 	self.render_buffer    = love.graphics.newCanvas(w, h)
 	self.normal           = love.graphics.newCanvas(w, h)
 	self.normal2          = love.graphics.newCanvas(w, h)
@@ -92,19 +95,20 @@ function light_world:refreshScreenSize(w, h)
   self.post_shader:refreshScreenSize(w, h)
 end
 
-function light_world:draw(l,t,s)
-  l,t,s = (l or 0), (t or 0), s or 1 
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  util.drawto(self.render_buffer, l, t, s, function()
-    self.drawBackground(    l,t,w,h,s)
-    self.drawForeground(    l,t,w,h,s)
-		self:drawMaterial(      l,t,w,h,s)
-    self:drawNormalShading( l,t,w,h,s)
-    self:drawGlow(          l,t,w,h,s)
-    self:drawRefraction(    l,t,w,h,s)
-    self:drawReflection(    l,t,w,h,s)
+function light_world:setTranslation(l, t, s)
+  self.l, self.t, self.s = l, t, s
+end
+
+function light_world:draw(cb)
+  util.drawto(self.render_buffer, self.l, self.t, self.s, function()
+    cb(                     self.l,self.t,self.w,self.h,self.s)
+		self:drawMaterial(      self.l,self.t,self.w,self.h,self.s)
+    self:drawNormalShading( self.l,self.t,self.w,self.h,self.s)
+    self:drawGlow(          self.l,self.t,self.w,self.h,self.s)
+    self:drawRefraction(    self.l,self.t,self.w,self.h,self.s)
+    self:drawReflection(    self.l,self.t,self.w,self.h,self.s)
   end)
-  self.post_shader:drawWith(self.render_buffer, l, t, s)
+  self.post_shader:drawWith(self.render_buffer, self.l, self.t, self.s)
 end
 
 -- draw normal shading

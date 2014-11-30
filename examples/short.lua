@@ -130,10 +130,20 @@ function love.mousepressed(x, y, c)
 end
 
 function love.draw()
+  lightWorld:setTranslation(x, y, scale)
   love.graphics.push()
     love.graphics.translate(x, y)
     love.graphics.scale(scale)
-    lightWorld:draw(x,y,scale)
+    lightWorld:draw(function()
+      love.graphics.setColor(255, 255, 255)
+      love.graphics.rectangle("fill", -x/scale, -y/scale, love.graphics.getWidth()/scale, love.graphics.getHeight()/scale)
+      love.graphics.setColor(63, 255, 127)
+      local cx, cy = circleTest:getPosition()
+      love.graphics.circle("fill", cx, cy, circleTest:getRadius())
+      love.graphics.polygon("fill", rectangleTest:getPoints())
+      love.graphics.setColor(255, 255, 255)
+      love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
+    end)
   love.graphics.pop()
 
   love.graphics.setBlendMode("alpha")
@@ -143,18 +153,3 @@ function love.draw()
   love.graphics.print("To toggle postshaders, use 0-9 and q->y, to scale use - and =, and to translate use arrows")
   love.graphics.print("light z: " .. lightMouse.z, 0, 50)
 end
-
-function drawBackground(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
-end
-
-function drawForeground(l,t,w,h)
-  love.graphics.setColor(63, 255, 127)
-  local cx, cy = circleTest:getPosition()
-  love.graphics.circle("fill", cx, cy, circleTest:getRadius())
-  love.graphics.polygon("fill", rectangleTest:getPoints())
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
-end
-

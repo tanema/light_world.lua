@@ -54,22 +54,17 @@ function love.update(dt)
 end
 
 function love.draw()
+  lightWorld:setTranslation(x,y,scale)
   love.graphics.push()
     love.graphics.translate(x, y)
     love.graphics.scale(scale)
-    lightWorld:draw(x,y,scale)
+    lightWorld:draw(function(l, t, w, h, s)
+      love.graphics.setColor(255, 255, 255)
+      love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
+      love.graphics.setColor(255, 255, 255)
+      local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+      love.graphics.draw(image, w/2-(image:getWidth()/2), h/2-(image:getHeight()/2))
+    end)
   love.graphics.pop()
 end
-
-function drawBackground(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle("fill", -l/scale, -t/scale, w/scale, h/scale)
-end
-
-function drawForeground(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  love.graphics.draw(image, w/2-(image:getWidth()/2), h/2-(image:getHeight()/2))
-end
-
 

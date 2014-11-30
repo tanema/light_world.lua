@@ -235,10 +235,57 @@ end
 
 function love.draw()
 	-- set shader buffer
+  lightWorld:setTranslation(offsetX,offsetY, scale)
   love.graphics.push()
     love.graphics.translate(offsetX, offsetY)
     love.graphics.scale(scale)
-    lightWorld:draw(offsetX,offsetY, scale)
+    lightWorld:draw(function(l, t, w, h, s)
+      love.graphics.setBlendMode("alpha")
+      if normalOn then
+        love.graphics.setColor(127, 127, 255)
+        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+      else
+        love.graphics.setColor(255, 255, 255)
+        if textureOn then
+          love.graphics.draw(imgFloor, quadScreen, 0,0)
+        else
+          love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        end
+      end
+
+      for i = 1, phyCnt do
+        if phyLight[i]:getType() == "refraction" then
+          if not normalOn then
+            love.graphics.setBlendMode("alpha")
+            love.graphics.setColor(255, 255, 255, 191)
+            love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
+          end
+        end
+      end
+
+      love.graphics.setBlendMode("alpha")
+      for i = 1, phyCnt do
+        if phyLight[i]:getType() == "polygon" then
+          math.randomseed(i)
+          love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+          love.graphics.polygon("fill", phyLight[i]:getPoints())
+        elseif phyLight[i]:getType() == "circle" then
+          math.randomseed(i)
+          love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+          local cx, cy = phyLight[i]:getPosition()
+          love.graphics.circle("fill", cx, cy, phyLight[i]:getRadius())
+        elseif phyLight[i]:getType() == "image" then
+          if normalOn and phyLight[i].normal then
+            love.graphics.setColor(255, 255, 255)
+            love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
+          elseif not phyLight[i].material then
+            math.randomseed(i)
+            love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
+            love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
+          end
+        end
+      end
+    end)
   love.graphics.pop()
 
 	love.graphics.draw(imgLight, mx - 5, (my - 5) - (16.0 + (math.sin(lightDirection) + 1.0) * 64.0))
@@ -331,56 +378,6 @@ function love.draw()
 	else
 		love.graphics.setColor(255, 255, 255, 191)
 		love.graphics.print("F1: Help", 4, 4)
-	end
-end
-
-function drawBackground(l,t,w,h)
-	love.graphics.setBlendMode("alpha")
-	if normalOn then
-		love.graphics.setColor(127, 127, 255)
-		love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-	else
-		love.graphics.setColor(255, 255, 255)
-		if textureOn then
-			love.graphics.draw(imgFloor, quadScreen, 0,0)
-		else
-			love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-		end
-	end
-
-	for i = 1, phyCnt do
-		if phyLight[i]:getType() == "refraction" then
-			if not normalOn then
-        love.graphics.setBlendMode("alpha")
-        love.graphics.setColor(255, 255, 255, 191)
-        love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
-			end
-		end
-	end
-end
-
-function drawForeground(l,t,w,h)
-	love.graphics.setBlendMode("alpha")
-	for i = 1, phyCnt do
-		if phyLight[i]:getType() == "polygon" then
-      math.randomseed(i)
-      love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-			love.graphics.polygon("fill", phyLight[i]:getPoints())
-		elseif phyLight[i]:getType() == "circle" then
-      math.randomseed(i)
-      love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-      local cx, cy = phyLight[i]:getPosition()
-			love.graphics.circle("fill", cx, cy, phyLight[i]:getRadius())
-    elseif phyLight[i]:getType() == "image" then
-			if normalOn and phyLight[i].normal then
-				love.graphics.setColor(255, 255, 255)
-				love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
-			elseif not phyLight[i].material then
-				math.randomseed(i)
-				love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
-				love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
-			end
-		end
 	end
 end
 

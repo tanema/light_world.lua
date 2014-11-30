@@ -60,28 +60,24 @@ function exf.update(dt)
 end
 
 function exf.draw()
-	lightWorld:draw()
-end
+	lightWorld:draw(function()
+    love.graphics.setBackgroundColor(0, 0, 0)
 
-function exf.drawBackground()
-  love.graphics.setBackgroundColor(0, 0, 0)
+    love.graphics.setColor(48, 156, 225)
+    love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
 
-  love.graphics.setColor(48, 156, 225)
-  love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
+    love.graphics.setColor(255, 255, 255, 191)
+    love.graphics.setFont(exf.bigfont)
+    love.graphics.print("Examples:", 50, 50)
 
-  love.graphics.setColor(255, 255, 255, 191)
-  love.graphics.setFont(exf.bigfont)
-  love.graphics.print("Examples:", 50, 50)
+    love.graphics.setFont(exf.smallfont)
+    love.graphics.print("Browse and click on the example you \nwant to run. To return the the example \nselection screen, press escape.", 500, 80)
 
-  love.graphics.setFont(exf.smallfont)
-  love.graphics.print("Browse and click on the example you \nwant to run. To return the the example \nselection screen, press escape.", 500, 80)
+    exf.list:draw()
 
-  exf.list:draw()
-end
-
-function exf.drawForeground()
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
+  end)
 end
 
 function exf.keypressed(k)

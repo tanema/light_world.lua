@@ -43,17 +43,11 @@ function love.update(dt)
 end
 
 function love.draw()
-  lightWorld:draw()
+  lightWorld:draw(function(l, t, w, h, s)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.rectangle("fill", l, t, w, h)
+    love.graphics.setColor(0, 255, 0)
+    love.graphics.circle('fill', 150,  150, 50)
+  end)
 end
-
-function drawBackground(l,t,w,h)
-  love.graphics.setColor(255, 255, 255)
-  love.graphics.rectangle("fill", l, t, w, h)
-end
-
-function drawForeground(l,t,w,h)
-  love.graphics.setColor(0, 255, 0)
-  love.graphics.circle('fill', 150,  150, 50)
-end
-
 
