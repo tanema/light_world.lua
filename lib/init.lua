@@ -108,17 +108,6 @@ function light_world:draw(l,t,s)
   self.post_shader:drawWith(self.render_buffer, l, t, s)
 end
 
-function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h, s)
-  if blur <= 0 then
-    return
-  end
-  canvas2:clear()
-  self.blurv:send("steps", blur)
-  self.blurh:send("steps", blur)
-  util.drawCanvasToCanvas(canvas, canvas2, {shader = self.blurv, blendmode = blendmode})
-  util.drawCanvasToCanvas(canvas2, canvas, {shader = self.blurh, blendmode = blendmode})
-end
-
 -- draw normal shading
 function light_world:drawNormalShading(l,t,w,h,s)
   if not self.isShadows then
@@ -187,7 +176,11 @@ function light_world:drawGlow(l,t,w,h,s)
     end
   end)
 
-  light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h, s)
+  self.glowMap2:clear()
+  self.blurv:send("steps", self.glowBlur)
+  self.blurh:send("steps", self.glowBlur)
+  util.drawCanvasToCanvas(self.glowMap, self.glowMap2, {shader = self.blurv, blendmode = "alpha"})
+  util.drawCanvasToCanvas(self.glowMap2, self.glowMap, {shader = self.blurh, blendmode = "alpha"})
   util.drawCanvasToCanvas(self.glowMap, self.render_buffer, {blendmode = "additive"})
 end
 -- draw refraction

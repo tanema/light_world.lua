@@ -11,22 +11,21 @@ extern float lightDirection;
 extern float lightAngle;
 extern bool  invert_normal;
 
+bool not_in_slice(vec2 pixel_coords){
+  float angle = atan(lightPosition.x - pixel_coords.x, pixel_coords.y - lightPosition.y) + PI;
+  bool pastRightSide = angle < mod(lightDirection + lightAngle, PI * 2);
+  bool pastLeftSide  = angle > mod(lightDirection - lightAngle, PI * 2);
+  bool lightUp = lightDirection - lightAngle > 0 && lightDirection + lightAngle < PI * 2;
+  return (lightUp && (pastRightSide && pastLeftSide)) || (!lightUp && (pastRightSide || pastLeftSide));
+}
+
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   vec4 pixelColor = Texel(texture, texture_coords);
   vec4 shadowColor = Texel(shadowMap, texture_coords);
 
   //if the light is a slice and the pixel is not inside
-  if(lightAngle > 0.0) {
-    float angle2 = atan(lightPosition.x - pixel_coords.x, pixel_coords.y - lightPosition.y) + PI;
-    if(lightDirection - lightAngle > 0 && lightDirection + lightAngle < PI * 2) {
-      if(angle2 < mod(lightDirection + lightAngle, PI * 2) && angle2 > mod(lightDirection - lightAngle, PI * 2)) {
-        return vec4(0.0, 0.0, 0.0, 1.0);
-      }
-    } else {
-      if(angle2 < mod(lightDirection + lightAngle, PI * 2) || angle2 > mod(lightDirection - lightAngle, PI * 2)) {
-        return vec4(0.0, 0.0, 0.0, 1.0);
-      }
-    }
+  if(lightAngle > 0.0 && not_in_slice(pixel_coords)) {
+    return vec4(0.0, 0.0, 0.0, 1.0);
   }
 
   vec3 normal;
@@ -44,18 +43,16 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   if(dist < lightRange) {
     float att = clamp((1.0 - dist / lightRange) / lightSmooth, 0.0, 1.0);
     if(pixelColor.a == 0.0) {
-      vec4 val = pixelColor;
-      val.a = 1.0;
+      vec4 pixel = vec4(0.0, 0.0, 0.0, 1.0);
       if (lightGlow.x < 1.0 && lightGlow.y > 0.0) {
-        val.rgb = clamp(lightColor * pow(att, lightSmooth) + pow(smoothstep(lightGlow.x, 1.0, att), lightSmooth) * lightGlow.y, 0.0, 1.0);
+        pixel.rgb = clamp(lightColor * pow(att, lightSmooth) + pow(smoothstep(lightGlow.x, 1.0, att), lightSmooth) * lightGlow.y, 0.0, 1.0);
       } else {
-        val.rgb = lightColor * pow(att, lightSmooth);
+        pixel.rgb = lightColor * pow(att, lightSmooth);
       }
       if(shadowColor.a > 0.0) {
-        shadowColor.a = 1.0 - shadowColor.a;
-        val = val * shadowColor;
+        pixel.rgb = pixel.rgb * shadowColor.rgb;
       }
-      return val;
+      return pixel;
     } else {
       vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / screenResolution.xy, lightPosition.z);
       dir.x *= screenResolution.x / screenResolution.y;
