@@ -671,6 +671,20 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld:newRefraction(refraction_normal, mx, my)
 		phyLight[phyCnt]:setReflection(true)
+  elseif k == "k" then
+		-- add light
+		local r = lightWorld:getLightCount() % 3
+		local light
+
+		if r == 0 then
+			light = lightWorld:newLight(mx, my, 31, 127, 63, lightRange)
+		elseif r == 1 then
+			light = lightWorld:newLight(mx, my, 127, 63, 31, lightRange)
+		else
+			light = lightWorld:newLight(mx, my, 31, 63, 127, lightRange)
+		end
+		light:setSmooth(lightSmooth)
+		light:setGlowStrength(0.3)
 	elseif k == "l" then
 		-- add light
 		local r = lightWorld:getLightCount() % 3

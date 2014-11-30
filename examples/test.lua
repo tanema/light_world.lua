@@ -24,8 +24,9 @@ function love.load()
   end)
   circle_image = love.graphics.newImage(circle_canvas:getImageData()) 
 
-	local t = lightWorld:newCircle(150, 150, radius)
+	local t = lightWorld:newImage(circle_image, 150, 150)
   t:setNormalMap(normal_map.generateFlat(circle_image, "top"))
+  t:setShadowType('circle', 50)
 end
 
 function love.mousepressed(x, y, c)

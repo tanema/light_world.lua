@@ -562,7 +562,6 @@ function body:drawCircleShadow(light)
 
   love.graphics.polygon("fill", curShadowGeometry)
 
-  print(self.red, self.green, self.blue, self.alpha)
   if distance1 <= self.radius then
     love.graphics.arc("fill", cx, cy, radius, 0, (math.pi * 2))
   elseif distance2 < light.range then -- dont draw circle if way off screen
