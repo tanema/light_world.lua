@@ -5,8 +5,6 @@ local util = require(_PACKAGE..'/util')
 
 local light = class()
 
-light.shineShader  = love.graphics.newShader(_PACKAGE.."/shaders/shine.glsl")
-light.normalShader = love.graphics.newShader(_PACKAGE.."/shaders/normal.glsl")
 light.shadowShader = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 
 function light:init(x, y, r, g, b, range)
@@ -29,10 +27,6 @@ end
 
 function light:refresh(w, h)
   w, h = w or love.window.getWidth(), h or love.window.getHeight()
-
-	self.shadow = love.graphics.newCanvas(w, h)
-	self.shine  = love.graphics.newCanvas(w, h)
-  self.normalShader:send('screenResolution', {w, h})
   self.shadowShader:send('screenResolution', {w, h})
 end
 
@@ -122,86 +116,12 @@ end
 
 function light:inRange(l,t,w,h,s)
   local lx, ly, rs = (self.x + l/s) * s, (self.y + t/s) * s, self.range * s
-
-  return (lx + rs) > 0 and 
-         (lx - rs) < w/s and 
-         (ly + rs) > 0 and 
-         (ly - rs) < h/s
+  return (lx + rs) > 0 and (lx - rs) < w/s and (ly + rs) > 0 and (ly - rs) < h/s
 end
 
-function light:drawShadow(l,t,w,h,s,bodies, canvas)
+function light:drawNormalShading(l,t,w,h,s, normalMap, shadowMap, canvas)
   if self.visible and self:inRange(l,t,w,h,s) then
-    -- calculate shadows
-    local shadow_geometry = {}
-    for i = 1, #bodies do
-      local current = bodies[i]:calculateShadow(self)
-      if current ~= nil then
-        shadow_geometry[#shadow_geometry + 1] = current
-      end
-    end
-
-    -- draw shadow
-    self.shadow:clear()
-    util.drawto(self.shadow, l, t, s, function()
- 
-      self.shineShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10)/255.0})
-      self.shineShader:send("lightRange", self.range*s)
-      self.shineShader:send("lightColor", {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-      self.shineShader:send("lightSmooth", self.smooth)
-      self.shineShader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-      self.shineShader:send("lightAngle", math.pi - self.angle / 2.0)
-      self.shineShader:send("lightDirection", self.direction)
-      love.graphics.setShader(self.shineShader)
-      love.graphics.setInvertedStencil(stencils.shadow(shadow_geometry, bodies))
-      love.graphics.setBlendMode("additive")
-      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
-
-      -- draw color shadows
-      love.graphics.setBlendMode("multiplicative")
-      love.graphics.setShader()
-      for k = 1,#shadow_geometry do
-        if shadow_geometry[k].alpha < 1.0 then
-          love.graphics.setColor(
-            shadow_geometry[k].red * (1.0 - shadow_geometry[k].alpha),
-            shadow_geometry[k].green * (1.0 - shadow_geometry[k].alpha),
-            shadow_geometry[k].blue * (1.0 - shadow_geometry[k].alpha)
-          )
-          love.graphics.polygon("fill", unpack(shadow_geometry[k]))
-          if shadow_geometry[k].circle then
-            love.graphics.arc("fill", unpack(shadow_geometry[k].circle))
-          end
-        end
-      end
-
-      for k = 1, #bodies do
-        bodies[k]:drawShadow(self,l,t,w,h,s)
-      end
-    end)
-
-    love.graphics.setStencil()
-    love.graphics.setShader()
-    util.drawCanvasToCanvas(self.shadow, canvas, {blendmode = "additive"})
-  end
-end
-
-function light:drawShine(l,t,w,h,s,bodies,canvas)
-  if self.visible and self:inRange(l,t,w,h,s) then
-    --update shine
-    self.shine:clear(255, 255, 255)
-    util.drawto(self.shine, l, t, s, function()
-      love.graphics.setShader(self.shineShader)
-      love.graphics.setBlendMode("alpha")
-      love.graphics.setStencil(stencils.shine(bodies))
-      love.graphics.rectangle("fill", -l/s,-t/s,w/s,h/s)
-    end)
-    love.graphics.setStencil()
-    love.graphics.setShader()
-    util.drawCanvasToCanvas(self.shine, canvas, {blendmode = "additive"})
-  end
-end
-
-function light:drawNormalShading(l,t,w,h,s, normalMap, canvas)
-  if self.visible and self:inRange(l,t,w,h,s) then
+    self.shadowShader:send('shadowMap', shadowMap)
     self.shadowShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
     self.shadowShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
     self.shadowShader:send('lightRange',{self.range})

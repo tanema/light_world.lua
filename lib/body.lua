@@ -13,9 +13,9 @@ function body:init(id, type, ...)
 	self.id = id
 	self.type = type
 	self.shine = true
-	self.red = 0
-	self.green = 0
-	self.blue = 0
+	self.red = 1.0
+	self.green = 1.0
+	self.blue = 1.0
 	self.alpha = 1.0
 	self.glowRed = 255
 	self.glowGreen = 255
@@ -447,7 +447,7 @@ function body:drawShadow(light)
   end
 end
 
-function body:drawNormalShading()
+function body:drawNormal()
   if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
@@ -534,7 +534,7 @@ function body:drawMaterial()
   end
 end
 
-function body:calculateShadow(light)
+function body:drawCalculatedShadow(light)
   if self.shadowType == "rectangle" or self.shadowType == "polygon" then
     return self:calculatePolyShadow(light)
   elseif self.shadowType == "circle" then
@@ -593,13 +593,8 @@ function body:calculatePolyShadow(light)
     end
   end
   if #curShadowGeometry >= 6 then
-    curShadowGeometry.alpha = self.alpha
-    curShadowGeometry.red = self.red
-    curShadowGeometry.green = self.green
-    curShadowGeometry.blue = self.blue
-    return curShadowGeometry
-  else
-    return nil
+    love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
+    love.graphics.polygon("fill", unpack(curShadowGeometry))
   end
 end
 
@@ -609,7 +604,7 @@ function body:calculateCircleShadow(light)
   if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return nil
   end
-
+  
   local curShadowGeometry = {}
   local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
   local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
@@ -641,22 +636,18 @@ function body:calculateCircleShadow(light)
   local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) / 2 
   local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) / 2 
 
+  love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
+  love.graphics.polygon("fill", curShadowGeometry)
+
   if distance1 <= self.radius then
-    curShadowGeometry.circle = {cx, cy, radius, 0, (math.pi * 2)}
+    love.graphics.arc("fill", cx, cy, radius, 0, (math.pi * 2))
   elseif distance2 < light.range then -- dont draw circle if way off screen
     if angle1 > angle2 then
-      curShadowGeometry.circle = {cx, cy, radius, angle1, angle2}
+      love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
     else
-      curShadowGeometry.circle = {cx, cy, radius, angle1 - math.pi, angle2 - math.pi}
+      love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
     end
   end
-
-  curShadowGeometry.red = self.red
-  curShadowGeometry.green = self.green
-  curShadowGeometry.blue = self.blue
-  curShadowGeometry.alpha = self.alpha
-
-  return curShadowGeometry
 end
 
 return body

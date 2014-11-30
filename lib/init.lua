@@ -70,13 +70,10 @@ function light_world:refreshScreenSize(w, h)
   w, h = w or love.window.getWidth(), h or love.window.getHeight()
 
 	self.render_buffer    = love.graphics.newCanvas(w, h)
-	self.shadow           = love.graphics.newCanvas(w, h)
-	self.shadow2          = love.graphics.newCanvas(w, h)
 	self.normal           = love.graphics.newCanvas(w, h)
 	self.normal2          = love.graphics.newCanvas(w, h)
-	self.shine            = love.graphics.newCanvas(w, h)
-	self.shine2           = love.graphics.newCanvas(w, h)
 	self.normalMap        = love.graphics.newCanvas(w, h)
+	self.shadowMap        = love.graphics.newCanvas(w, h)
 	self.glowMap          = love.graphics.newCanvas(w, h)
 	self.glowMap2         = love.graphics.newCanvas(w, h)
 	self.refractionMap    = love.graphics.newCanvas(w, h)
@@ -101,10 +98,8 @@ function light_world:draw(l,t,s)
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   util.drawto(self.render_buffer, l, t, s, function()
     self.drawBackground(    l,t,w,h,s)
-    --self:drawShadow(        l,t,w,h,s)
     self.drawForeground(    l,t,w,h,s)
 		self:drawMaterial(      l,t,w,h,s)
-    --self:drawShine(         l,t,w,h,s)
     self:drawNormalShading( l,t,w,h,s)
     self:drawGlow(          l,t,w,h,s)
     self:drawRefraction(    l,t,w,h,s)
@@ -124,46 +119,6 @@ function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h, s)
   util.drawCanvasToCanvas(canvas2, canvas, {shader = self.blurh, blendmode = blendmode})
 end
 
--- draw shadow
-function light_world:drawShadow(l,t,w,h,s)
-  if not self.isShadows and not self.isLight then
-    return
-  end
-
-  -- draw ambient
-  util.drawto(self.shadow, l, t, s, function()
-    love.graphics.setColor(unpack(self.ambient))
-    love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", -l/s, -t/s, w/s, h/s)
-    for i = 1, #self.lights do
-      self.lights[i]:drawShadow(l,t,w,h,s,self.body, self.shadow)
-    end
-  end)
-
-  light_world:drawBlur("alpha", self.blur, self.shadow, self.shadow2, l, t, w, h, s)
-  util.drawCanvasToCanvas(self.shadow, self.render_buffer, {blendmode = "multiplicative"})
-end
-
--- draw shine
-function light_world:drawShine(l,t,w,h,s)
-  if not self.isShadows then
-    return
-  end
-
-  -- update shine
-  util.drawto(self.shine, l, t, s, function()
-    love.graphics.setColor(unpack(self.ambient))
-    love.graphics.setBlendMode("alpha")
-    love.graphics.rectangle("fill", -l/s, -t/s, w/s, h/s)
-    for i = 1, #self.lights do
-      self.lights[i]:drawShine(l,t,w,h,s,self.body,self.shine)
-    end
-  end)
-
-  --light_world:drawBlur("additive", self.blur, self.shine, self.shine2, l, t, w, h, s)
-  util.drawCanvasToCanvas(self.shine, self.render_buffer, {blendmode = "multiplicative"})
-end
-
 -- draw normal shading
 function light_world:drawNormalShading(l,t,w,h,s)
   if not self.isShadows then
@@ -173,13 +128,19 @@ function light_world:drawNormalShading(l,t,w,h,s)
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawNormalShading()
+      self.body[i]:drawNormal()
     end
   end)
 
   self.normal2:clear()
   for i = 1, #self.lights do
-    self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.normal2)
+    self.shadowMap:clear()
+    util.drawto(self.shadowMap, l, t, s, function()
+      for k = 1, #self.body do
+        self.body[k]:drawCalculatedShadow(self.lights[i])
+      end
+    end)
+    self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
   end
 
   self.normal:clear(255, 255, 255)
