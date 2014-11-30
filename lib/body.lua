@@ -461,6 +461,10 @@ function body:drawMaterial()
 end
 
 function body:drawShadow(light)
+  if self.castsNoShadow or (self.zheight - light.z) > 0 then
+    return
+  end
+
   love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
   if self.shadowType == "rectangle" or self.shadowType == "polygon" then
     self:drawPolyShadow(light)
@@ -474,10 +478,6 @@ end
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawPolyShadow(light)
-  if self.castsNoShadow or (self.zheight - light.z) > 0 then
-    return nil
-  end
-
   local edgeFacingTo = {}
   for k = 1, #self.data, 2 do
     local indexOfNextVertex = (k + 2) % #self.data
@@ -529,10 +529,6 @@ end
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawCircleShadow(light)
-  if self.castsNoShadow or (self.zheight - light.z) > 0 then
-    return nil
-  end
-  
   local curShadowGeometry = {}
   local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
   local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
@@ -566,6 +562,7 @@ function body:drawCircleShadow(light)
 
   love.graphics.polygon("fill", curShadowGeometry)
 
+  print(self.red, self.green, self.blue, self.alpha)
   if distance1 <= self.radius then
     love.graphics.arc("fill", cx, cy, radius, 0, (math.pi * 2))
   elseif distance2 < light.range then -- dont draw circle if way off screen
