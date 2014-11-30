@@ -460,63 +460,20 @@ function body:drawMaterial()
   end
 end
 
-function body:drawCalculatedShadow(light)
+function body:drawShadow(light)
+  love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
   if self.shadowType == "rectangle" or self.shadowType == "polygon" then
-    return self:calculatePolyShadow(light)
+    self:drawPolyShadow(light)
   elseif self.shadowType == "circle" then
-    return self:calculateCircleShadow(light)
+    self:drawCircleShadow(light)
   elseif self.shadowType == "image" and self.img then
-    local length = 1.0
-    local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
-
-    self.shadowVert = {
-      {
-        math.sin(shadowRotation) * self.imgHeight * length, 
-        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        0, 0, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * self.fadeStrength * 255
-      },
-      {
-        self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, 
-        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        1, 0, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * self.fadeStrength * 255
-      },
-      {
-        self.imgWidth, 
-        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        1, 1, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * 255
-      },
-      {
-        0, 
-        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        0, 1, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * 255
-      }
-    }
-
-    love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
-    self.shadowMesh:setVertices(self.shadowVert)
-    love.graphics.draw(self.shadowMesh, self.x - self.ox, self.y - self.oy, 0, s, s)
+    self:drawImageShadow(light)
   end
 end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
-function body:calculatePolyShadow(light)
+function body:drawPolyShadow(light)
   if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return nil
   end
@@ -565,14 +522,13 @@ function body:calculatePolyShadow(light)
     end
   end
   if #curShadowGeometry >= 6 then
-    love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
     love.graphics.polygon("fill", unpack(curShadowGeometry))
   end
 end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
-function body:calculateCircleShadow(light)
+function body:drawCircleShadow(light)
   if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return nil
   end
@@ -608,7 +564,6 @@ function body:calculateCircleShadow(light)
   local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) / 2 
   local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) / 2 
 
-  love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
   love.graphics.polygon("fill", curShadowGeometry)
 
   if distance1 <= self.radius then
@@ -620,6 +575,28 @@ function body:calculateCircleShadow(light)
       love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
     end
   end
+end
+
+function body:drawImageShadow(light)
+  local height_diff = (light.z - self.zheight) 
+  if height_diff <= 0.1 then -- prevent shadows from leaving thier person like peter pan.
+    height_diff = 0.1
+  end
+
+  local length = 1.0 / height_diff
+  local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
+  local shadowStartY = self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY
+  local shadowX = math.sin(shadowRotation) * self.imgHeight * length
+  local shadowY = (length * math.cos(shadowRotation) + 1.0) * shadowStartY
+
+  self.shadowMesh:setVertices({
+    {shadowX, shadowY, 0, 0, self.red, self.green, self.blue, self.alpha},
+    {shadowX + self.imgWidth, shadowY, 1, 0, self.red, self.green, self.blue, self.alpha},
+    {self.imgWidth, shadowStartY, 1, 1, self.red, self.green, self.blue, self.alpha},
+    {0, shadowStartY, 0, 1, self.red, self.green, self.blue, self.alpha}
+  })
+
+  love.graphics.draw(self.shadowMesh, self.x - self.ox, self.y - self.oy, 0, s, s)
 end
 
 return body

@@ -137,7 +137,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
     self.shadowMap:clear()
     util.drawto(self.shadowMap, l, t, s, function()
       for k = 1, #self.body do
-        self.body[k]:drawCalculatedShadow(self.lights[i])
+        self.body[k]:drawShadow(self.lights[i])
       end
     end)
     self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
