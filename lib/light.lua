@@ -1,6 +1,5 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
-local stencils = require(_PACKAGE..'/stencils')
 local util = require(_PACKAGE..'/util')
 
 local light = class()

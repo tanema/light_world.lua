@@ -373,80 +373,6 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:stencil()
-  if self.shadowType == "circle" then
-    love.graphics.circle("fill", self.x - self.ox, self.y - self.oy, self.radius)
-  elseif self.shadowType == "rectangle" then
-    love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
-  elseif self.shadowType == "polygon" then
-    love.graphics.polygon("fill", unpack(self.data))
-  elseif self.shadowType == "image" then
-  --love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
-  end
-end
-
-function body:drawShadow(light)
-  if self.alpha < 1.0 then
-    love.graphics.setBlendMode("multiplicative")
-    love.graphics.setColor(self.red, self.green, self.blue)
-    if self.shadowType == "circle" then
-      love.graphics.circle("fill", self.x - self.ox, self.y - self.oy, self.radius)
-    elseif self.shadowType == "rectangle" then
-      love.graphics.rectangle("fill", self.x - self.ox, self.y - self.oy, self.width, self.height)
-    elseif self.shadowType == "polygon" then
-      love.graphics.polygon("fill", unpack(self.data))
-    end
-  end
-
-  if self.shadowType == "image" and self.img then
-    love.graphics.setBlendMode("alpha")
-    local length = 1.0
-    local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
-
-    self.shadowVert = {
-      {
-        math.sin(shadowRotation) * self.imgHeight * length, 
-        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        0, 0, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * self.fadeStrength * 255
-      },
-      {
-        self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, 
-        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        1, 0, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * self.fadeStrength * 255
-      },
-      {
-        self.imgWidth, 
-        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        1, 1, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * 255
-      },
-      {
-        0, 
-        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
-        0, 1, 
-        self.red, 
-        self.green, 
-        self.blue, 
-        self.alpha * 255
-      }
-    }
-
-    self.shadowMesh:setVertices(self.shadowVert)
-    love.graphics.draw(self.shadowMesh, self.x - self.ox, self.y - self.oy, 0, s, s)
-  end
-end
-
 function body:drawNormal()
   if self.type == "image" and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
@@ -539,6 +465,52 @@ function body:drawCalculatedShadow(light)
     return self:calculatePolyShadow(light)
   elseif self.shadowType == "circle" then
     return self:calculateCircleShadow(light)
+  elseif self.shadowType == "image" and self.img then
+    local length = 1.0
+    local shadowRotation = math.atan2((self.x) - light.x, (self.y + self.oy) - light.y)
+
+    self.shadowVert = {
+      {
+        math.sin(shadowRotation) * self.imgHeight * length, 
+        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        0, 0, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * self.fadeStrength * 255
+      },
+      {
+        self.imgWidth + math.sin(shadowRotation) * self.imgHeight * length, 
+        (length * math.cos(shadowRotation) + 1.0) * self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        1, 0, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * self.fadeStrength * 255
+      },
+      {
+        self.imgWidth, 
+        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        1, 1, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * 255
+      },
+      {
+        0, 
+        self.imgHeight + (math.cos(shadowRotation) + 1.0) * self.shadowY, 
+        0, 1, 
+        self.red, 
+        self.green, 
+        self.blue, 
+        self.alpha * 255
+      }
+    }
+
+    love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
+    self.shadowMesh:setVertices(self.shadowVert)
+    love.graphics.draw(self.shadowMesh, self.x - self.ox, self.y - self.oy, 0, s, s)
   end
 end
 
