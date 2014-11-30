@@ -58,9 +58,6 @@ function light_world:init(options)
 	self.glowTimer            = 0.0
 	self.glowDown             = false
 
-  self.drawBackground       = function() end
-  self.drawForeground        = function() end
-
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
 
@@ -164,14 +161,12 @@ function light_world:drawGlow(l,t,w,h,s)
   util.drawto(self.glowMap, l, t, s, function()
     if self.glowDown then
       self.glowTimer = math.max(0.0, self.glowTimer - love.timer.getDelta())
-      if self.glowTimer == 0.0 then
-        self.glowDown = not self.glowDown
-      end
     else
       self.glowTimer = math.min(self.glowTimer + love.timer.getDelta(), 1.0)
-      if self.glowTimer == 1.0 then
-        self.glowDown = not self.glowDown
-      end
+    end
+
+    if self.glowTimer == 1.0 or self.glowTimer == 0.0 then
+      self.glowDown = not self.glowDown
     end
 
     for i = 1, #self.body do
@@ -251,14 +246,6 @@ function light_world:clearBodies()
   self.isShadows = false
   self.isRefraction = false
   self.isReflection = false
-end
-
-function light_world:setBackgroundMethod(fn)
-  self.drawBackground = fn or function() end
-end
-
-function light_world:setForegroundMethod(fn)
-  self.drawForeground = fn or function() end
 end
 
 -- set ambient color
