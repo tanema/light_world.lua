@@ -1,6 +1,5 @@
 :todoing
 -make sure all draw calls check if the object is within range
--add normal map to each object
 -refactor rectablges to be polygons to reduce code
 -handle polygons in a moveable way
 -optimize shadow body calculations and drawing methods
