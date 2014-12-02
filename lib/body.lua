@@ -1,8 +1,8 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
 local normal_map = require(_PACKAGE..'/normal_map')
+local util = require(_PACKAGE..'/util')
 local vec2 = require(_PACKAGE..'/vec2')
-local vec3 = require(_PACKAGE..'/vec3')
 local body = class()
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
@@ -28,12 +28,63 @@ function body:init(id, type, ...)
 	if self.type == "circle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
+
+    circle_canvas = love.graphics.newCanvas(args[3]*2, args[3]*2)
+    util.drawto(circle_canvas, 0, 0, 1, function()
+      love.graphics.circle('fill', args[3], args[3], args[3]) 
+    end)
+    self.img = love.graphics.newImage(circle_canvas:getImageData()) 
+    self.imgWidth = self.img:getWidth()
+    self.imgHeight = self.img:getHeight()
+    self.ix = self.imgWidth * 0.5
+    self.iy = self.imgHeight * 0.5
+    self:generateNormalMapFlat("top")
+
     self:setShadowType('circle', args[3], args[4], args[5])
 	elseif self.type == "rectangle" then
 		self.x = args[1] or 0
 		self.y = args[2] or 0
+
+    rectangle_canvas = love.graphics.newCanvas(args[3], args[4])
+    util.drawto(rectangle_canvas, 0, 0, 1, function()
+      love.graphics.rectangle('fill', 0, 0, args[3], args[4]) 
+    end)
+    self.img = love.graphics.newImage(rectangle_canvas:getImageData()) 
+    self.imgWidth = self.img:getWidth()
+    self.imgHeight = self.img:getHeight()
+    self.ix = self.imgWidth * 0.5
+    self.iy = self.imgHeight * 0.5
+    self:generateNormalMapFlat("top")
+
     self:setShadowType('rectangle', args[3], args[4])
 	elseif self.type == "polygon" then
+    local points = {...}
+    self.x, self.y, self.width, self.height = points[1], points[2], 0, 0
+    for i = 1, #points, 2 do
+      local px, py = points[i], points[i+1]
+      if px < self.x then self.x = px end
+      if py < self.y then self.y = py end
+      if px > self.width then self.width = px end
+      if py > self.height then self.height = py end
+    end
+    self.width = self.width - self.x
+    self.height = self.height - self.y
+    for i = 1, #points, 2 do
+      points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
+    end
+
+    poly_canvas = love.graphics.newCanvas(self.width, self.height)
+    util.drawto(poly_canvas, 0, 0, 1, function()
+      love.graphics.polygon('fill', points) 
+    end)
+    self.img = love.graphics.newImage(poly_canvas:getImageData()) 
+    self.imgWidth = self.img:getWidth()
+    self.imgHeight = self.img:getHeight()
+    self.ix = self.imgWidth * 0.5
+    self.iy = self.imgHeight * 0.5
+    self:generateNormalMapFlat("top")
+
+
     self:setShadowType('polygon', ...)
 	elseif self.type == "image" then
 		self.img = args[1]
@@ -45,6 +96,7 @@ function body:init(id, type, ...)
 			self.ix = self.imgWidth * 0.5
 			self.iy = self.imgHeight * 0.5
 		end
+    self:generateNormalMapFlat("top")
     self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
 		self.reflective = true
 	elseif self.type == "refraction" then
@@ -374,7 +426,7 @@ function body:setShadowType(type, ...)
 end
 
 function body:drawNormal()
-  if self.type == "image" and self.normalMesh then
+  if not self.refraction and not self.reflection and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
   end
@@ -413,7 +465,7 @@ function body:drawRefraction()
   if self.refraction and self.normal then
     love.graphics.setColor(255, 255, 255)
     if self.tileX == 0.0 and self.tileY == 0.0 then
-      love.graphics.draw(normal, self.x - self.nx, self.y - self.ny)
+      love.graphics.draw(self.normal, self.x - self.nx, self.y - self.ny)
     else
       self.normalMesh:setVertices(self.normalVert)
       love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
@@ -477,6 +529,7 @@ end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
+--TODO if not in range of light or screen dont draw
 function body:drawPolyShadow(light)
   local edgeFacingTo = {}
   for k = 1, #self.data, 2 do
@@ -528,6 +581,7 @@ end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
+--TODO if not in range of light or screen dont draw
 function body:drawCircleShadow(light)
   local curShadowGeometry = {}
   local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2

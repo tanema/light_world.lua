@@ -400,14 +400,15 @@ function love.mousepressed(x, y, c)
 		-- add rectangle
 		math.randomseed(love.timer.getTime())
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld:newPolygon({
+    local w, h = math.random(32, 64), math.random(32, 64)
+		phyLight[phyCnt] = lightWorld:newPolygon(
      x, y,
-     x+16, y,
-     x+16, y+16,
-     x, y+16
-    })
+     x+w, y,
+     x+w, y+h,
+     x, y+h
+    )
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, x, y, "dynamic")
-		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, w, h)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 	elseif c == "r" then
@@ -636,12 +637,18 @@ function love.keypressed(k, u)
 	elseif k == "8" then
 		-- add rectangle
 		phyCnt = phyCnt + 1
-		phyLight[phyCnt] = lightWorld:newPolygon()
+    local w, h = math.random(32, 64), math.random(32, 64)
+		phyLight[phyCnt] = lightWorld:newPolygon(
+      mx, my,
+      mx+w, my,
+      mx+w, my+h,
+      mx, my+h
+    )
 		phyLight[phyCnt]:setAlpha(255 * 0.5)
 		phyLight[phyCnt]:setGlowStrength(1.0)
 		phyBody[phyCnt] = love.physics.newBody(physicWorld, mx, my, "dynamic")
 		math.randomseed(love.timer.getTime())
-		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, math.random(32, 64), math.random(32, 64))
+		phyShape[phyCnt] = love.physics.newRectangleShape(0, 0, w, h)
 		phyFixture[phyCnt] = love.physics.newFixture(phyBody[phyCnt], phyShape[phyCnt])
 		phyFixture[phyCnt]:setRestitution(0.5)
 		math.randomseed(phyCnt)
