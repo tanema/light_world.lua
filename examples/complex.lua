@@ -449,7 +449,7 @@ function love.keypressed(k, u)
 		if shadowBlur > 8.0 then
 			shadowBlur = 0.0
 		end
-		lightWorld:setBlur(shadowBlur)
+		lightWorld:setShadowBlur(shadowBlur)
 	elseif k == "f6" or k == "b" then
 		bloomOn = math.max(0.25, bloomOn * 2.0)
 		if bloomOn > 1.0 then

@@ -22,15 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 local _PACKAGE = string.gsub(...,"%.","/") or ""
-if string.len(_PACKAGE) > 0 then
-  _PACKAGE = _PACKAGE .. "/"
-end
+if string.len(_PACKAGE) > 0 then _PACKAGE = _PACKAGE .. "/" end
 local class = require(_PACKAGE..'class')
 local Light = require(_PACKAGE..'light')
 local Body = require(_PACKAGE..'body')
 local util = require(_PACKAGE..'util')
 local PostShader = require(_PACKAGE..'postshader')
-require(_PACKAGE..'postshader')
 
 local light_world = class()
 
@@ -45,16 +42,12 @@ function light_world:init(options)
   self.post_shader = PostShader()
 
   self.l, self.t, self.s    =  0, 0, 1 
-
 	self.ambient              = {0, 0, 0}
-
 	self.refractionStrength   = 8.0
 	self.reflectionStrength   = 16.0
 	self.reflectionVisibility = 1.0
-
 	self.blur                 = 2.0
 	self.glowBlur             = 1.0
-
 	self.glowTimer            = 0.0
 	self.glowDown             = false
 
@@ -92,10 +85,6 @@ function light_world:refreshScreenSize(w, h)
   self.post_shader:refreshScreenSize(w, h)
 end
 
-function light_world:setTranslation(l, t, s)
-  self.l, self.t, self.s = l, t, s
-end
-
 function light_world:draw(cb)
   util.drawto(self.render_buffer, self.l, self.t, self.s, function()
     cb(                     self.l,self.t,self.w,self.h,self.s)
@@ -110,9 +99,6 @@ end
 
 -- draw normal shading
 function light_world:drawNormalShading(l,t,w,h,s)
-  if not self.isShadows then
-    return 
-  end
   -- create normal map
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
@@ -123,15 +109,18 @@ function light_world:drawNormalShading(l,t,w,h,s)
 
   self.normal2:clear()
   for i = 1, #self.lights do
+    -- create shadow map for this light
     self.shadowMap:clear()
     util.drawto(self.shadowMap, l, t, s, function()
       for k = 1, #self.body do
         self.body[k]:drawShadow(self.lights[i])
       end
     end)
+    -- draw scene for this light using normals and shadowmap
     self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
   end
 
+  -- add in ambient color
   self.normal:clear(255, 255, 255)
   util.drawCanvasToCanvas(self.normal2, self.normal, {blendmode = "alpha"})
   util.drawto(self.normal, l, t, s, function()
@@ -152,23 +141,19 @@ end
 
 -- draw glow
 function light_world:drawGlow(l,t,w,h,s)
-  if not self.isShadows then
-    return
+  if self.glowDown then
+    self.glowTimer = math.max(0.0, self.glowTimer - love.timer.getDelta())
+  else
+    self.glowTimer = math.min(self.glowTimer + love.timer.getDelta(), 1.0)
+  end
+
+  if self.glowTimer == 1.0 or self.glowTimer == 0.0 then
+    self.glowDown = not self.glowDown
   end
 
   -- create glow map
   self.glowMap:clear(0, 0, 0)
   util.drawto(self.glowMap, l, t, s, function()
-    if self.glowDown then
-      self.glowTimer = math.max(0.0, self.glowTimer - love.timer.getDelta())
-    else
-      self.glowTimer = math.min(self.glowTimer + love.timer.getDelta(), 1.0)
-    end
-
-    if self.glowTimer == 1.0 or self.glowTimer == 0.0 then
-      self.glowDown = not self.glowDown
-    end
-
     for i = 1, #self.body do
       self.body[i]:drawGlow()
     end
@@ -183,10 +168,6 @@ function light_world:drawGlow(l,t,w,h,s)
 end
 -- draw refraction
 function light_world:drawRefraction(l,t,w,h,s)
-  if not self.isRefraction then
-    return
-  end
-
   -- create refraction map
   self.refractionMap:clear()
   util.drawto(self.refractionMap, l, t, s, function()
@@ -203,10 +184,6 @@ end
 
 -- draw reflection
 function light_world:drawReflection(l,t,w,h,s)
-  if not self.isReflection then
-    return
-  end
-
   -- create reflection map
   self.reflectionMap:clear(0, 0, 0)
   util.drawto(self.reflectionMap, l, t, s, function()
@@ -225,7 +202,6 @@ end
 -- new light
 function light_world:newLight(x, y, red, green, blue, range)
   self.lights[#self.lights + 1] = Light(x, y, red, green, blue, range)
-  self.isLight = true
   return self.lights[#self.lights]
 end
 
@@ -234,116 +210,32 @@ function light_world:clear()
   light_world:clearBodies()
 end
 
--- clear lights
-function light_world:clearLights()
-  self.lights = {}
-  self.isLight = false
-end
-
--- clear objects
-function light_world:clearBodies()
-  self.body = {}
-  self.isShadows = false
-  self.isRefraction = false
-  self.isReflection = false
-end
-
--- set ambient color
-function light_world:setAmbientColor(red, green, blue)
-  self.ambient = {red, green, blue}
-end
-
--- set blur
-function light_world:setBlur(blur)
-  self.blur = blur
-end
-
--- set blur
-function light_world:setShadowBlur(blur)
-  self.blur = blur
-end
-
--- set glow blur
-function light_world:setGlowStrength(strength)
-  self.glowBlur = strength
-end
-
--- set refraction blur
-function light_world:setRefractionStrength(strength)
-  self.refractionStrength = strength
-end
-
--- set reflection strength
-function light_world:setReflectionStrength(strength)
-  self.reflectionStrength = strength
-end
-
--- set reflection visibility
-function light_world:setReflectionVisibility(visibility)
-  self.reflectionVisibility = visibility
-end
-
--- new rectangle
-function light_world:newRectangle(x, y, w, h)
-  self.isShadows = true
-  return self:newBody("rectangle", x, y, w, h)
-end
-
--- new circle
-function light_world:newCircle(x, y, r)
-  self.isShadows = true
-  return self:newBody("circle", x, y, r)
-end
-
--- new polygon
-function light_world:newPolygon(...)
-  self.isShadows = true
-  return self:newBody("polygon", ...)
-end
-
--- new image
-function light_world:newImage(img, x, y, width, height, ox, oy)
-  self.isShadows = true
-  return self:newBody("image", img, x, y, width, height, ox, oy)
-end
-
--- new refraction
-function light_world:newRefraction(normal, x, y, width, height)
-  self.isRefraction = true
-  return self:newBody("refraction", normal, x, y, width, height)
-end
-
--- new reflection
-function light_world:newReflection(normal, x, y, width, height)
-  self.isReflection = true
-  return self:newBody("reflection", normal, x, y, width, height)
-end
+function light_world:setScale(s) self.s = s end
+function light_world:setTranslation(l, t, s) self.l, self.t, self.s = l, t, s end
+function light_world:clearLights() self.lights = {} end
+function light_world:clearBodies() self.body = {} end
+function light_world:setAmbientColor(red, green, blue) self.ambient = {red, green, blue} end
+function light_world:setShadowBlur(blur) self.blur = blur end
+function light_world:setGlowStrength(strength) self.glowBlur = strength end
+function light_world:setRefractionStrength(strength) self.refractionStrength = strength end
+function light_world:setReflectionStrength(strength) self.reflectionStrength = strength end
+function light_world:setReflectionVisibility(visibility) self.reflectionVisibility = visibility end
+function light_world:getBodyCount() return #self.body end
+function light_world:getBody(n) return self.body[n] end
+function light_world:getLightCount() return #self.lights end
+function light_world:getLight(n) return self.lights[n] end
+function light_world:newRectangle(...) return self:newBody("rectangle", ...) end
+function light_world:newCircle(...) return self:newBody("circle", ...) end
+function light_world:newPolygon(...) return self:newBody("polygon", ...) end
+function light_world:newImage(...) return self:newBody("image", ...) end
+function light_world:newRefraction(...) return self:newBody("refraction", ...) end
+function light_world:newReflection(normal, ...) return self:newBody("reflection", ...) end
 
 -- new body
 function light_world:newBody(type, ...)
   local id = #self.body + 1
   self.body[id] = Body(id, type, ...)
   return self.body[#self.body]
-end
-
--- get body count
-function light_world:getBodyCount()
-  return #self.body
-end
-
--- get light
-function light_world:getBody(n)
-  return self.body[n]
-end
-
--- get light count
-function light_world:getLightCount()
-  return #self.lights
-end
-
--- get light
-function light_world:getLight(n)
-  return self.lights[n]
 end
 
 function light_world:remove(to_kill)

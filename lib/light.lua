@@ -25,8 +25,7 @@ function light:init(x, y, r, g, b, range)
 end
 
 function light:refresh(w, h)
-  w, h = w or love.window.getWidth(), h or love.window.getHeight()
-  self.shadowShader:send('screenResolution', {w, h})
+  self.shadowShader:send('screenResolution', {w or love.window.getWidth(), h or love.window.getHeight()})
 end
 
 -- set position

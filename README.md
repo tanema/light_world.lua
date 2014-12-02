@@ -1,3 +1,9 @@
+:todoing
+-make sure all draw calls check if the object is within range
+-add normal map to each object
+-refactor rectablges to be polygons to reduce code
+-handle polygons in a moveable way
+
 # light_world.lua
 
   This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
