@@ -1,5 +1,4 @@
 :todoing
--make sure all draw calls check if the object is within range
 -add body animations
 -optimize shadow body calculations and drawing methods
 

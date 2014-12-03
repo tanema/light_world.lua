@@ -182,7 +182,9 @@ function light_world:drawRefraction(l,t,w,h,s)
   self.refractionMap:clear()
   util.drawto(self.refractionMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawRefraction()
+      if self.body[i]:isInRange(l,t,w,h,s) then
+        self.body[i]:drawRefraction()
+      end
     end
   end)
 
