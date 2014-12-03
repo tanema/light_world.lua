@@ -165,7 +165,6 @@ function love.draw()
     end)
   love.graphics.pop()
 
-
   love.graphics.setBlendMode("alpha")
   love.graphics.setColor(0, 0, 0, 191)
   love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), 24)

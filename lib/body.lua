@@ -24,6 +24,9 @@ function body:init(id, type, ...)
 	self.tileX = 0
 	self.tileY = 0
   self.zheight = 1
+ 
+  self.castsNoShadow = false
+  self.visible = true
 
 	if self.type == "circle" then
 		self.x = args[1] or 0
@@ -216,6 +219,10 @@ end
 -- set glow alpha
 function body:setGlowStrength(strength)
   self.glowStrength = strength
+end
+
+function body:setVisible(visible)
+  self.visible = visible
 end
 
 -- get radius
@@ -432,6 +439,27 @@ function body:setShadowType(type, ...)
     self.shadowY = args[2] or 0
     self.fadeStrength = args[3] or 0.0
   end
+end
+
+function body:isInLightRange(light, l, t, w, h, s)
+  local distance
+  if self.type == 'circle' then
+    return light.range > math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) 
+  else
+    local cx, cy = self.x + (self.width * 0.5), self.y + (self.height * 0.5)
+    distance = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
+    return distance <= light.range + (self.width > self.height and self.width or self.height)
+  end
+end
+
+function body:isInRange(l, t, w, h, s)
+  local bx, by, bw, bh 
+  if self.type == 'circle' then
+    bx, by, bw, bh = (self.x + l/s) * s, (self.y + t/s) * s, self.radius/s, self.radius/s
+  else
+    bx, by, bw, bh = (self.x + l/s) * s, (self.y + t/s) * s, self.width/s, self.height/s
+  end
+  return self.visible and (bx + bw) > 0 and (bx - bw) < w/s and (by + bh) > 0 and (by - bh) < h/s
 end
 
 function body:drawNormal()

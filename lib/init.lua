@@ -103,21 +103,27 @@ function light_world:drawNormalShading(l,t,w,h,s)
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawNormal()
+      if self.body[i]:isInRange(l,t,w,h,s) then
+        self.body[i]:drawNormal()
+      end
     end
   end)
 
   self.normal2:clear()
   for i = 1, #self.lights do
-    -- create shadow map for this light
-    self.shadowMap:clear()
-    util.drawto(self.shadowMap, l, t, s, function()
-      for k = 1, #self.body do
-        self.body[k]:drawShadow(self.lights[i])
-      end
-    end)
-    -- draw scene for this light using normals and shadowmap
-    self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
+    if self.lights[i]:inRange(l,t,w,h,s) then
+      -- create shadow map for this light
+      self.shadowMap:clear()
+      util.drawto(self.shadowMap, l, t, s, function()
+        for k = 1, #self.body do
+          if self.body[k]:isInLightRange(self.lights[i]) and self.body[k]:isInRange(l,t,w,h,s) then
+            self.body[k]:drawShadow(self.lights[i])
+          end
+        end
+      end)
+      -- draw scene for this light using normals and shadowmap
+      self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
+    end
   end
 
   -- add in ambient color
@@ -135,7 +141,9 @@ end
 -- draw material
 function light_world:drawMaterial(l,t,w,h,s)
   for i = 1, #self.body do
-    self.body[i]:drawMaterial()
+    if self.body[i]:isInRange(l,t,w,h,s) then
+      self.body[i]:drawMaterial()
+    end
   end
 end
 
@@ -155,7 +163,9 @@ function light_world:drawGlow(l,t,w,h,s)
   self.glowMap:clear(0, 0, 0)
   util.drawto(self.glowMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawGlow()
+      if self.body[i]:isInRange(l,t,w,h,s) then
+        self.body[i]:drawGlow()
+      end
     end
   end)
 
@@ -188,7 +198,9 @@ function light_world:drawReflection(l,t,w,h,s)
   self.reflectionMap:clear(0, 0, 0)
   util.drawto(self.reflectionMap, l, t, s, function()
     for i = 1, #self.body do
-      self.body[i]:drawReflection()
+      if self.body[i]:isInRange(l,t,w,h,s) then
+        self.body[i]:drawReflection()
+      end
     end
   end)
 

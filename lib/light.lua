@@ -114,25 +114,23 @@ end
 
 function light:inRange(l,t,w,h,s)
   local lx, ly, rs = (self.x + l/s) * s, (self.y + t/s) * s, self.range * s
-  return (lx + rs) > 0 and (lx - rs) < w/s and (ly + rs) > 0 and (ly - rs) < h/s
+  return self.visible and (lx + rs) > 0 and (lx - rs) < w/s and (ly + rs) > 0 and (ly - rs) < h/s
 end
 
 function light:drawNormalShading(l,t,w,h,s, normalMap, shadowMap, canvas)
-  if self.visible and self:inRange(l,t,w,h,s) then
-    self.shadowShader:send('shadowMap', shadowMap)
-    self.shadowShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-    self.shadowShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
-    self.shadowShader:send('lightRange',{self.range * s})
-    self.shadowShader:send("lightSmooth", self.smooth)
-    self.shadowShader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-    self.shadowShader:send("lightAngle", math.pi - self.angle / 2.0)
-    self.shadowShader:send("lightDirection", self.direction)
-    self.shadowShader:send("invert_normal", self.normalInvert == true)
-    util.drawCanvasToCanvas(normalMap, canvas, {
-      blendmode = 'additive',
-      shader = self.shadowShader
-    })
-  end
+  self.shadowShader:send('shadowMap', shadowMap)
+  self.shadowShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
+  self.shadowShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
+  self.shadowShader:send('lightRange',{self.range * s})
+  self.shadowShader:send("lightSmooth", self.smooth)
+  self.shadowShader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
+  self.shadowShader:send("lightAngle", math.pi - self.angle / 2.0)
+  self.shadowShader:send("lightDirection", self.direction)
+  self.shadowShader:send("invert_normal", self.normalInvert == true)
+  util.drawCanvasToCanvas(normalMap, canvas, {
+    blendmode = 'additive',
+    shader = self.shadowShader
+  })
 end
 
 function light:setVisible(visible)
