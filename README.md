@@ -1,6 +1,5 @@
 :todoing
 -make sure all draw calls check if the object is within range
--refactor rectablges to be polygons to reduce code
 -optimize shadow body calculations and drawing methods
 
 # light_world.lua

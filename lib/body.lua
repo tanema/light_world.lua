@@ -244,6 +244,7 @@ function body:setPoints(...)
   self.height = self.height - self.y
   for i = 1, #points, 2 do
     points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
+    print(points[i], points[i+1])
   end
 
   poly_canvas = love.graphics.newCanvas(self.width, self.height)
@@ -256,6 +257,9 @@ function body:setPoints(...)
   self.ix = self.imgWidth * 0.5
   self.iy = self.imgHeight * 0.5
   self:generateNormalMapFlat("top")
+  --wrapping with polygon normals causes edges to show 
+  --also we do not need wrapping for this default normal map
+  self.normal:setWrap("clamp", "clamp")
   self.nx, self.ny = 0, 0
 
   self:setShadowType('polygon', ...)
