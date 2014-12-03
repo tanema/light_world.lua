@@ -58,34 +58,7 @@ function body:init(id, type, ...)
 
     self:setShadowType('rectangle', args[3], args[4])
 	elseif self.type == "polygon" then
-    local points = {...}
-    self.x, self.y, self.width, self.height = points[1], points[2], 0, 0
-    for i = 1, #points, 2 do
-      local px, py = points[i], points[i+1]
-      if px < self.x then self.x = px end
-      if py < self.y then self.y = py end
-      if px > self.width then self.width = px end
-      if py > self.height then self.height = py end
-    end
-    self.width = self.width - self.x
-    self.height = self.height - self.y
-    for i = 1, #points, 2 do
-      points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
-    end
-
-    poly_canvas = love.graphics.newCanvas(self.width, self.height)
-    util.drawto(poly_canvas, 0, 0, 1, function()
-      love.graphics.polygon('fill', points) 
-    end)
-    self.img = love.graphics.newImage(poly_canvas:getImageData()) 
-    self.imgWidth = self.img:getWidth()
-    self.imgHeight = self.img:getHeight()
-    self.ix = self.imgWidth * 0.5
-    self.iy = self.imgHeight * 0.5
-    self:generateNormalMapFlat("top")
-
-
-    self:setShadowType('polygon', ...)
+    self:setPoints(...)
 	elseif self.type == "image" then
 		self.img = args[1]
 		self.x = args[2] or 0
@@ -106,6 +79,7 @@ function body:init(id, type, ...)
     self:initNormal(...)
 		self.reflection = true
 	end
+  self.old_x, self.old_y = self.x, self.y
 end
 
 function body:initNormal(...)
@@ -138,13 +112,19 @@ end
 
 -- refresh
 function body:refresh()
-  if self.x and self.y and self.width and self.height and self.ox and self.oy then
+  if self.shadowType == "rectangle" then
     self.data = {
       self.x - self.ox, self.y - self.oy,
       self.x - self.ox + self.width, self.y - self.oy,
       self.x - self.ox + self.width, self.y - self.oy + self.height,
       self.x - self.ox, self.y - self.oy + self.height
     }
+  elseif self.shadowType == 'polygon' and (self.old_x ~= self.x or self.old_y ~= self.y) then
+    local dx, dy = self.x - self.old_x, self.y - self.old_y
+    for i = 1, #self.data, 2 do
+      self.data[i], self.data[i+1] = self.data[i] + dx, self.data[i+1] + dy
+    end
+    self.old_x, self.old_y = self.x, self.y
   end
 end
 
@@ -214,7 +194,6 @@ function body:setImageOffset(ix, iy)
   if ix ~= self.ix or iy ~= self.iy then
     self.ix = ix
     self.iy = iy
-    self:refresh()
   end
 end
 
@@ -223,7 +202,6 @@ function body:setNormalOffset(nx, ny)
   if nx ~= self.nx or ny ~= self.ny then
     self.nx = nx
     self.ny = ny
-    self:refresh()
   end
 end
 
@@ -253,7 +231,34 @@ end
 
 -- set polygon data
 function body:setPoints(...)
-  self.data = {...}
+  local points = {...}
+  self.x, self.y, self.width, self.height = points[1], points[2], 0, 0
+  for i = 1, #points, 2 do
+    local px, py = points[i], points[i+1]
+    if px < self.x then self.x = px end
+    if py < self.y then self.y = py end
+    if px > self.width then self.width = px end
+    if py > self.height then self.height = py end
+  end
+  self.width = self.width - self.x
+  self.height = self.height - self.y
+  for i = 1, #points, 2 do
+    points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
+  end
+
+  poly_canvas = love.graphics.newCanvas(self.width, self.height)
+  util.drawto(poly_canvas, 0, 0, 1, function()
+    love.graphics.polygon('fill', points) 
+  end)
+  self.img = love.graphics.newImage(poly_canvas:getImageData()) 
+  self.imgWidth = self.img:getWidth()
+  self.imgHeight = self.img:getHeight()
+  self.ix = self.imgWidth * 0.5
+  self.iy = self.imgHeight * 0.5
+  self:generateNormalMapFlat("top")
+  self.nx, self.ny = 0, 0
+
+  self:setShadowType('polygon', ...)
 end
 
 -- get polygon data

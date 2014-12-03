@@ -31,6 +31,7 @@ function love.load()
 	-- create shadow bodys
 	circleTest = lightWorld:newCircle(256, 256, 16)
 	rectangleTest = lightWorld:newRectangle(512, 512, 64, 64)
+	polygonTest = lightWorld:newPolygon(100, 200, 120, 200, 150, 250, 100, 250)
 
 	imageTest = lightWorld:newImage(image, 64, 64, 24, 6)
 	imageTest:setNormalMap(image_normal)
@@ -83,7 +84,7 @@ function love.keypressed(k)
     lightWorld:remove(lightMouse)
 	elseif k == "g" then
     lightWorld:remove(circleTest)
-	elseif k == "h" then
+	elseif k == "d" then
     lightWorld:remove(rectangleTest)
   end
 end
@@ -102,6 +103,18 @@ function love.update(dt)
 	elseif love.keyboard.isDown("left") then
 		x = x + dt * 200
 	end
+
+  
+	if love.keyboard.isDown("k") then
+    polygonTest:move(0, -(dt * 200))
+	elseif love.keyboard.isDown("j") then
+    polygonTest:move(0, (dt * 200))
+  end
+	if love.keyboard.isDown("h") then
+    polygonTest:move(-(dt * 200), 0)
+	elseif love.keyboard.isDown("l") then
+    polygonTest:move((dt * 200), 0)
+  end
 
 	if love.keyboard.isDown("-") then
 		scale = scale - 0.01
@@ -141,6 +154,7 @@ function love.draw()
       local cx, cy = circleTest:getPosition()
       love.graphics.circle("fill", cx, cy, circleTest:getRadius())
       love.graphics.polygon("fill", rectangleTest:getPoints())
+      love.graphics.polygon("fill", polygonTest:getPoints())
       love.graphics.setColor(255, 255, 255)
       love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
     end)

@@ -195,7 +195,7 @@ function love.update(dt)
   for i = 1, phyCnt do
 		if phyBody[i] and (phyBody[i]:isAwake() or offsetChanged) then
 			if phyLight[i]:getType() == "polygon" then
-				phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
+				--phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
 			elseif phyLight[i]:getType() == "circle" then
 				phyLight[i]:setPosition(phyBody[i]:getPosition())
 			elseif phyLight[i]:getType() == "image" then
