@@ -82,6 +82,7 @@ function body:init(id, type, ...)
   self.old_x, self.old_y = self.x, self.y
 end
 
+--use for refraction and reflection because they are both just a normal map
 function body:initNormal(...)
 	local args = {...}
   self.normal = args[1]
@@ -244,7 +245,6 @@ function body:setPoints(...)
   self.height = self.height - self.y
   for i = 1, #points, 2 do
     points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
-    print(points[i], points[i+1])
   end
 
   poly_canvas = love.graphics.newCanvas(self.width, self.height)
@@ -538,7 +538,6 @@ end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
---TODO if not in range of light or screen dont draw
 function body:drawPolyShadow(light)
   local edgeFacingTo = {}
   for k = 1, #self.data, 2 do
@@ -561,6 +560,7 @@ function body:drawPolyShadow(light)
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
+
   for k = 1, #edgeFacingTo do
     local nextIndex = (k + 1) % #edgeFacingTo
     if nextIndex == 0 then nextIndex = #edgeFacingTo end
@@ -590,7 +590,6 @@ end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
---TODO if not in range of light or screen dont draw
 function body:drawCircleShadow(light)
   local curShadowGeometry = {}
   local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
@@ -599,11 +598,6 @@ function body:drawCircleShadow(light)
   local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
   local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
 
-  curShadowGeometry[1] = x2
-  curShadowGeometry[2] = y2
-  curShadowGeometry[3] = x3
-  curShadowGeometry[4] = y3
-
   local lxh = (light.x * self.zheight)
   local lyh = (light.y * self.zheight)
   local height_diff = (self.zheight - light.z) 
@@ -611,23 +605,25 @@ function body:drawCircleShadow(light)
     height_diff = -0.001
   end
   
-  curShadowGeometry[5] = (lxh - (x3 * light.z))/height_diff 
-  curShadowGeometry[6] = (lyh - (y3 * light.z))/height_diff 
-  curShadowGeometry[7] = (lxh - (x2 * light.z))/height_diff  
-  curShadowGeometry[8] = (lyh - (y2 * light.z))/height_diff  
+  local x4 = (lxh - (x3 * light.z))/height_diff 
+  local y4 = (lyh - (y3 * light.z))/height_diff 
+  local x5 = (lxh - (x2 * light.z))/height_diff  
+  local y5 = (lyh - (y2 * light.z))/height_diff  
 
-  local radius = math.sqrt(math.pow(curShadowGeometry[7] - curShadowGeometry[5], 2) + math.pow(curShadowGeometry[8]-curShadowGeometry[6], 2)) / 2
-  local cx, cy = (curShadowGeometry[5] + curShadowGeometry[7])/2, (curShadowGeometry[6] + curShadowGeometry[8])/2
-  local angle1 = math.atan2(curShadowGeometry[6] - cy, curShadowGeometry[5] - cx)
-  local angle2 = math.atan2(curShadowGeometry[8] - cy, curShadowGeometry[7] - cx)
-  local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) / 2 
-  local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) / 2 
+  local radius = math.sqrt(math.pow(x5 - x4, 2) + math.pow(y5-y4, 2)) / 2
+  local cx, cy = (x4 + x5)/2, (y4 + y5)/2
+  local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2))
+  local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
 
-  love.graphics.polygon("fill", curShadowGeometry)
+  if distance1 >= self.radius then
+    love.graphics.polygon("fill", x2, y2, x3, y3, x4, y4, x5, y5)
+  end
 
   if distance1 <= self.radius then
-    love.graphics.arc("fill", cx, cy, radius, 0, (math.pi * 2))
+    love.graphics.circle("fill", cx, cy, radius)
   elseif distance2 < light.range then -- dont draw circle if way off screen
+    local angle1 = math.atan2(y4 - cy, x4 - cx)
+    local angle2 = math.atan2(y5 - cy, x5 - cx)
     if angle1 > angle2 then
       love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
     else
