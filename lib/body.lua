@@ -441,13 +441,12 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:isInLightRange(light, l, t, w, h, s)
-  local distance
+function body:isInLightRange(light)
   if self.type == 'circle' then
     return light.range > math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) 
   else
     local cx, cy = self.x + (self.width * 0.5), self.y + (self.height * 0.5)
-    distance = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
+    local distance = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
     return distance <= light.range + (self.width > self.height and self.width or self.height)
   end
 end
@@ -455,11 +454,11 @@ end
 function body:isInRange(l, t, w, h, s)
   local bx, by, bw, bh 
   if self.type == 'circle' then
-    bx, by, bw, bh = (self.x + l/s) * s, (self.y + t/s) * s, self.radius/s, self.radius/s
+    bx, by, bw, bh = self.x - self.radius, self.y - self.radius, self.radius * 2, self.radius * 2
   else
-    bx, by, bw, bh = (self.x + l/s) * s, (self.y + t/s) * s, self.width/s, self.height/s
+    bx, by, bw, bh = self.x, self.y, self.width, self.height
   end
-  return self.visible and (bx + bw) > 0 and (bx - bw) < w/s and (by + bh) > 0 and (by - bh) < h/s
+  return self.visible and (bx+bw) > (-l/s) and bx < (-l+w)/s and (by+bh) > (-t/s) and by < (-t+h)/s
 end
 
 function body:drawNormal()
