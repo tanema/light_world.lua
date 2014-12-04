@@ -179,10 +179,8 @@ function exf.resume()
 
 	-- create light world
 	lightWorld = LightWorld({
-    drawBackground = exf.drawBackground,
-    drawForeground = exf.drawForeground
+    ambient = {127, 127, 127} 
   })
-	lightWorld:setAmbientColor(127, 127, 127)
 
 	-- create light
 	lightMouse = lightWorld:newLight(0, 0, 255, 127, 63, 500)

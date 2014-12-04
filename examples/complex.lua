@@ -93,8 +93,6 @@ function love.load()
     ambient = {15,15,15},
     refractionStrength = 16.0,
     reflectionVisibility = 0.75,
-    drawBackground = drawBackground,
-    drawForeground = drawForeground
   })
 
 	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
@@ -195,7 +193,7 @@ function love.update(dt)
   for i = 1, phyCnt do
 		if phyBody[i] and (phyBody[i]:isAwake() or offsetChanged) then
 			if phyLight[i]:getType() == "polygon" then
-				--phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
+				phyLight[i]:setPoints(phyBody[i]:getWorldPoints(phyShape[i]:getPoints()))
 			elseif phyLight[i]:getType() == "circle" then
 				phyLight[i]:setPosition(phyBody[i]:getPosition())
 			elseif phyLight[i]:getType() == "image" then

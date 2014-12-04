@@ -1,9 +1,10 @@
-local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
-local class = require(_PACKAGE.."/class")
-local normal_map = require(_PACKAGE..'/normal_map')
-local util = require(_PACKAGE..'/util')
-local vec2 = require(_PACKAGE..'/vec2')
-local body = class()
+local _PACKAGE    = (...):match("^(.+)[%./][^%./]+") or ""
+local class       = require(_PACKAGE.."/class")
+local normal_map  = require(_PACKAGE..'/normal_map')
+local util        = require(_PACKAGE..'/util')
+local anim8       = require(_PACKAGE..'/anim8')
+local vec2        = require(_PACKAGE..'/vec2')
+local body        = class()
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
@@ -75,6 +76,17 @@ function body:init(id, type, ...)
     self:generateNormalMapFlat("top")
     self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
 		self.reflective = true
+  elseif self.type == "animation" then
+		self.img = args[1]
+		self.x = args[2] or 0
+		self.y = args[3] or 0
+    self.ix = 0
+    self.iy = 0
+    self.width, self.height = 16, 16
+    self.animations = {}
+    self.castsNoShadow = true
+    self:generateNormalMapFlat("top")
+		self.reflective = true
 	elseif self.type == "refraction" then
     self:initNormal(...)
 		self.refraction = true
@@ -130,6 +142,26 @@ function body:refresh()
     end
     self.old_x, self.old_y = self.x, self.y
   end
+end
+
+function body:newGrid(frameWidth, frameHeight, imageWidth, imageHeight, left, top, border)
+  return anim8.newGrid(
+    frameWidth, frameHeight, 
+    imageWidth or self.img:getWidth(), imageHeight or self.img:getHeight(), 
+    left, top, border
+  )
+end
+-- frameWidth, frameHeight, imageWidth, imageHeight, left, top, border 
+function body:addAnimation(name, frames, durations, onLoop)
+  self.current_animation_name = self.current_animation or name
+  self.animations[name] = anim8.newAnimation(frames, durations, onLoop)
+  self.animation = self.animations[self.current_animation_name]
+end
+
+function body:update(dt)
+  local frame = self.animation.frames[self.animation.position]
+  _,_,self.width, self.height = frame:getViewport()
+  self.animation:update(dt)
 end
 
 -- set position
@@ -464,7 +496,11 @@ end
 function body:drawNormal()
   if not self.refraction and not self.reflection and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
-    love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
+    if self.type == 'animation' then
+      self.animation:draw(self.normal, self.x, self.y)
+    else
+      love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
+    end
   end
 end
 
@@ -492,6 +528,11 @@ function body:drawGlow()
       love.graphics.setColor(0, 0, 0)
     end
     love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+  elseif self.type == "animation" then
+    if self.glow then
+      print('glowmaps not yet supported for animations')
+    end
+    self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
   end
 
   love.graphics.setShader()
@@ -519,6 +560,8 @@ function body:drawRefraction()
       love.graphics.polygon("fill", unpack(self.data))
     elseif self.type == "image" and self.img then
       love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+    elseif self.type == 'animation' then
+      self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
     end
   end
 end
@@ -531,10 +574,18 @@ function body:drawReflection()
   end
   if self.reflective and self.img then
     love.graphics.setColor(0, 255, 0)
-    love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+    if self.type == 'animation' then
+      self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
+    else
+      love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+    end
   elseif not self.reflection and self.img then
     love.graphics.setColor(0, 0, 0)
-    love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+    if self.type == 'animation' then
+      self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
+    else
+      love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+    end
   end
 end
 
@@ -543,7 +594,11 @@ function body:drawMaterial()
     love.graphics.setShader(self.materialShader)
     love.graphics.setColor(255, 255, 255)
     self.materialShader:send("material", self.material)
-    love.graphics.draw(self.normal, self.x - self.nx, self.y - self.ny)
+    if self.type == 'animation' then
+      self.animation:draw(self.normal, self.x - self.nx, self.y - self.ny)
+    else
+      love.graphics.draw(self.normal, self.x - self.nx, self.y - self.ny)
+    end
     love.graphics.setShader()
   end
 end

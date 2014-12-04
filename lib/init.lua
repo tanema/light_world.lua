@@ -85,6 +85,15 @@ function light_world:refreshScreenSize(w, h)
   self.post_shader:refreshScreenSize(w, h)
 end
 
+function light_world:update(dt)
+  for i = 1, #self.body do
+    if self.body[i]:isInRange(self.l,self.t,self.w,self.h,self.s) and 
+      self.body[i].type == 'animation' then
+      self.body[i]:update(dt)
+    end
+  end
+end
+
 function light_world:draw(cb)
   util.drawto(self.render_buffer, self.l, self.t, self.s, function()
     cb(                     self.l,self.t,self.w,self.h,self.s)
@@ -242,6 +251,7 @@ function light_world:getBody(n) return self.body[n] end
 function light_world:getLightCount() return #self.lights end
 function light_world:getLight(n) return self.lights[n] end
 function light_world:newRectangle(...) return self:newBody("rectangle", ...) end
+function light_world:newAnimationGrid(...) return self:newBody("animation", ...) end
 function light_world:newCircle(...) return self:newBody("circle", ...) end
 function light_world:newPolygon(...) return self:newBody("polygon", ...) end
 function light_world:newImage(...) return self:newBody("image", ...) end
