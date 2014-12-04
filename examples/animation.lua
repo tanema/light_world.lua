@@ -1,5 +1,6 @@
 -- Example: Animation Example
 local LightWorld = require "lib"
+local anim8 = require 'lib.anim8'
 
 function love.load()
   x, y, scale = 0, 0, 1
@@ -23,6 +24,9 @@ function love.load()
   animation:setNormalMap(image_normal)
   grid = animation:newGrid(108, 140)
   animation:addAnimation('run right', grid('1-8', 1), 0.1)
+
+  local g = anim8.newGrid(108, 140, image:getWidth(), image:getHeight())
+  animation2 = anim8.newAnimation(g('1-8', 1), 0.1)
 end
 
 function love.update(dt)
@@ -46,6 +50,7 @@ function love.update(dt)
 		scale = scale + 0.01
 	end
 
+  animation2:update(dt)
   lightWorld:update(dt) --only needed for animation
 	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale)
 end
@@ -59,6 +64,8 @@ function love.draw()
       love.graphics.setColor(255, 255, 255)
       love.graphics.rectangle("fill", -x/scale, -y/scale, love.graphics.getWidth()/scale, love.graphics.getHeight()/scale)
       animation.animation:draw(image, 100, 100)
+ 
+      animation2:draw(image, 200, 100)
     end)
   love.graphics.pop()
 end
