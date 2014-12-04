@@ -1,6 +1,5 @@
 -- Example: Short Example
 local LightWorld = require "lib"
-local normal_map = require "lib/normal_map"
 
 function love.load()
   testShader = 0

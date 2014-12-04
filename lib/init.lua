@@ -224,8 +224,11 @@ function light_world:clear()
   light_world:clearBodies()
 end
 
+function light_world:setTranslation(l, t, s) 
+  self.l, self.t, self.s = l or self.l, t or self.t, s or self.s
+end
+
 function light_world:setScale(s) self.s = s end
-function light_world:setTranslation(l, t, s) self.l, self.t, self.s = l, t, s end
 function light_world:clearLights() self.lights = {} end
 function light_world:clearBodies() self.body = {} end
 function light_world:setAmbientColor(red, green, blue) self.ambient = {red, green, blue} end

@@ -1,6 +1,6 @@
 :todoing
+-isinlightrange still not working right
 -add body animations
--optimize shadow body calculations and drawing methods
 
 # light_world.lua
 
