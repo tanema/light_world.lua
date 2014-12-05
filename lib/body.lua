@@ -153,10 +153,23 @@ function body:newGrid(frameWidth, frameHeight, imageWidth, imageHeight, left, to
 end
 -- frameWidth, frameHeight, imageWidth, imageHeight, left, top, border 
 function body:addAnimation(name, frames, durations, onLoop)
-  self.current_animation_name = self.current_animation or name
+  self.current_animation_name = self.current_animation_name or name
   self.animations[name] = anim8.newAnimation(frames, durations, onLoop)
   self.animation = self.animations[self.current_animation_name]
 end
+
+function body:setAnimation(name)
+  self.current_animation_name = name
+  self.animation = self.animations[self.current_animation_name]
+end
+
+function body:gotoFrame(frame) self.animation:gotoFrame(frame) end
+function body:pause() self.animation:pause() end
+function body:resume() self.animation:resume() end
+function body:flipH() self.animation:flipH() end
+function body:flipV() self.animation:flipV() end
+function body:pauseAtEnd() self.animation:pauseAtEnd() end
+function body:pauseAtStart() self.animation:pauseAtStart() end
 
 function body:update(dt)
   local frame = self.animation.frames[self.animation.position]
@@ -491,6 +504,10 @@ function body:isInRange(l, t, w, h, s)
     bx, by, bw, bh = self.x, self.y, self.width, self.height
   end
   return self.visible and (bx+bw) > (-l/s) and bx < (-l+w)/s and (by+bh) > (-t/s) and by < (-t+h)/s
+end
+
+function body:drawAnimation()
+  self.animation:draw(self.img, self.x, self.y)
 end
 
 function body:drawNormal()
