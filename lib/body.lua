@@ -534,22 +534,20 @@ function body:drawGlow()
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
   elseif self.type == "polygon" then
     love.graphics.polygon("fill", unpack(self.data))
-  elseif self.type == "image" and self.img then
+  elseif (self.type == "image" or self.type == "animation") and self.img then
     if self.glowStrength > 0.0 and self.glow then
       love.graphics.setShader(self.glowShader)
       self.glowShader:send("glowImage", self.glow)
       self.glowShader:send("glowTime", love.timer.getTime() * 0.5)
       love.graphics.setColor(255, 255, 255)
     else
-      love.graphics.setShader()
       love.graphics.setColor(0, 0, 0)
     end
-    love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
-  elseif self.type == "animation" then
-    if self.glow then
-      print('glowmaps not yet supported for animations')
+    if self.type == "animation" then
+      self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
+    else
+      love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
     end
-    self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
   end
 
   love.graphics.setShader()
