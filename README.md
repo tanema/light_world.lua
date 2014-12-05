@@ -1,6 +1,3 @@
-:todoing
--add body animations
-
 # light_world.lua
 
   This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
@@ -15,21 +12,33 @@ only it has been largely refactored and edited to allow for scaling and proper t
 ```lua
 local LightWorld = require "lib" --the path to where light_world is (in this repo "lib")
 
--- create light world
-lightWorld = LightWorld({
-  ambient = {55,55,55},         --the general ambient light in the environment
-})
+--create light world
+function love.load()
+  lightWorld = LightWorld({
+    ambient = {55,55,55},         --the general ambient light in the environment
+  })
+end
+
+function love.update(dt)
+  lightWorld:update(dt) --only needed for animation
+  lightWorld:setTranslation(x, y, scale)
+end
 
 function love.draw()
   love.graphics.push()
     love.graphics.translate(x, y)
     love.graphics.scale(scale)
-    lightWorld:draw(x,y,scale)
+    lightWorld:draw(function()
+      -- do your stuff
+    end)
   love.graphics.pop()
 end
 ```
 
 For more information please check out the [wiki](https://github.com/tanema/light_world.lua/wiki) and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action. 
+
+### Gamera & HUMP
+There are example in the example directory how to use both of these with the library.
 
 ## Features ##
 * **[Preview (Video)](https://www.youtube.com/watch?v=6V5Dtsa6Nd4)**
@@ -49,6 +58,7 @@ For more information please check out the [wiki](https://github.com/tanema/light
 * refractions (moveable) [Preview](http://onepixelahead.de/love2d_polyshadow13.gif)
 * chromatic aberration [Preview](http://onepixelahead.de/love2d_polyshadow16.gif)
 * postshader with many included postshaders, plus easy to extend
+* animations in tandem with normal maps thanks to [anim8](https://github.com/kikito/anim8)
 			
 ## License
 
