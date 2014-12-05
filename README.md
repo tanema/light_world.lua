@@ -20,7 +20,8 @@ function love.load()
 end
 
 function love.update(dt)
- lightWorld:setTranslation(x, y, scale)
+  lightWorld:update(dt) --only needed for animation
+  lightWorld:setTranslation(x, y, scale)
 end
 
 function love.draw()
@@ -57,6 +58,7 @@ There are example in the example directory how to use both of these with the lib
 * refractions (moveable) [Preview](http://onepixelahead.de/love2d_polyshadow13.gif)
 * chromatic aberration [Preview](http://onepixelahead.de/love2d_polyshadow16.gif)
 * postshader with many included postshaders, plus easy to extend
+* animations in tandem with normal maps thanks to [anim8](https://github.com/kikito/anim8)
 			
 ## License
 
