@@ -36,6 +36,9 @@ end
 
 For more information please check out the [wiki](https://github.com/tanema/light_world.lua/wiki) and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action. 
 
+### Gamera & HUMP
+There are example in the example directory how to use both of these with the library.
+
 ## Features ##
 * **[Preview (Video)](https://www.youtube.com/watch?v=6V5Dtsa6Nd4)**
 * polygon shadow calculation [Preview](http://onepixelahead.de/love2d_polyshadow.png)
