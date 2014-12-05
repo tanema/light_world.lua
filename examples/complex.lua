@@ -217,7 +217,10 @@ function love.update(dt)
 	if colorAberration > 0.0 then
 		-- vert / horz blur
 		lightWorld.post_shader:addEffect("blur", 2.0, 2.0)
-		lightWorld.post_shader:addEffect("chromatic_aberration", math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration, math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration)
+		lightWorld.post_shader:addEffect("chromatic_aberration", 
+      {math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration}, 
+      {math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration}, 
+      {math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration})
   else
 		lightWorld.post_shader:removeEffect("blur")
 		lightWorld.post_shader:removeEffect("chromatic_aberration")
