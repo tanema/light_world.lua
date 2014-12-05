@@ -1,6 +1,3 @@
-:todoing
--add body animations
-
 # light_world.lua
 
   This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
@@ -15,16 +12,24 @@ only it has been largely refactored and edited to allow for scaling and proper t
 ```lua
 local LightWorld = require "lib" --the path to where light_world is (in this repo "lib")
 
--- create light world
-lightWorld = LightWorld({
-  ambient = {55,55,55},         --the general ambient light in the environment
-})
+--create light world
+function love.load()
+  lightWorld = LightWorld({
+    ambient = {55,55,55},         --the general ambient light in the environment
+  })
+end
+
+function love.update(dt)
+ lightWorld:setTranslation(x, y, scale)
+end
 
 function love.draw()
   love.graphics.push()
     love.graphics.translate(x, y)
     love.graphics.scale(scale)
-    lightWorld:draw(x,y,scale)
+    lightWorld:draw(function()
+      -- do your stuff
+    end)
   love.graphics.pop()
 end
 ```
