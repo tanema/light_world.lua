@@ -59,7 +59,7 @@ function love.update(dt)
 		scale = scale + 0.01
 	end
 
-	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale, z)
+	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale)
 
   cam:setScale(scale)
   cam:setPosition(x, y)
