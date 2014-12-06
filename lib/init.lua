@@ -46,7 +46,7 @@ function light_world:init(options)
 	self.refractionStrength   = 8.0
 	self.reflectionStrength   = 16.0
 	self.reflectionVisibility = 1.0
-	self.blur                 = 2.0
+	self.blur                 = 0.0
 	self.glowBlur             = 1.0
 	self.glowTimer            = 0.0
 	self.glowDown             = false
