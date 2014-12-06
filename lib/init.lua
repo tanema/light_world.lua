@@ -46,7 +46,7 @@ function light_world:init(options)
 	self.refractionStrength   = 8.0
 	self.reflectionStrength   = 16.0
 	self.reflectionVisibility = 1.0
-	self.blur                 = 0.0
+	self.shadowBlur           = 0.0
 	self.glowBlur             = 1.0
 	self.glowTimer            = 0.0
 	self.glowDown             = false
@@ -155,7 +155,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
     love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
   end)
 
-  light_world:drawBlur("alpha", self.blur, self.normal, self.normal2, l, t, w, h, s)
+  light_world:drawBlur("alpha", self.shadowBlur, self.normal, self.normal2, l, t, w, h, s)
   util.drawCanvasToCanvas(self.normal, self.render_buffer, {blendmode = "multiplicative"})
 end
 
@@ -249,7 +249,7 @@ function light_world:setScale(s) self.s = s end
 function light_world:clearLights() self.lights = {} end
 function light_world:clearBodies() self.body = {} end
 function light_world:setAmbientColor(red, green, blue) self.ambient = {red, green, blue} end
-function light_world:setShadowBlur(blur) self.blur = blur end
+function light_world:setShadowBlur(blur) self.shadowBlur = blur end
 function light_world:setGlowStrength(strength) self.glowBlur = strength end
 function light_world:setRefractionStrength(strength) self.refractionStrength = strength end
 function light_world:setReflectionStrength(strength) self.reflectionStrength = strength end
