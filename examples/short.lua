@@ -17,6 +17,8 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     ambient = {55,55,55},
+    refractionStrength = 32.0,
+    reflectionVisibility = 0.75,
   })
 
 	-- create light
