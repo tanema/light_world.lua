@@ -81,7 +81,7 @@ function love.draw()
       love.graphics.rectangle("fill", -x/scale, -y/scale, love.graphics.getWidth()/scale, love.graphics.getHeight()/scale)
       animation:drawAnimation()
  
-      animation2:draw(image, 200, 100)
+      animation2:draw(image, 200, 30)
     end)
   love.graphics.pop()
 end

@@ -80,9 +80,6 @@ function body:init(id, type, ...)
 		self.img = args[1]
 		self.x = args[2] or 0
 		self.y = args[3] or 0
-    self.ix = 0
-    self.iy = 0
-    self.width, self.height = 16, 16
     self.animations = {}
     self.castsNoShadow = true
     self:generateNormalMapFlat("top")
@@ -153,14 +150,19 @@ function body:newGrid(frameWidth, frameHeight, imageWidth, imageHeight, left, to
 end
 -- frameWidth, frameHeight, imageWidth, imageHeight, left, top, border 
 function body:addAnimation(name, frames, durations, onLoop)
-  self.current_animation_name = self.current_animation_name or name
   self.animations[name] = anim8.newAnimation(frames, durations, onLoop)
-  self.animation = self.animations[self.current_animation_name]
+
+  if not self.current_animation_name then
+    self:setAnimation(name)
+  end
 end
 
 function body:setAnimation(name)
   self.current_animation_name = name
   self.animation = self.animations[self.current_animation_name]
+
+  local frame = self.animation.frames[self.animation.position]
+  _,_,self.width, self.height = frame:getViewport()
 end
 
 function body:gotoFrame(frame) self.animation:gotoFrame(frame) end
@@ -172,9 +174,15 @@ function body:pauseAtEnd() self.animation:pauseAtEnd() end
 function body:pauseAtStart() self.animation:pauseAtStart() end
 
 function body:update(dt)
-  local frame = self.animation.frames[self.animation.position]
-  _,_,self.width, self.height = frame:getViewport()
-  self.animation:update(dt)
+  if self.type == "animation" and self.animation then
+    local frame = self.animation.frames[self.animation.position]
+    _,_,self.width, self.height = frame:getViewport()
+    self.imgWidth, self.imgHeight = self.width, self.height
+    self.normalWidth, self.normalHeight = self.width, self.height 
+    self.ix, self.iy = self.imgWidth * 0.5,self.imgHeight * 0.5
+    self.nx, self.ny = self.ix, self.iy
+    self.animation:update(dt)
+  end
 end
 
 -- set position
@@ -293,11 +301,14 @@ function body:setPoints(...)
     if px > self.width then self.width = px end
     if py > self.height then self.height = py end
   end
+  -- normalize width and height
   self.width = self.width - self.x
   self.height = self.height - self.y
   for i = 1, #points, 2 do
     points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
   end
+  self.x = self.x + (self.width * 0.5)
+  self.y = self.y + (self.height * 0.5)
 
   poly_canvas = love.graphics.newCanvas(self.width, self.height)
   util.drawto(poly_canvas, 0, 0, 1, function()
@@ -312,7 +323,6 @@ function body:setPoints(...)
   --wrapping with polygon normals causes edges to show 
   --also we do not need wrapping for this default normal map
   self.normal:setWrap("clamp", "clamp")
-  self.nx, self.ny = 0, 0
 
   self:setShadowType('polygon', ...)
 end
@@ -507,14 +517,14 @@ function body:isInRange(l, t, w, h, s)
 end
 
 function body:drawAnimation()
-  self.animation:draw(self.img, self.x, self.y)
+  self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
 end
 
 function body:drawNormal()
   if not self.refraction and not self.reflection and self.normalMesh then
     love.graphics.setColor(255, 255, 255)
     if self.type == 'animation' then
-      self.animation:draw(self.normal, self.x, self.y)
+      self.animation:draw(self.normal, self.x - self.nx, self.y - self.ny)
     else
       love.graphics.draw(self.normalMesh, self.x - self.nx, self.y - self.ny)
     end
