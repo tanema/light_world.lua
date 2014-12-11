@@ -51,6 +51,11 @@ function light_world:init(options)
 	self.glowTimer            = 0.0
 	self.glowDown             = false
 
+  self.disableGlow          = false
+  self.disableMaterial      = false
+  self.disableReflection    = true
+  self.disableRefraction    = true
+
   options = options or {}
   for k, v in pairs(options) do self[k] = v end
 
@@ -87,7 +92,7 @@ end
 
 function light_world:update(dt)
   for i = 1, #self.body do
-    if self.body[i]:isInRange(self.l,self.t,self.w,self.h,self.s) and 
+    if self.body[i]:isInRange(-self.l,-self.t,self.w,self.h,self.s) and 
       self.body[i].type == 'animation' then
       self.body[i]:update(dt)
     end
@@ -97,11 +102,11 @@ end
 function light_world:draw(cb)
   util.drawto(self.render_buffer, self.l, self.t, self.s, function()
     cb(                     self.l,self.t,self.w,self.h,self.s)
-		self:drawMaterial(      self.l,self.t,self.w,self.h,self.s)
+		_ = self.disableMaterial   or self:drawMaterial(      self.l,self.t,self.w,self.h,self.s)
     self:drawNormalShading( self.l,self.t,self.w,self.h,self.s)
-    self:drawGlow(          self.l,self.t,self.w,self.h,self.s)
-    self:drawRefraction(    self.l,self.t,self.w,self.h,self.s)
-    self:drawReflection(    self.l,self.t,self.w,self.h,self.s)
+    _ = self.disableGlow       or self:drawGlow(          self.l,self.t,self.w,self.h,self.s)
+    _ = self.disableRefraction or self:drawRefraction(    self.l,self.t,self.w,self.h,self.s)
+    _ = self.disableReflection or self:drawReflection(    self.l,self.t,self.w,self.h,self.s)
   end)
   self.post_shader:drawWith(self.render_buffer, self.l, self.t, self.s)
 end
@@ -123,7 +128,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
     for i = 1, #self.body do
-      if self.body[i]:isInRange(l,t,w,h,s) then
+      if self.body[i]:isInRange(-l,-t,w,h,s) then
         self.body[i]:drawNormal()
       end
     end
@@ -136,7 +141,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
         for k = 1, #self.body do
-          if self.body[k]:isInLightRange(self.lights[i]) and self.body[k]:isInRange(l,t,w,h,s) then
+          if self.body[k]:isInLightRange(self.lights[i]) and self.body[k]:isInRange(-l,-t,w,h,s) then
             self.body[k]:drawShadow(self.lights[i])
           end
         end
@@ -162,7 +167,7 @@ end
 -- draw material
 function light_world:drawMaterial(l,t,w,h,s)
   for i = 1, #self.body do
-    if self.body[i]:isInRange(l,t,w,h,s) then
+    if self.body[i]:isInRange(-l,-t,w,h,s) then
       self.body[i]:drawMaterial()
     end
   end
@@ -180,18 +185,22 @@ function light_world:drawGlow(l,t,w,h,s)
     self.glowDown = not self.glowDown
   end
 
+  local has_glow = false
   -- create glow map
   self.glowMap:clear(0, 0, 0)
   util.drawto(self.glowMap, l, t, s, function()
     for i = 1, #self.body do
-      if self.body[i]:isInRange(l,t,w,h,s) then
+      if self.body[i]:isInRange(-l,-t,w,h,s) and self.body[i].glowStrength > 0.0 then
+        has_glow = true
         self.body[i]:drawGlow()
       end
     end
   end)
 
-  light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h, s)
-  util.drawCanvasToCanvas(self.glowMap, self.render_buffer, {blendmode = "additive"})
+  if has_glow then
+    light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h, s)
+    util.drawCanvasToCanvas(self.glowMap, self.render_buffer, {blendmode = "additive"})
+  end
 end
 -- draw refraction
 function light_world:drawRefraction(l,t,w,h,s)
@@ -199,7 +208,7 @@ function light_world:drawRefraction(l,t,w,h,s)
   self.refractionMap:clear()
   util.drawto(self.refractionMap, l, t, s, function()
     for i = 1, #self.body do
-      if self.body[i]:isInRange(l,t,w,h,s) then
+      if self.body[i]:isInRange(-l,-t,w,h,s) then
         self.body[i]:drawRefraction()
       end
     end
@@ -217,7 +226,7 @@ function light_world:drawReflection(l,t,w,h,s)
   self.reflectionMap:clear(0, 0, 0)
   util.drawto(self.reflectionMap, l, t, s, function()
     for i = 1, #self.body do
-      if self.body[i]:isInRange(l,t,w,h,s) then
+      if self.body[i]:isInRange(-l,-t,w,h,s) then
         self.body[i]:drawReflection()
       end
     end
@@ -263,8 +272,15 @@ function light_world:newAnimationGrid(...) return self:newBody("animation", ...)
 function light_world:newCircle(...) return self:newBody("circle", ...) end
 function light_world:newPolygon(...) return self:newBody("polygon", ...) end
 function light_world:newImage(...) return self:newBody("image", ...) end
-function light_world:newRefraction(...) return self:newBody("refraction", ...) end
-function light_world:newReflection(normal, ...) return self:newBody("reflection", ...) end
+
+function light_world:newRefraction(...) 
+  self.disableRefraction = false
+  return self:newBody("refraction", ...) 
+end
+function light_world:newReflection(normal, ...) 
+  self.disableReflection = false
+  return self:newBody("reflection", ...) 
+end
 
 -- new body
 function light_world:newBody(type, ...)

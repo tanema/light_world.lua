@@ -9,7 +9,6 @@ light.shadowShader = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 function light:init(x, y, r, g, b, range)
 	self.direction = 0
 	self.angle = math.pi * 2.0
-	self.range = 0
 	self.x = x or 0
 	self.y = y or 0
 	self.z = 1

@@ -1,8 +1,11 @@
 -- Example: STI Example
 local LightWorld = require "lib"
 local sti = require 'examples.vendor.sti'
+local ProFi = require 'examples.vendor.ProFi'
 
 function love.load()
+  ProFi:start()
+
   x = 0
   y = 0
   z = 1

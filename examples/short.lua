@@ -1,7 +1,10 @@
 -- Example: Short Example
 local LightWorld = require "lib"
+local ProFi = require 'examples.vendor.ProFi'
 
 function love.load()
+  ProFi:start()
+
   testShader = 0
   x = 0
   y = 0
@@ -17,6 +20,8 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     ambient = {55,55,55},
+    refractionStrength = 32.0,
+    reflectionVisibility = 0.75,
   })
 
 	-- create light
@@ -157,7 +162,9 @@ function love.draw()
       love.graphics.polygon("fill", polygonTest:getPoints())
       love.graphics.setColor(255, 255, 255)
       love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
+
     end)
+    love.graphics.rectangle('line', lightMouse.x - lightMouse.range, lightMouse.y - lightMouse.range, lightMouse.range*2, lightMouse.range*2)
   love.graphics.pop()
 
   love.graphics.setBlendMode("alpha")

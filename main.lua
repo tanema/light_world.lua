@@ -8,6 +8,7 @@
 
 require "lib/postshader"
 local LightWorld = require "lib"
+local ProFi = require 'examples.vendor.ProFi'
 
 exf = {}
 exf.current = nil
@@ -166,6 +167,9 @@ function exf.clear()
 end
 
 function exf.resume()
+  ProFi:stop()
+  ProFi:writeReport( 'light_world_profiling_report.txt' )
+
   load = nil
   love.update = exf.update
   love.draw = exf.draw

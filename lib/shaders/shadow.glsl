@@ -28,27 +28,30 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   vec4 pixelColor = Texel(texture, texture_coords);
   vec4 shadowColor = Texel(shadowMap, texture_coords);
 
-  //if the light is a slice and the pixel is not inside
-  if(lightAngle > 0.0 && not_in_slice(pixel_coords)) {
-    return vec4(0.0, 0.0, 0.0, 1.0);
-  }
-
-  vec3 normal;
-	if(pixelColor.a > 0.0) {
-    //if on the normal map ie there is normal map data
-    //so get the normal data
-    if(invert_normal) {
-      normal = normalize(vec3(pixelColor.r, 1 - pixelColor.g, pixelColor.b) * 2.0 - 1.0); 
-    } else {
-      normal = normalize(pixelColor.rgb * 2.0 - 1.0);
-    }
-  } else {
-    // not on the normal map so it is the floor with a normal point strait up
-    normal = vec3(0.0, 0.0, 1.0);
-  }
-  float dist = distance(lightPosition, vec3(pixel_coords, normal.b));
+  float dist = distance(lightPosition, vec3(pixel_coords, 1.0));
   //if the pixel is within this lights range
-  if(dist < lightRange) {
+  if(dist > lightRange) {
+    //not in range draw in shadows
+    return vec4(0.0, 0.0, 0.0, 1.0);
+  }else{
+    //if the light is a slice and the pixel is not inside
+    if(lightAngle > 0.0 && not_in_slice(pixel_coords)) {
+      return vec4(0.0, 0.0, 0.0, 1.0);
+    }
+
+    vec3 normal;
+    if(pixelColor.a > 0.0) {
+      //if on the normal map ie there is normal map data
+      //so get the normal data
+      if(invert_normal) {
+        normal = normalize(vec3(pixelColor.r, 1 - pixelColor.g, pixelColor.b) * 2.0 - 1.0); 
+      } else {
+        normal = normalize(pixelColor.rgb * 2.0 - 1.0);
+      }
+    } else {
+      // not on the normal map so it is the floor with a normal point strait up
+      normal = vec3(0.0, 0.0, 1.0);
+    }
     //calculater attenuation of light based on the distance
     float att = clamp((1.0 - dist / lightRange) / lightSmooth, 0.0, 1.0);
     // if not on the normal map draw attenuated shadows
@@ -73,9 +76,6 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
       //return the light that is effected by the normal and attenuation
       return vec4(diff * att, 1.0);
     }
-  } else {
-    //not in range draw in shadows
-    return vec4(0.0, 0.0, 0.0, 1.0);
   }
 }
 

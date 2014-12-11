@@ -497,13 +497,8 @@ function body:setShadowType(type, ...)
 end
 
 function body:isInLightRange(light)
-  if self.type == 'circle' then
-    return light.range > math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) 
-  else
-    local cx, cy = self.x + (self.width * 0.5), self.y + (self.height * 0.5)
-    local distance = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
-    return distance <= light.range + (self.width > self.height and self.width or self.height)
-  end
+  local l, t, w = light.x - light.range, light.y - light.range, light.range*2 
+  return self:isInRange(l,t,w,w,1)
 end
 
 function body:isInRange(l, t, w, h, s)
@@ -516,7 +511,7 @@ function body:isInRange(l, t, w, h, s)
     
   local bx, by, bw, bh = self.x - radius, self.y - radius, radius * 2, radius * 2
 
-  return self.visible and (bx+bw) > (-l/s) and bx < (-l+w)/s and (by+bh) > (-t/s) and by < (-t+h)/s
+  return self.visible and (bx+bw) > (l/s) and bx < (l+w)/s and (by+bh) > (t/s) and by < (t+h)/s
 end
 
 function body:drawAnimation()
@@ -535,11 +530,7 @@ function body:drawNormal()
 end
 
 function body:drawGlow()
-  if self.glowStrength > 0.0 then
-    love.graphics.setColor(self.glowRed * self.glowStrength, self.glowGreen * self.glowStrength, self.glowBlue * self.glowStrength)
-  else
-    love.graphics.setColor(0, 0, 0)
-  end
+  love.graphics.setColor(self.glowRed * self.glowStrength, self.glowGreen * self.glowStrength, self.glowBlue * self.glowStrength)
 
   if self.type == "circle" then
     love.graphics.circle("fill", self.x, self.y, self.radius)
@@ -548,7 +539,7 @@ function body:drawGlow()
   elseif self.type == "polygon" then
     love.graphics.polygon("fill", unpack(self.data))
   elseif (self.type == "image" or self.type == "animation") and self.img then
-    if self.glowStrength > 0.0 and self.glow then
+    if self.glow then
       love.graphics.setShader(self.glowShader)
       self.glowShader:send("glowImage", self.glow)
       self.glowShader:send("glowTime", love.timer.getTime() * 0.5)
@@ -556,14 +547,15 @@ function body:drawGlow()
     else
       love.graphics.setColor(0, 0, 0)
     end
+
     if self.type == "animation" then
       self.animation:draw(self.img, self.x - self.ix, self.y - self.iy)
     else
       love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
     end
-  end
 
-  love.graphics.setShader()
+    love.graphics.setShader()
+  end
 end
 
 function body:drawRefraction()
