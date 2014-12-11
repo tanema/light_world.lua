@@ -507,12 +507,15 @@ function body:isInLightRange(light)
 end
 
 function body:isInRange(l, t, w, h, s)
-  local bx, by, bw, bh 
+  local radius
   if self.type == 'circle' then
-    bx, by, bw, bh = self.x - self.radius, self.y - self.radius, self.radius * 2, self.radius * 2
+    radius = self.radius
   else
-    bx, by, bw, bh = self.x, self.y, self.width, self.height
+    radius = (self.width > self.height and self.width or self.height)
   end
+    
+  local bx, by, bw, bh = self.x - radius, self.y - radius, radius * 2, radius * 2
+
   return self.visible and (bx+bw) > (-l/s) and bx < (-l+w)/s and (by+bh) > (-t/s) and by < (-t+h)/s
 end
 
