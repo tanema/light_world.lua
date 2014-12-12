@@ -162,9 +162,7 @@ function love.draw()
       love.graphics.polygon("fill", polygonTest:getPoints())
       love.graphics.setColor(255, 255, 255)
       love.graphics.draw(image, 64 - image:getWidth() * 0.5, 64 - image:getHeight() * 0.5)
-
     end)
-    love.graphics.rectangle('line', lightMouse.x - lightMouse.range, lightMouse.y - lightMouse.range, lightMouse.range*2, lightMouse.range*2)
   love.graphics.pop()
 
   love.graphics.setBlendMode("alpha")
