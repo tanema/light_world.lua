@@ -695,10 +695,10 @@ end
 function body:drawCircleShadow(light)
   local curShadowGeometry = {}
   local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
-  local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
-  local y2 = ((self.y - self.oy) - math.cos(angle) * self.radius)
-  local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
-  local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
+  local x1 = ((self.x - self.ox) + math.sin(angle) * self.radius)
+  local y1 = ((self.y - self.oy) - math.cos(angle) * self.radius)
+  local x2 = ((self.x - self.ox) - math.sin(angle) * self.radius)
+  local y2 = ((self.y - self.oy) + math.cos(angle) * self.radius)
 
   local lxh = (light.x * self.zheight)
   local lyh = (light.y * self.zheight)
@@ -707,29 +707,26 @@ function body:drawCircleShadow(light)
     height_diff = -0.001
   end
   
-  local x4 = (lxh - (x3 * light.z))/height_diff 
-  local y4 = (lyh - (y3 * light.z))/height_diff 
-  local x5 = (lxh - (x2 * light.z))/height_diff  
-  local y5 = (lyh - (y2 * light.z))/height_diff  
+  local x3 = (lxh - (x2 * light.z))/height_diff 
+  local y3 = (lyh - (y2 * light.z))/height_diff 
+  local x4 = (lxh - (x1 * light.z))/height_diff  
+  local y4 = (lyh - (y1 * light.z))/height_diff  
 
-  local radius = math.sqrt(math.pow(x5 - x4, 2) + math.pow(y5-y4, 2)) / 2
-  local cx, cy = (x4 + x5)/2, (y4 + y5)/2
-  local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2))
-  local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
+  local radius = math.sqrt(math.pow(x4 - x3, 2) + math.pow(y4-y3, 2)) / 2
+  local cx, cy = (x3 + x4)/2, (y3 + y4)/2
 
-  if distance1 >= self.radius then
-    love.graphics.polygon("fill", x2, y2, x3, y3, x4, y4, x5, y5)
-  end
-
-  if distance1 <= self.radius then
+  if math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) <= self.radius then
     love.graphics.circle("fill", cx, cy, radius)
-  elseif distance2 < light.range then -- dont draw circle if way off screen
-    local angle1 = math.atan2(y4 - cy, x4 - cx)
-    local angle2 = math.atan2(y5 - cy, x5 - cx)
-    if angle1 > angle2 then
-      love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
-    else
-      love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
+  else
+    love.graphics.polygon("fill", x1, y1, x2, y2, x3, y3, x4, y4)
+    if math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) < light.range then -- dont draw circle if way off screen
+      local angle1 = math.atan2(y3 - cy, x3 - cx)
+      local angle2 = math.atan2(y4 - cy, x4 - cx)
+      if angle1 > angle2 then
+        love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
+      else
+        love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
+      end
     end
   end
 end

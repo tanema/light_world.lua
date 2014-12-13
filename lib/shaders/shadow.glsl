@@ -4,7 +4,6 @@
 */
 #define PI 3.1415926535897932384626433832795
 
-extern vec2 screenResolution; //size of the screen
 extern Image shadowMap;       //a canvas containing shadow data only
 extern vec3 lightPosition;    //the light position on the screen(not global)
 extern vec3 lightColor;       //the rgb color of the light
@@ -70,8 +69,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
       return pixel;
     } else {
       //on the normal map, draw normal shadows
-      vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / screenResolution.xy, lightPosition.z);
-      dir.x *= screenResolution.x / screenResolution.y;
+      vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / love_ScreenSize.xy, lightPosition.z);
+      dir.x *= love_ScreenSize.x / love_ScreenSize.y;
       vec3 diff = lightColor * max(dot(normalize(normal), normalize(dir)), 0.0);
       //return the light that is effected by the normal and attenuation
       return vec4(diff * att, 1.0);

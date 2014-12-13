@@ -2,7 +2,6 @@ extern float exposure = 0.7;
 extern float brightness = 1.0;
 extern vec3 lumacomponents = vec3(1.0, 1.0, 1.0);
 
-
 // luma 
 //const vec3 lumcoeff = vec3(0.299,0.587,0.114);
 const vec3 lumcoeff = vec3(0.212671, 0.715160, 0.072169);

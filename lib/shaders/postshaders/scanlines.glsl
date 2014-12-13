@@ -1,9 +1,8 @@
-extern vec2 screen = vec2(800.0, 600.0);
 extern float strength = 2.0;
 extern float time = 0.0;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
-	vec2 pSize = 1.0 / screen;
+	vec2 pSize = 1.0 / love_ScreenSize.xy;
 	float brightness = 1.0;
 	float offsetX = sin(texture_coords.y * 10.0 + time * strength) * pSize.x;
 	float corner = 500.0;

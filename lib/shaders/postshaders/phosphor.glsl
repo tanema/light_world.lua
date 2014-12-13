@@ -18,8 +18,6 @@
    )
 */
 
-extern vec2 textureSize;
-
 
 // 0.5 = the spot stays inside the original pixel
 // 1.0 = the spot bleeds up to the center of next pixel
@@ -80,7 +78,7 @@ vec4 B_IN = vec4(1.0) - A_IN;
 #ifdef DEBUG
 vec4 grid_color( vec2 coords )
 {
-		vec2 snes = floor( coords * textureSize );
+		vec2 snes = floor( coords * love_ScreenSize.xy );
 		if ( (mod(snes.x, 3.0) == 0.0) && (mod(snes.y, 3.0) == 0.0) )
 				return texture2D(_tex0_, coords);
 		else
@@ -93,16 +91,16 @@ vec4 grid_color( vec2 coords )
 
 #endif // DEBUG
 
-vec2 onex = vec2( 1.0/textureSize.x, 0.0 );
-vec2 oney = vec2( 0.0, 1.0/textureSize.y );
+vec2 onex = vec2( 1.0/love_ScreenSize.x, 0.0 );
+vec2 oney = vec2( 0.0, 1.0/love_ScreenSize.y );
 
 vec4 effect(vec4 vcolor, Image texture, vec2 texCoord, vec2 pixel_coords)
 {
-	vec2 coords = (texCoord * textureSize);
+	vec2 coords = (texCoord * love_ScreenSize.xy);
 	vec2 pixel_start = floor(coords);
 	coords -= pixel_start;
 	vec2 pixel_center = pixel_start + vec2(0.5);
-	vec2 texture_coords = pixel_center / textureSize;
+	vec2 texture_coords = pixel_center / love_ScreenSize.xy;
 
 	vec4 color = vec4(0.0);
 	vec4 pixel;

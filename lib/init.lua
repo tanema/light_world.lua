@@ -33,6 +33,7 @@ local light_world = class()
 
 light_world.blurv              = love.graphics.newShader(_PACKAGE.."shaders/blurv.glsl")
 light_world.blurh              = love.graphics.newShader(_PACKAGE.."shaders/blurh.glsl")
+light_world.shadowShader       = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
 light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
@@ -50,6 +51,7 @@ function light_world:init(options)
 	self.glowBlur             = 1.0
 	self.glowTimer            = 0.0
 	self.glowDown             = false
+  self.normalInvert         = false
 
   self.disableGlow          = false
   self.disableMaterial      = false
@@ -77,15 +79,6 @@ function light_world:refreshScreenSize(w, h)
 	self.refractionMap2   = love.graphics.newCanvas(w, h)
 	self.reflectionMap    = love.graphics.newCanvas(w, h)
 	self.reflectionMap2   = love.graphics.newCanvas(w, h)
-
-  self.blurv:send("screen",            {w, h})
-  self.blurh:send("screen",            {w, h})
-  self.refractionShader:send("screen", {w, h})
-  self.reflectionShader:send("screen", {w, h})
-
-  for i = 1, #self.lights do
-    self.lights[i]:refresh(w, h)
-  end
 
   self.post_shader:refreshScreenSize(w, h)
 end
@@ -136,18 +129,31 @@ function light_world:drawNormalShading(l,t,w,h,s)
 
   self.normal2:clear()
   for i = 1, #self.lights do
-    if self.lights[i]:inRange(l,t,w,h,s) then
+    local light = self.lights[i]
+    if light:inRange(l,t,w,h,s) then
       -- create shadow map for this light
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
         for k = 1, #self.body do
-          if self.body[k]:isInLightRange(self.lights[i]) and self.body[k]:isInRange(-l,-t,w,h,s) then
-            self.body[k]:drawShadow(self.lights[i])
+          if self.body[k]:isInLightRange(light) and self.body[k]:isInRange(-l,-t,w,h,s) then
+            self.body[k]:drawShadow(light)
           end
         end
       end)
       -- draw scene for this light using normals and shadowmap
-      self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
+      self.shadowShader:send('shadowMap', self.shadowMap)
+      self.shadowShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
+      self.shadowShader:send("lightPosition", {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
+      self.shadowShader:send('lightRange',{light.range * s})
+      self.shadowShader:send("lightSmooth", light.smooth)
+      self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
+      self.shadowShader:send("lightAngle", math.pi - light.angle / 2.0)
+      self.shadowShader:send("lightDirection", light.direction)
+      self.shadowShader:send("invert_normal", self.normalInvert == true)
+      util.drawCanvasToCanvas(self.normalMap, self.normal2, {
+        blendmode = 'additive',
+        shader = self.shadowShader
+      })
     end
   end
 

@@ -59,16 +59,6 @@ function post_shader:refreshScreenSize(w, h)
   self.render_buffer = love.graphics.newCanvas(w, h)
   self.back_buffer   = love.graphics.newCanvas(w, h)
 
-  post_shader.blurv:send("screen",     {w, h})
-  post_shader.blurh:send("screen",     {w, h})
-  for shaderName, v in pairs(shaders) do
-    for def in pairs(v[2]) do
-      if def == "screen" or def == "textureSize" or def == "inputSize" or def == "outputSize" then
-        v[1]:send(def, {w, h})
-      end
-    end
-  end
-
   self.w = w
   self.h = h
 end
