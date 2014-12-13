@@ -3,6 +3,7 @@ function love.conf(t)
     t.version = "0.9.0"                -- The LÖVE version this game was made for (string)
     t.console = true                   -- Attach a console (boolean, Windows only)
 
+    --1440 x 900
     t.window.title = "Untitled"        -- The window title (string)
     t.window.icon = nil                -- Filepath to an image to use as the window's icon (string)
     t.window.width = 800               -- The window width (number)

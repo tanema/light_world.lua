@@ -62,7 +62,7 @@ function love.update(dt)
 	end
 
   animation2:update(dt)
-  lightWorld:update(dt) --only needed for animation
+  lightWorld:update(dt)
 	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale, z)
 end
 

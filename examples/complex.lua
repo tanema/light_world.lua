@@ -235,6 +235,8 @@ function love.update(dt)
   else
 		lightWorld.post_shader:removeEffect("bloom")
 	end
+
+  lightWorld:update(dt)
 end
 
 function love.draw()
