@@ -146,12 +146,6 @@ function post_shader:drawShader(shaderName, canvas, args)
       current_arg = current_arg + 3
     elseif def == "imgBuffer" then
       effect[1]:send("imgBuffer", canvas)
-    elseif def ~= "screen" and def ~= "textureSize" and def ~= "inputSize" and def ~= "outputSize" then
-      local value = args[current_arg]
-      if value ~= nil then
-        effect[1]:send(def, value)
-      end
-      current_arg = current_arg + 1
     end
   end
 

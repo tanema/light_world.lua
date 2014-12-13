@@ -30,6 +30,7 @@ function love.load()
 
 	-- create shadow bodys
 	circleTest = lightWorld:newCircle(256, 256, 16)
+  cx, cy = circleTest:getPosition()
 	rectangleTest = lightWorld:newRectangle(512, 512, 64, 64)
   local px, py, pw, ph = 100, 200, 20, 50
 	polygonTest = lightWorld:newPolygon(
@@ -156,7 +157,6 @@ function love.draw()
       love.graphics.setColor(255, 255, 255)
       love.graphics.rectangle("fill", -x/scale, -y/scale, love.graphics.getWidth()/scale, love.graphics.getHeight()/scale)
       love.graphics.setColor(63, 255, 127)
-      local cx, cy = circleTest:getPosition()
       love.graphics.circle("fill", cx, cy, circleTest:getRadius())
       love.graphics.polygon("fill", rectangleTest:getPoints())
       love.graphics.polygon("fill", polygonTest:getPoints())

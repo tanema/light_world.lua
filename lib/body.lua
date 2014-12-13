@@ -28,6 +28,7 @@ function body:init(id, type, ...)
  
   self.castsNoShadow = false
   self.visible = true
+  self.is_on_screen = true
 
 	if self.type == "circle" then
 		self.x = args[1] or 0
@@ -85,42 +86,25 @@ function body:init(id, type, ...)
     self:generateNormalMapFlat("top")
 		self.reflective = true
 	elseif self.type == "refraction" then
-    self:initNormal(...)
+    self.x = args[2] or 0
+    self.y = args[3] or 0
+    self:setNormalMap(args[1], args[4], args[5])
+    self.width = args[4] or self.normalWidth
+    self.height = args[5] or self.normalHeight
+    self.ox = self.width * 0.5
+    self.oy = self.height * 0.5
 		self.refraction = true
 	elseif self.type == "reflection" then
-    self:initNormal(...)
+    self.x = args[2] or 0
+    self.y = args[3] or 0
+    self:setNormalMap(args[1], args[4], args[5])
+    self.width = args[4] or self.normalWidth
+    self.height = args[5] or self.normalHeight
+    self.ox = self.width * 0.5
+    self.oy = self.height * 0.5
 		self.reflection = true
 	end
   self.old_x, self.old_y = self.x, self.y
-end
-
---use for refraction and reflection because they are both just a normal map
-function body:initNormal(...)
-	local args = {...}
-  self.normal = args[1]
-  self.x = args[2] or 0
-  self.y = args[3] or 0
-  if self.normal then
-    self.normalWidth = self.normal:getWidth()
-    self.normalHeight = self.normal:getHeight()
-    self.width = args[4] or self.normalWidth
-    self.height = args[5] or self.normalHeight
-    self.nx = self.normalWidth * 0.5
-    self.ny = self.normalHeight * 0.5
-    self.normal:setWrap("repeat", "repeat")
-    self.normalVert = {
-      {0.0, 0.0, 0.0, 0.0},
-      {self.width, 0.0, 1.0, 0.0},
-      {self.width, self.height, 1.0, 1.0},
-      {0.0, self.height, 0.0, 1.0}
-    }
-    self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
-  else
-    self.width = args[4] or 64
-    self.height = args[5] or 64
-  end
-  self.ox = self.width * 0.5
-  self.oy = self.height * 0.5
 end
 
 -- refresh
@@ -494,6 +478,10 @@ function body:setShadowType(type, ...)
     self.shadowY = args[2] or 0
     self.fadeStrength = args[3] or 0.0
   end
+end
+
+function body:isVisible()
+  return self.visible and self.is_on_screen
 end
 
 function body:isInLightRange(light)
