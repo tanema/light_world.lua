@@ -2,8 +2,6 @@
     Copyright (c) 2014 Tim Anema
     light shadow, shine and normal shader all in one
 */
-#define PI 3.1415926535897932384626433832795
-
 extern Image shadowMap;       //a canvas containing shadow data only
 extern vec3  lightPosition;    //the light position on the screen(not global)
 extern vec3  lightColor;       //the rgb color of the light
