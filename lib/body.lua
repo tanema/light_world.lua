@@ -25,7 +25,7 @@ function body:init(id, type, ...)
 	self.tileX = 0
 	self.tileY = 0
   self.zheight = 1
- 
+
   self.castsNoShadow = false
   self.visible = true
   self.is_on_screen = true

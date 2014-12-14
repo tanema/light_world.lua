@@ -17,6 +17,7 @@ function light:init(x, y, r, g, b, range)
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
 	self.visible = true
+  self.is_on_screen = true
 end
 
 -- set position
@@ -110,6 +111,10 @@ end
 
 function light:setVisible(visible)
   self.visible = visible
+end
+
+function light:isVisible()
+  return self.visible and self.is_on_screen
 end
 
 return light

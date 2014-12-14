@@ -2,13 +2,13 @@
     Copyright (c) 2014 Tim Anema
     light shadow, shine and normal shader all in one
 */
-extern Image shadowMap;       //a canvas containing shadow data only
-extern vec3  lightPosition;    //the light position on the screen(not global)
-extern vec3  lightColor;       //the rgb color of the light
-extern float lightRange;      //the range of the light
-extern float lightSmooth;     //smoothing of the lights attenuation
-extern vec2  lightGlow = vec2(0.5, 0.5); //how brightly the light bulb part glows
-extern bool  invert_normal;   //if the light should invert normals
+extern Image shadowMap;                      //a canvas containing shadow data only
+extern vec3  lightPosition;                  //the light position on the screen(not global)
+extern vec3  lightColor;                     //the rgb color of the light
+extern float lightRange;                     //the range of the light
+extern float lightSmooth;                    //smoothing of the lights attenuation
+extern vec2  lightGlow     = vec2(0.5, 0.5); //how brightly the light bulb part glows
+extern bool  invert_normal = false;          //if the light should invert normals
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   vec4 pixelColor = Texel(texture, texture_coords);

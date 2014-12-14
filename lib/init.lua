@@ -89,6 +89,10 @@ function light_world:update(dt)
       self.bodies[i]:update(dt)
     end
   end
+
+  for i = 1, #self.lights do
+    self.lights[i].is_on_screen = self.lights[i]:inRange(self.l,self.t,self.w,self.h,self.s)
+  end
 end
 
 function light_world:draw(cb)
@@ -129,7 +133,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
   self.normal2:clear()
   for i = 1, #self.lights do
     local light = self.lights[i]
-    if light:inRange(l,t,w,h,s) then
+    if light:isVisible() then
       -- create shadow map for this light
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
@@ -146,7 +150,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
       self.shadowShader:send('shadowMap', self.shadowMap)
       self.shadowShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
       self.shadowShader:send("lightPosition", {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
-      self.shadowShader:send('lightRange',{light.range * s})
+      self.shadowShader:send('lightRange',  light.range * s)
       self.shadowShader:send("lightSmooth", light.smooth)
       self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
       self.shadowShader:send("invert_normal", self.normalInvert)
