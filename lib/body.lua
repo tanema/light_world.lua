@@ -626,23 +626,13 @@ function body:drawShadow(light)
   end
 end
 
+local function isEdgeFacingLight(x1, y1, x2, y2, light)
+  return vec2(-y2 + y1, x2 - x1):dot(vec2(x1 - light.x, y1 - light.y)) > 0
+end
+
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawPolyShadow(light)
-  local edgeFacingTo = {}
-  for k = 1, #self.data, 2 do
-    local indexOfNextVertex = (k + 2) % #self.data
-    local normal = vec2(-self.data[indexOfNextVertex+1] + self.data[k + 1], self.data[indexOfNextVertex] - self.data[k]):normalize()
-    local lightToPoint = vec2(self.data[k] - light.x, self.data[k + 1] - light.y):normalize()
-
-    local dotProduct = normal:dot(lightToPoint)
-    if dotProduct > 0 then 
-      table.insert(edgeFacingTo, true)
-    else 
-      table.insert(edgeFacingTo, false) 
-    end
-  end
-
   local curShadowGeometry = {}
   local lxh = (light.x * self.zheight)
   local lyh = (light.y * self.zheight)
@@ -651,28 +641,29 @@ function body:drawPolyShadow(light)
     height_diff = -0.001
   end
 
-  for k = 1, #edgeFacingTo do
-    local nextIndex = (k + 1) % #edgeFacingTo
-    if nextIndex == 0 then nextIndex = #edgeFacingTo end
+  local facingLight = {}
+  for i = 1, #self.data, 2 do
+    local j, k = (i + 2) % #self.data, (i + 4) % #self.data 
 
-    local x, y = self.data[nextIndex*2-1], self.data[nextIndex*2]
-    local xs, ys = (lxh - (x * light.z))/height_diff, (lyh - (y * light.z))/height_diff
+    facingLight[i] = facingLight[i] ~= nil and facingLight[i] or isEdgeFacingLight(self.data[i], self.data[i+1], self.data[j], self.data[j+1], light)
+    facingLight[j] = facingLight[j] ~= nil and facingLight[j] or isEdgeFacingLight(self.data[j], self.data[j+1], self.data[k], self.data[k+1], light) 
 
-    if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = x
-      curShadowGeometry[#curShadowGeometry+1] = y
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-    elseif not edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-    elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-      curShadowGeometry[#curShadowGeometry+1] = x
-      curShadowGeometry[#curShadowGeometry+1] = y
+    if facingLight[i] and not facingLight[j] then
+      curShadowGeometry[#curShadowGeometry+1] = self.data[j]
+      curShadowGeometry[#curShadowGeometry+1] = self.data[j+1]
+      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
+      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
+    elseif not facingLight[i] and not facingLight[j] then
+      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
+      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
+    elseif not facingLight[i] and facingLight[j] then
+      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
+      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
+      curShadowGeometry[#curShadowGeometry+1] = self.data[j]
+      curShadowGeometry[#curShadowGeometry+1] = self.data[j+1]
     end
   end
+
   if #curShadowGeometry >= 6 then
     love.graphics.polygon("fill", unpack(curShadowGeometry))
   end
