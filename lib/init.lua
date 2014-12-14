@@ -89,7 +89,6 @@ function light_world:update(dt)
       self.bodies[i]:update(dt)
     end
   end
-
   for i = 1, #self.lights do
     self.lights[i].is_on_screen = self.lights[i]:inRange(self.l,self.t,self.w,self.h,self.s)
   end
@@ -99,7 +98,7 @@ function light_world:draw(cb)
   util.drawto(self.render_buffer, self.l, self.t, self.s, function()
     cb(                     self.l,self.t,self.w,self.h,self.s)
 		_ = self.disableMaterial   or self:drawMaterial(      self.l,self.t,self.w,self.h,self.s)
-    self:drawNormalShading( self.l,self.t,self.w,self.h,self.s)
+    self:drawShadows( self.l,self.t,self.w,self.h,self.s)
     _ = self.disableGlow       or self:drawGlow(          self.l,self.t,self.w,self.h,self.s)
     _ = self.disableRefraction or self:drawRefraction(    self.l,self.t,self.w,self.h,self.s)
     _ = self.disableReflection or self:drawReflection(    self.l,self.t,self.w,self.h,self.s)
@@ -119,7 +118,7 @@ function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h, s)
 end
 
 -- draw normal shading
-function light_world:drawNormalShading(l,t,w,h,s)
+function light_world:drawShadows(l,t,w,h,s)
   -- create normal map
   self.normalMap:clear()
   util.drawto(self.normalMap, l, t, s, function()
@@ -162,12 +161,11 @@ function light_world:drawNormalShading(l,t,w,h,s)
   end
 
   -- add in ambient color
-  self.normal:clear(255, 255, 255)
-  util.drawCanvasToCanvas(self.normal2, self.normal, {blendmode = "alpha"})
-  util.drawto(self.normal, l, t, s, function()
+  util.drawCanvasToCanvas(self.normal2, self.normal)
+  util.drawto(self.normal, 0, 0, 1, function()
     love.graphics.setBlendMode("additive")
     love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
-    love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
+    love.graphics.rectangle("fill", 0, 0, w,h)
   end)
 
   light_world:drawBlur("alpha", self.shadowBlur, self.normal, self.normal2, l, t, w, h, s)
