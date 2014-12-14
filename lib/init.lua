@@ -76,7 +76,6 @@ function light_world:refreshScreenSize(w, h)
 	self.glowMap          = love.graphics.newCanvas(w, h)
 	self.glowMap2         = love.graphics.newCanvas(w, h)
 	self.refractionMap    = love.graphics.newCanvas(w, h)
-	self.refractionMap2   = love.graphics.newCanvas(w, h)
 	self.reflectionMap    = love.graphics.newCanvas(w, h)
 	self.reflectionMap2   = love.graphics.newCanvas(w, h)
 
@@ -220,8 +219,7 @@ function light_world:drawRefraction(l,t,w,h,s)
     end
   end)
 
-  util.drawCanvasToCanvas(self.render_buffer, self.refractionMap2)
-  self.refractionShader:send("backBuffer", self.refractionMap2)
+  self.refractionShader:send("backBuffer", self.render_buffer)
   self.refractionShader:send("refractionStrength", self.refractionStrength)
   util.drawCanvasToCanvas(self.refractionMap, self.render_buffer, {shader = self.refractionShader})
 end
@@ -238,8 +236,7 @@ function light_world:drawReflection(l,t,w,h,s)
     end
   end)
 
-  util.drawCanvasToCanvas(self.render_buffer, self.reflectionMap2)
-  self.reflectionShader:send("backBuffer", self.reflectionMap2)
+  self.reflectionShader:send("backBuffer", self.render_buffer)
   self.reflectionShader:send("reflectionStrength", self.reflectionStrength)
   self.reflectionShader:send("reflectionVisibility", self.reflectionVisibility)
   util.drawCanvasToCanvas(self.reflectionMap, self.render_buffer, {shader = self.reflectionShader})

@@ -18,11 +18,7 @@ function love.load()
 	glow = love.graphics.newImage("examples/gfx/machine2_glow.png")
 
 	-- create light world
-	lightWorld = LightWorld({
-    ambient = {55,55,55},
-    refractionStrength = 32.0,
-    reflectionVisibility = 0.75,
-  })
+	lightWorld = LightWorld({ambient = {55,55,55}})
 
 	-- create light
 	lightMouse = lightWorld:newLight(0, 0, 255, 127, 63, 300)
@@ -43,10 +39,6 @@ function love.load()
 	imageTest:setNormalMap(image_normal)
 	imageTest:setGlowMap(glow)
 	imageTest:setOffset(12, -10)
-
-	-- create body object
-	objectTest = lightWorld:newRefraction(normal, 64, 64, 128, 128)
-	objectTest:setReflection(true)
 end
 
 function love.keypressed(k)
