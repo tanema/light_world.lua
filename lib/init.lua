@@ -149,7 +149,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
       self.shadowShader:send('lightRange',{light.range * s})
       self.shadowShader:send("lightSmooth", light.smooth)
       self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
-      self.shadowShader:send("invert_normal", self.normalInvert == true)
+      self.shadowShader:send("invert_normal", self.normalInvert)
       util.drawCanvasToCanvas(self.normalMap, self.normal2, {
         blendmode = 'additive',
         shader = self.shadowShader
