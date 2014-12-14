@@ -138,6 +138,9 @@ function light_world:drawNormalShading(l,t,w,h,s)
             self.bodies[k]:drawShadow(light)
           end
         end
+        local angle = math.pi - light.angle / 2.0
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.arc("fill", light.x, light.y, light.range, light.direction - angle, light.direction + angle)
       end)
       -- draw scene for this light using normals and shadowmap
       self.shadowShader:send('shadowMap', self.shadowMap)
@@ -146,8 +149,6 @@ function light_world:drawNormalShading(l,t,w,h,s)
       self.shadowShader:send('lightRange',{light.range * s})
       self.shadowShader:send("lightSmooth", light.smooth)
       self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
-      self.shadowShader:send("lightAngle", math.pi - light.angle / 2.0)
-      self.shadowShader:send("lightDirection", light.direction)
       self.shadowShader:send("invert_normal", self.normalInvert == true)
       util.drawCanvasToCanvas(self.normalMap, self.normal2, {
         blendmode = 'additive',
