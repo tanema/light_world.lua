@@ -19,17 +19,17 @@ local class = function(base, init)
    -- expose a constructor which can be called by <classname>(<args>)
    local mt = {}
    mt.__call = function(class_tbl, ...)
-   local obj = {}
-   setmetatable(obj,c)
-   if class_tbl.init then
-      class_tbl.init(obj,...)
-   else 
-      -- make sure that any stuff from the base class is initialized!
-      if base and base.init then
-      base.init(obj, ...)
-      end
-   end
-   return obj
+     local obj = {}
+     setmetatable(obj,c)
+     if class_tbl.init then
+        class_tbl.init(obj,...)
+     else 
+        -- make sure that any stuff from the base class is initialized!
+        if base and base.init then
+        base.init(obj, ...)
+        end
+     end
+     return obj
    end
    c.init = init
    c.is_a = function(self, klass)

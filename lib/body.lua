@@ -3,7 +3,7 @@ local class       = require(_PACKAGE.."/class")
 local normal_map  = require(_PACKAGE..'/normal_map')
 local util        = require(_PACKAGE..'/util')
 local anim8       = require(_PACKAGE..'/anim8')
-local vec2        = require(_PACKAGE..'/vec2')
+local vector      = require(_PACKAGE..'/vector')
 local body        = class()
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
@@ -626,85 +626,67 @@ function body:drawShadow(light)
   end
 end
 
-local function isEdgeFacingLight(x1, y1, x2, y2, light)
-  return vec2(-y2 + y1, x2 - x1):dot(vec2(x1 - light.x, y1 - light.y)) > 0
-end
-
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawPolyShadow(light)
-  local curShadowGeometry = {}
-  local lxh = (light.x * self.zheight)
-  local lyh = (light.y * self.zheight)
+  local lightPosition = vector(light.x, light.y)
+  local lh = lightPosition * self.zheight
+
   local height_diff = (self.zheight - light.z) 
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
 
-  local facingLight = {}
   for i = 1, #self.data, 2 do
-    local j, k = (i + 2) % #self.data, (i + 4) % #self.data 
-
-    facingLight[i] = facingLight[i] ~= nil and facingLight[i] or isEdgeFacingLight(self.data[i], self.data[i+1], self.data[j], self.data[j+1], light)
-    facingLight[j] = facingLight[j] ~= nil and facingLight[j] or isEdgeFacingLight(self.data[j], self.data[j+1], self.data[k], self.data[k+1], light) 
-
-    if facingLight[i] and not facingLight[j] then
-      curShadowGeometry[#curShadowGeometry+1] = self.data[j]
-      curShadowGeometry[#curShadowGeometry+1] = self.data[j+1]
-      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
-      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
-    elseif not facingLight[i] and not facingLight[j] then
-      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
-      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
-    elseif not facingLight[i] and facingLight[j] then
-      curShadowGeometry[#curShadowGeometry+1] = (lxh - (self.data[j] * light.z))/height_diff
-      curShadowGeometry[#curShadowGeometry+1] = (lyh - (self.data[j+1] * light.z))/height_diff 
-      curShadowGeometry[#curShadowGeometry+1] = self.data[j]
-      curShadowGeometry[#curShadowGeometry+1] = self.data[j+1]
+    local vertex = vector(self.data[i], self.data[i + 1])
+    local nextVertex = vector(self.data[(i + 2) % 8], self.data[(i + 2) % 8 + 1])
+    local startToEnd = nextVertex - vertex
+    if vector(startToEnd.y, -startToEnd.x) * (vertex - lightPosition) > 0 then
+      local point1 = (lh - (vertex * light.z))/height_diff
+      local point2 = (lh - (nextVertex * light.z))/height_diff
+      love.graphics.polygon("fill", 
+        vertex.x, vertex.y, point1.x, point1.y, 
+        point2.x, point2.y, nextVertex.x, nextVertex.y)
     end
-  end
-
-  if #curShadowGeometry >= 6 then
-    love.graphics.polygon("fill", unpack(curShadowGeometry))
   end
 end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawCircleShadow(light)
-  local curShadowGeometry = {}
-  local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
-  local x1 = ((self.x - self.ox) + math.sin(angle) * self.radius)
-  local y1 = ((self.y - self.oy) - math.cos(angle) * self.radius)
-  local x2 = ((self.x - self.ox) - math.sin(angle) * self.radius)
-  local y2 = ((self.y - self.oy) + math.cos(angle) * self.radius)
-
-  local lxh = (light.x * self.zheight)
-  local lyh = (light.y * self.zheight)
+  local selfPos = vector(self.x - self.ox, self.y - self.oy)
+  local lightPosition = vector(light.x, light.y)
+  local lh = lightPosition * self.zheight
   local height_diff = (self.zheight - light.z) 
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
+
+  local angle = math.atan2(light.x - selfPos.x, selfPos.y - light.y) + math.pi / 2
+  local point1 = vector(selfPos.x + math.sin(angle) * self.radius,
+                        selfPos.y - math.cos(angle) * self.radius)
+  local point2 = vector(selfPos.x - math.sin(angle) * self.radius,
+                        selfPos.y + math.cos(angle) * self.radius)
+  local point3 = (lh - (point1 * light.z))/height_diff
+  local point4 = (lh - (point2 * light.z))/height_diff
   
-  local x3 = (lxh - (x2 * light.z))/height_diff 
-  local y3 = (lyh - (y2 * light.z))/height_diff 
-  local x4 = (lxh - (x1 * light.z))/height_diff  
-  local y4 = (lyh - (y1 * light.z))/height_diff  
+  local radius = point3:dist(point4)/2
+  local circleCenter = (point3 + point4)/2
 
-  local radius = math.sqrt(math.pow(x4 - x3, 2) + math.pow(y4-y3, 2)) / 2
-  local cx, cy = (x3 + x4)/2, (y3 + y4)/2
-
-  if math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2)) <= self.radius then
-    love.graphics.circle("fill", cx, cy, radius)
+  if lightPosition:dist(selfPos) <= self.radius then
+    love.graphics.circle("fill", circleCenter.x, circleCenter.y, radius)
   else
-    love.graphics.polygon("fill", x1, y1, x2, y2, x3, y3, x4, y4)
-    if math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) < light.range then -- dont draw circle if way off screen
-      local angle1 = math.atan2(y3 - cy, x3 - cx)
-      local angle2 = math.atan2(y4 - cy, x4 - cx)
-      if angle1 > angle2 then
-        love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
+    love.graphics.polygon("fill", point1.x, point1.y, 
+                                  point2.x, point2.y, 
+                                  point4.x, point4.y,
+                                  point3.x, point3.y)
+    if lightPosition:dist(circleCenter) < light.range then -- dont draw circle if way off screen
+      local angle1 = math.atan2(point3.y - circleCenter.y, point3.x - circleCenter.x)
+      local angle2 = math.atan2(point4.y - circleCenter.y, point4.x - circleCenter.x)
+      if angle1 < angle2 then
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1, angle2)
       else
-        love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1 - math.pi, angle2 - math.pi)
       end
     end
   end
