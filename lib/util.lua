@@ -1,5 +1,9 @@
 local util = {}
 
+function util.process(canvas, options)
+  util.drawCanvasToCanvas(canvas, canvas, options)
+end
+
 function util.drawCanvasToCanvas(canvas, other_canvas, options)
   options = options or {}
 
