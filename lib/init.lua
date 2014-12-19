@@ -34,7 +34,7 @@ local light_world = class()
 light_world.blurv              = love.graphics.newShader(_PACKAGE.."shaders/blurv.glsl")
 light_world.blurh              = love.graphics.newShader(_PACKAGE.."shaders/blurh.glsl")
 light_world.normalShader       = love.graphics.newShader(_PACKAGE.."shaders/normal.glsl") 
-light_world.shineShader        = love.graphics.newShader(_PACKAGE.."shaders/shadow.glsl")
+light_world.shineShader        = love.graphics.newShader(_PACKAGE.."shaders/shine.glsl")
 light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
 light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
@@ -55,7 +55,7 @@ function light_world:init(options)
   self.normalInvert         = false
 
   self.disableMaterial      = true
-  self.disableNormals       = true
+  self.disableNormals       = false
   self.disableShadows       = false
   self.disableGlow          = true
   self.disableReflection    = true
@@ -134,7 +134,7 @@ function light_world:drawNormalShading(l,t,w,h,s)
     if light:isVisible() then
       self.normalShader:send('LightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0, 1})
       self.normalShader:send("LightPos",   {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
-      self.normalShader:send('Falloff',    {light.glowSize, light.smooth, light.range})
+      self.normalShader:send('Falloff',    {0.3,4,20})
       util.process(self.render_buffer, {
         blendmode = 'additive',
         shader = self.normalShader
