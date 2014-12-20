@@ -15,7 +15,7 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
       love.graphics.setShader(options["shader"])
     end
     if options["stencil"] then
-      love.graphics.setInvertedStencil(options["stencil"])
+      love.graphics.setStencil(options["stencil"])
     end
     if options["istencil"] then
       love.graphics.setInvertedStencil(options["istencil"])
@@ -33,7 +33,7 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
       love.graphics.setShader()
     end
     if options["stencil"] then
-      love.graphics.setInvertedStencil()
+      love.graphics.setStencil()
     end
     if options["istencil"] then
       love.graphics.setInvertedStencil()

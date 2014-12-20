@@ -9,13 +9,18 @@ extern vec2  lightGlow     = vec2(0.5, 0.5); //how brightly the light bulb part 
 extern vec4  AmbientColor;                   //ambient RGBA -- alpha is intensity 
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
-  float dist = distance(lightPosition, vec3(pixel_coords, 1.0));
-  //if the pixel is within this lights range
-  //calculater attenuation of light based on the distance
-  float att = clamp((1.0 - dist / lightRange) / lightSmooth, 0.0, 1.0);
-  // if not on the normal map draw attenuated shadows
-  vec3 Ambient = AmbientColor.rgb * AmbientColor.a;
-  vec3 pixel = lightColor * pow(att, lightSmooth) + pow(smoothstep(lightGlow.x, 1.0, att), lightSmooth) * lightGlow.y;
-  return vec4(Ambient + pixel, 1.0);
+  vec4 pixelColor = Texel(texture, texture_coords);
+  if(pixelColor.a > 0){
+    return pixelColor;
+  } else {
+    float dist = distance(lightPosition, vec3(pixel_coords, 1.0));
+    //if the pixel is within this lights range
+    //calculater attenuation of light based on the distance
+    float att = clamp((1.0 - dist / lightRange) / lightSmooth, 0.0, 1.0);
+    // if not on the normal map draw attenuated shadows
+    vec3 Ambient = AmbientColor.rgb * AmbientColor.a;
+    vec3 pixel = lightColor * pow(att, lightSmooth) + pow(smoothstep(lightGlow.x, 1.0, att), lightSmooth) * lightGlow.y;
+    return vec4(Ambient + pixel, 1.0);
+  }
 }
 

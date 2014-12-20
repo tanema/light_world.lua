@@ -1,5 +1,6 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
 local class = require(_PACKAGE.."/class")
+local util = require(_PACKAGE.."/util")
 
 local light = class()
 
@@ -18,6 +19,11 @@ function light:init(x, y, r, g, b, range)
 	self.glowStrength = 0.0
 	self.visible = true
   self.is_on_screen = true
+  self:refresh(love.window.getWidth(), love.window.getHeight())
+end
+
+function light:refresh(w, h)
+	self.shadowMap = love.graphics.newCanvas(w, h)
 end
 
 -- set position
@@ -115,6 +121,20 @@ end
 
 function light:isVisible()
   return self.visible and self.is_on_screen
+end
+
+function light:updateShadowMap(l, t, s, bodies)
+  self.shadowMap:clear()
+  util.drawto(self.shadowMap, l, t, s, function()
+    for k = 1, #bodies do
+      if bodies[k]:isInLightRange(self) and bodies[k]:isVisible() then
+        bodies[k]:drawShadow(self)
+      end
+    end
+    local angle = math.pi - self.angle / 2.0
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.arc("fill", self.x, self.y, self.range, self.direction - angle, self.direction + angle)
+  end)
 end
 
 return light

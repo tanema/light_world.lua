@@ -78,6 +78,10 @@ function light_world:refreshScreenSize(w, h)
 	self.refractionMap    = love.graphics.newCanvas(w, h)
 	self.reflectionMap    = love.graphics.newCanvas(w, h)
 
+  for i = 1, #self.lights do
+    self.lights[i]:refresh()
+  end
+
   self.post_shader:refreshScreenSize(w, h)
 end
 
@@ -149,26 +153,18 @@ function light_world:drawShadows(l,t,w,h,s)
   for i = 1, #self.lights do
     local light = self.lights[i]
     if light:isVisible() then
+      light:updateShadowMap(l, t, s, self.bodies)
       self.shineShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
       self.shineShader:send("lightPosition", {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
       self.shineShader:send('lightRange',  light.range * s)
       self.shineShader:send("lightSmooth", light.smooth)
       self.shineShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
       self.shineShader:send('AmbientColor',{self.ambient[1] / 255, self.ambient[2] / 255, self.ambient[3] / 255, 0.2})
-      util.process(self.shadowMap, {
+      util.drawCanvasToCanvas(light.shadowMap, self.shadowMap, {
         blendmode = 'additive',
         shader = self.shineShader,
-        istencil = function()
-          love.graphics.translate(l, t)
-          love.graphics.scale(s)
-          for k = 1, #self.bodies do
-            if self.bodies[k]:isInLightRange(light) and self.bodies[k]:isVisible() then
-              self.bodies[k]:drawShadow(light)
-            end
-          end
-          local angle = math.pi - light.angle / 2.0
-          love.graphics.setColor(0, 0, 0)
-          love.graphics.arc("fill", light.x, light.y, light.range, light.direction - angle, light.direction + angle)
+        stencil = function()
+          love.graphics.circle("fill", light.x, light.y, light.range)
         end
       })
     end
