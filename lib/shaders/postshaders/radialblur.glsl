@@ -1,5 +1,4 @@
 #define nsamples 5
-
 extern number blurstart = 1.0; // 0 to 1
 extern number blurwidth = -0.02; // -1 to 1
 

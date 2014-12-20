@@ -1,11 +1,10 @@
 extern Image backBuffer;
 
-extern vec2 screen = vec2(800.0, 600.0);
 extern float reflectionStrength;
 extern float reflectionVisibility;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
-	vec2 pSize = vec2(1.0 / screen.x, 1.0 / screen.y);
+	vec2 pSize = vec2(1.0 / love_ScreenSize.x, 1.0 / love_ScreenSize.y);
 	vec4 normal = Texel(texture, texture_coords);
 	if(normal.a > 0.0 && normal.r > 0.0) {
 		vec3 pColor = Texel(backBuffer, texture_coords).rgb;

@@ -4,25 +4,13 @@
 */
 #define PI 3.1415926535897932384626433832795
 
-extern vec2 screenResolution; //size of the screen
 extern Image shadowMap;       //a canvas containing shadow data only
 extern vec3 lightPosition;    //the light position on the screen(not global)
 extern vec3 lightColor;       //the rgb color of the light
 extern float lightRange;      //the range of the light
 extern float lightSmooth;     //smoothing of the lights attenuation
 extern vec2 lightGlow;        //how brightly the light bulb part glows
-extern float lightAngle;      //if set, the light becomes directional to a slice lightAngle degrees wide
-extern float lightDirection;  //which direction to shine the light in if directional in degrees 
 extern bool  invert_normal;   //if the light should invert normals
-
-//calculate if a pixel is within the light slice
-bool not_in_slice(vec2 pixel_coords){
-  float angle = atan(lightPosition.x - pixel_coords.x, pixel_coords.y - lightPosition.y) + PI;
-  bool pastRightSide = angle < mod(lightDirection + lightAngle, PI * 2);
-  bool pastLeftSide  = angle > mod(lightDirection - lightAngle, PI * 2);
-  bool lightUp = lightDirection - lightAngle > 0 && lightDirection + lightAngle < PI * 2;
-  return (lightUp && (pastRightSide && pastLeftSide)) || (!lightUp && (pastRightSide || pastLeftSide));
-}
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   vec4 pixelColor = Texel(texture, texture_coords);
@@ -34,11 +22,6 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
     //not in range draw in shadows
     return vec4(0.0, 0.0, 0.0, 1.0);
   }else{
-    //if the light is a slice and the pixel is not inside
-    if(lightAngle > 0.0 && not_in_slice(pixel_coords)) {
-      return vec4(0.0, 0.0, 0.0, 1.0);
-    }
-
     vec3 normal;
     if(pixelColor.a > 0.0) {
       //if on the normal map ie there is normal map data
@@ -70,8 +53,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
       return pixel;
     } else {
       //on the normal map, draw normal shadows
-      vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / screenResolution.xy, lightPosition.z);
-      dir.x *= screenResolution.x / screenResolution.y;
+      vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / love_ScreenSize.xy, lightPosition.z);
+      dir.x *= love_ScreenSize.x / love_ScreenSize.y;
       vec3 diff = lightColor * max(dot(normalize(normal), normalize(dir)), 0.0);
       //return the light that is effected by the normal and attenuation
       return vec4(diff * att, 1.0);

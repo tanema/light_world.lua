@@ -31,8 +31,7 @@ local PostShader = require(_PACKAGE..'postshader')
 
 local light_world = class()
 
-light_world.blurv              = love.graphics.newShader(_PACKAGE.."shaders/blurv.glsl")
-light_world.blurh              = love.graphics.newShader(_PACKAGE.."shaders/blurh.glsl")
+light_world.shadowShader       = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
 light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
@@ -67,25 +66,12 @@ function light_world:refreshScreenSize(w, h)
 
   self.w, self.h        = w, h
 	self.render_buffer    = love.graphics.newCanvas(w, h)
-	self.normal           = love.graphics.newCanvas(w, h)
-	self.normal2          = love.graphics.newCanvas(w, h)
+	self.shadow_buffer    = love.graphics.newCanvas(w, h)
 	self.normalMap        = love.graphics.newCanvas(w, h)
 	self.shadowMap        = love.graphics.newCanvas(w, h)
 	self.glowMap          = love.graphics.newCanvas(w, h)
-	self.glowMap2         = love.graphics.newCanvas(w, h)
 	self.refractionMap    = love.graphics.newCanvas(w, h)
-	self.refractionMap2   = love.graphics.newCanvas(w, h)
 	self.reflectionMap    = love.graphics.newCanvas(w, h)
-	self.reflectionMap2   = love.graphics.newCanvas(w, h)
-
-  self.blurv:send("screen",            {w, h})
-  self.blurh:send("screen",            {w, h})
-  self.refractionShader:send("screen", {w, h})
-  self.reflectionShader:send("screen", {w, h})
-
-  for i = 1, #self.lights do
-    self.lights[i]:refresh(w, h)
-  end
 
   self.post_shader:refreshScreenSize(w, h)
 end
@@ -110,17 +96,6 @@ function light_world:draw(cb)
   end)
   self.post_shader:drawWith(self.render_buffer, self.l, self.t, self.s)
 end
- 
-function light_world:drawBlur(blendmode, blur, canvas, canvas2, l, t, w, h, s)
-  if blur <= 0 then
-    return
-  end
-  canvas2:clear()
-  self.blurv:send("steps", blur)
-  self.blurh:send("steps", blur)
-  util.drawCanvasToCanvas(canvas, canvas2, {shader = self.blurv, blendmode = blendmode})
-  util.drawCanvasToCanvas(canvas2, canvas, {shader = self.blurh, blendmode = blendmode})
-end
 
 -- draw normal shading
 function light_world:drawNormalShading(l,t,w,h,s)
@@ -134,34 +109,54 @@ function light_world:drawNormalShading(l,t,w,h,s)
     end
   end)
 
-  self.normal2:clear()
+  self.shadow_buffer:clear()
   for i = 1, #self.lights do
+    local light = self.lights[i]
     if self.lights[i]:inRange(l,t,w,h,s) then
       -- create shadow map for this light
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
+        love.graphics.setStencil(function()
+          love.graphics.circle('fill', light.x, light.y, light.range)
+        end)
         for k = 1, #self.body do
           if self.body[k]:isInLightRange(self.lights[i]) and self.body[k]:isInRange(-l,-t,w,h,s) then
             self.body[k]:drawShadow(self.lights[i])
           end
         end
+        if light.angle > 0 then
+          local angle = math.pi - light.angle / 2.0
+          love.graphics.setColor(0, 0, 0)
+          love.graphics.arc("fill", light.x, light.y, light.range, light.direction - angle, light.direction + angle)
+        end
       end)
       -- draw scene for this light using normals and shadowmap
-      self.lights[i]:drawNormalShading(l,t,w,h,s, self.normalMap, self.shadowMap, self.normal2)
+      self.shadowShader:send('shadowMap', self.shadowMap)
+      self.shadowShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
+      self.shadowShader:send("lightPosition", {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
+      self.shadowShader:send('lightRange',{light.range * s})
+      self.shadowShader:send("lightSmooth", light.smooth)
+      self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
+      self.shadowShader:send("invert_normal", self.normalInvert == true)
+      util.drawCanvasToCanvas(self.normalMap, self.shadow_buffer, {
+        blendmode = 'additive',
+        shader = self.shadowShader,
+        stencil = function()
+          love.graphics.circle('fill', (light.x + l/s) * s, (light.y + t/s) * s, light.range)
+        end
+      })
     end
   end
 
   -- add in ambient color
-  self.normal:clear(255, 255, 255)
-  util.drawCanvasToCanvas(self.normal2, self.normal, {blendmode = "alpha"})
-  util.drawto(self.normal, l, t, s, function()
+  util.drawto(self.shadow_buffer, l, t, s, function()
     love.graphics.setBlendMode("additive")
     love.graphics.setColor({self.ambient[1], self.ambient[2], self.ambient[3]})
     love.graphics.rectangle("fill", -l/s, -t/s, w/s,h/s)
   end)
 
-  light_world:drawBlur("alpha", self.shadowBlur, self.normal, self.normal2, l, t, w, h, s)
-  util.drawCanvasToCanvas(self.normal, self.render_buffer, {blendmode = "multiplicative"})
+  self.post_shader:drawBlur(self.shadow_buffer, {self.shadowBlur})
+  util.drawCanvasToCanvas(self.shadow_buffer, self.render_buffer, {blendmode = "multiplicative"})
 end
 
 -- draw material
@@ -198,7 +193,7 @@ function light_world:drawGlow(l,t,w,h,s)
   end)
 
   if has_glow then
-    light_world:drawBlur("alpha", self.glowBlur, self.glowMap, self.glowMap2, l, t, w, h, s)
+    self.post_shader:drawBlur(self.glowMap, {self.glowBlur})
     util.drawCanvasToCanvas(self.glowMap, self.render_buffer, {blendmode = "additive"})
   end
 end
@@ -214,8 +209,7 @@ function light_world:drawRefraction(l,t,w,h,s)
     end
   end)
 
-  util.drawCanvasToCanvas(self.render_buffer, self.refractionMap2)
-  self.refractionShader:send("backBuffer", self.refractionMap2)
+  self.refractionShader:send("backBuffer", self.render_buffer)
   self.refractionShader:send("refractionStrength", self.refractionStrength)
   util.drawCanvasToCanvas(self.refractionMap, self.render_buffer, {shader = self.refractionShader})
 end
@@ -232,8 +226,7 @@ function light_world:drawReflection(l,t,w,h,s)
     end
   end)
 
-  util.drawCanvasToCanvas(self.render_buffer, self.reflectionMap2)
-  self.reflectionShader:send("backBuffer", self.reflectionMap2)
+  self.reflectionShader:send("backBuffer", self.render_buffer)
   self.reflectionShader:send("reflectionStrength", self.reflectionStrength)
   self.reflectionShader:send("reflectionVisibility", self.reflectionVisibility)
   util.drawCanvasToCanvas(self.reflectionMap, self.render_buffer, {shader = self.reflectionShader})

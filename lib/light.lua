@@ -4,8 +4,6 @@ local util = require(_PACKAGE..'/util')
 
 local light = class()
 
-light.shadowShader = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
-
 function light:init(x, y, r, g, b, range)
 	self.direction = 0
 	self.angle = math.pi * 2.0
@@ -20,11 +18,6 @@ function light:init(x, y, r, g, b, range)
 	self.glowSize = 0.1
 	self.glowStrength = 0.0
 	self.visible = true
-  self:refresh()
-end
-
-function light:refresh(w, h)
-  self.shadowShader:send('screenResolution', {w or love.window.getWidth(), h or love.window.getHeight()})
 end
 
 -- set position
@@ -114,22 +107,6 @@ end
 function light:inRange(l,t,w,h,s)
   local lx, ly, rs = (self.x + l/s) * s, (self.y + t/s) * s, self.range * s
   return self.visible and (lx + rs) > 0 and (lx - rs) < w/s and (ly + rs) > 0 and (ly - rs) < h/s
-end
-
-function light:drawNormalShading(l,t,w,h,s, normalMap, shadowMap, canvas)
-  self.shadowShader:send('shadowMap', shadowMap)
-  self.shadowShader:send('lightColor', {self.red / 255.0, self.green / 255.0, self.blue / 255.0})
-  self.shadowShader:send("lightPosition", {(self.x + l/s) * s, (h/s - (self.y + t/s)) * s, (self.z * 10) / 255.0})
-  self.shadowShader:send('lightRange',{self.range * s})
-  self.shadowShader:send("lightSmooth", self.smooth)
-  self.shadowShader:send("lightGlow", {1.0 - self.glowSize, self.glowStrength})
-  self.shadowShader:send("lightAngle", math.pi - self.angle / 2.0)
-  self.shadowShader:send("lightDirection", self.direction)
-  self.shadowShader:send("invert_normal", self.normalInvert == true)
-  util.drawCanvasToCanvas(normalMap, canvas, {
-    blendmode = 'additive',
-    shader = self.shadowShader
-  })
 end
 
 function light:setVisible(visible)

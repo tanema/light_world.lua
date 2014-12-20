@@ -1,9 +1,5 @@
 #define glarebasesize 0.896
 #define power 0.50
-
-extern vec2 textureSize;
-extern vec2 outputSize;
-
 extern float time;
 
 const vec3 green = vec3(0.17, 0.62, 0.25);
@@ -27,9 +23,9 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texcoord, vec2 pixel_coords)
 	vec4 sum = vec4(0.0);
 	vec4 bum = vec4(0.0);
 
-	vec2 glaresize = vec2(glarebasesize) / textureSize;
+	vec2 glaresize = vec2(glarebasesize) / love_ScreenSize.xy;
 	
-	float y_one = 1.0 / outputSize.y;
+	float y_one = 1.0 / love_ScreenSize.y;
 	
 	int j;
 	int i;

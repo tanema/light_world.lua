@@ -17,12 +17,10 @@ vec4 compress(vec4 in_color, float threshold, float ratio)
 	return in_color - (diff * (1.0 - 1.0/ratio));
 }
  
-extern vec2 textureSize;
- 
 vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 {
-	float x = 0.5 * (1.0 / textureSize.x);
-	float y = 0.5 * (1.0 / textureSize.y);
+	float x = 0.5 * (1.0 / love_ScreenSize.x);
+	float y = 0.5 * (1.0 / love_ScreenSize.y);
 	
 	vec2 dg1 = vec2( x, y);
 	vec2 dg2 = vec2(-x, y);
@@ -39,7 +37,7 @@ vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 	vec3 c21 = Texel(texture, tex + dx).xyz;
 	vec3 c22 = Texel(texture, tex + dg1).xyz;
 
-	vec2 texsize = textureSize;
+	vec2 texsize = love_ScreenSize.xy;
 	
 	vec3 first = mix(c00, c20, fract(tex.x * texsize.x + 0.5));
 	vec3 second = mix(c02, c22, fract(tex.x * texsize.x + 0.5));

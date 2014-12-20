@@ -1,8 +1,7 @@
-extern vec2 screen = vec2(800.0, 600.0);
 extern float steps = 2.0;
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
-	vec2 pSize = vec2(1.0 / screen.x, 1.0 / screen.y);
+	vec2 pSize = vec2(1.0 / love_ScreenSize.x, 1.0 / love_ScreenSize.y);
 	vec4 col = Texel(texture, texture_coords);
 	for(int i = 1; i <= steps; i++) {
 		col = col + Texel(texture, vec2(texture_coords.x - pSize.x * i, texture_coords.y));

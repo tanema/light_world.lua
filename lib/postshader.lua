@@ -26,10 +26,6 @@ local class = require(_PACKAGE..'/class')
 local util = require(_PACKAGE..'/util')
 
 local post_shader = class()
-post_shader.blurv                 = love.graphics.newShader(_PACKAGE.."/shaders/blurv.glsl")
-post_shader.blurh                 = love.graphics.newShader(_PACKAGE.."/shaders/blurh.glsl")
-post_shader.contrast              = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/contrast.glsl")
-post_shader.tilt_shift            = love.graphics.newShader(_PACKAGE.."/shaders/postshaders/tilt_shift.glsl")
 
 local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders")
 local shaders = {}
@@ -56,18 +52,7 @@ end
 function post_shader:refreshScreenSize(w, h)
   w, h = w or love.window.getWidth(), h or love.window.getHeight()
 
-  self.render_buffer = love.graphics.newCanvas(w, h)
   self.back_buffer   = love.graphics.newCanvas(w, h)
-
-  post_shader.blurv:send("screen",     {w, h})
-  post_shader.blurh:send("screen",     {w, h})
-  for shaderName, v in pairs(shaders) do
-    for def in pairs(v[2]) do
-      if def == "screen" or def == "textureSize" or def == "inputSize" or def == "outputSize" then
-        v[1]:send(def, {w, h})
-      end
-    end
-  end
 
   self.w = w
   self.h = h
@@ -105,30 +90,29 @@ function post_shader:drawWith(canvas)
 end
 
 function post_shader:drawBloom(canvas, args)
-  post_shader.blurv:send("steps", args[1] or 2.0)
-  post_shader.blurh:send("steps", args[1] or 2.0)
-  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.blurv})
-  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.blurh})
-  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.contrast})
-  util.drawCanvasToCanvas(canvas, canvas, {shader = post_shader.contrast})
+  shaders['blurv'][1]:send("steps", args[1] or 2.0)
+  shaders['blurh'][1]:send("steps", args[1] or 2.0)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = shaders['blurv'][1]})
+  util.process(self.back_buffer, {shader = shaders['blurh'][1]})
+  util.process(self.back_buffer, {shader = shaders['contrast'][1]})
+  util.process(canvas, {shader = shaders['contrast'][1]})
   util.drawCanvasToCanvas(self.back_buffer, canvas, {blendmode = "additive", color = {255, 255, 255, (args[2] or 0.25) * 255}})
 end
 
 function post_shader:drawBlur(canvas, args)
-  post_shader.blurv:send("steps", args[1] or 2.0)
-  post_shader.blurh:send("steps", args[2] or 2.0)
-  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.blurv})
-  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.blurh})
-  util.drawCanvasToCanvas(self.back_buffer, canvas)
+  shaders['blurv'][1]:send("steps", args[1] or 0.0)
+  shaders['blurh'][1]:send("steps", args[2] or args[1] or 0.0)
+  util.process(canvas, {shader = shaders['blurv'][1], blendmode = "alpha"})
+  util.process(canvas, {shader = shaders['blurh'][1], blendmode = "alpha"})
 end
 
 function post_shader:drawTiltShift(canvas, args)
-  post_shader.blurv:send("steps", args[1] or 2.0)
-  post_shader.blurh:send("steps", args[2] or 2.0)
-  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = post_shader.blurv})
-  util.drawCanvasToCanvas(self.back_buffer, self.back_buffer, {shader = post_shader.blurh})
-  post_shader.tilt_shift:send("imgBuffer", canvas)
-  util.drawCanvasToCanvas(self.back_buffer, canvas, {shader = post_shader.tilt_shift})
+  shaders['blurv'][1]:send("steps", args[1] or 2.0)
+  shaders['blurh'][1]:send("steps", args[2] or 2.0)
+  util.drawCanvasToCanvas(canvas, self.back_buffer, {shader = shaders['blurv'][1]})
+  util.process(self.back_buffer, {shader = shaders['blurh'][1]})
+  shaders['tilt_shift'][1]:send("imgBuffer", canvas)
+  util.drawCanvasToCanvas(self.back_buffer, canvas, {shader = shaders['tilt_shift'][1]})
 end
 
 function post_shader:drawShader(shaderName, canvas, args)
@@ -156,7 +140,7 @@ function post_shader:drawShader(shaderName, canvas, args)
       current_arg = current_arg + 3
     elseif def == "imgBuffer" then
       effect[1]:send("imgBuffer", canvas)
-    elseif def ~= "screen" and def ~= "textureSize" and def ~= "inputSize" and def ~= "outputSize" then
+    else
       local value = args[current_arg]
       if value ~= nil then
         effect[1]:send(def, value)
