@@ -109,6 +109,9 @@ function light_world:drawNormalShading(l,t,w,h,s)
     end
   end)
 
+  self.shadowShader:send('normalMap', self.normalMap)
+  self.shadowShader:send("invert_normal", self.normalInvert == true)
+
   self.shadow_buffer:clear()
   for i = 1, #self.lights do
     local light = self.lights[i]
@@ -131,14 +134,12 @@ function light_world:drawNormalShading(l,t,w,h,s)
         end
       end)
       -- draw scene for this light using normals and shadowmap
-      self.shadowShader:send('shadowMap', self.shadowMap)
       self.shadowShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
       self.shadowShader:send("lightPosition", {(light.x + l/s) * s, (h/s - (light.y + t/s)) * s, (light.z * 10) / 255.0})
       self.shadowShader:send('lightRange',{light.range * s})
       self.shadowShader:send("lightSmooth", light.smooth)
       self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
-      self.shadowShader:send("invert_normal", self.normalInvert == true)
-      util.drawCanvasToCanvas(self.normalMap, self.shadow_buffer, {
+      util.drawCanvasToCanvas(self.shadowMap, self.shadow_buffer, {
         blendmode = 'additive',
         shader = self.shadowShader,
         stencil = function()
