@@ -123,7 +123,7 @@ function light_world:drawShadows(l,t,w,h,s)
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
         love.graphics.setStencil(function()
-          local angle = light.direction - (math.pi - light.angle / 2.0)
+          local angle = light.direction - (light.angle / 2.0)
           love.graphics.arc("fill", light.x, light.y, light.range, angle, angle + light.angle)
         end)
         for k = 1, #self.bodies do
@@ -142,7 +142,7 @@ function light_world:drawShadows(l,t,w,h,s)
         blendmode = 'additive',
         shader = self.shadowShader,
         stencil = function()
-          local angle = light.direction - (math.pi - light.angle / 2.0)
+          local angle = light.direction - (light.angle / 2.0)
           love.graphics.arc("fill", (light.x + l/s) * s, (light.y + t/s) * s, light.range, angle, angle + light.angle)
         end
       })
