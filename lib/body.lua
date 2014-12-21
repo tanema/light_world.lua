@@ -3,7 +3,7 @@ local class       = require(_PACKAGE.."/class")
 local normal_map  = require(_PACKAGE..'/normal_map')
 local util        = require(_PACKAGE..'/util')
 local anim8       = require(_PACKAGE..'/anim8')
-local vec2        = require(_PACKAGE..'/vec2')
+local vector      = require(_PACKAGE..'/vector')
 local body        = class()
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
@@ -49,17 +49,6 @@ function body:init(id, type, ...)
 		self.x = args[1] or 0
 		self.y = args[2] or 0
 
-    rectangle_canvas = love.graphics.newCanvas(args[3], args[4])
-    util.drawto(rectangle_canvas, 0, 0, 1, function()
-      love.graphics.rectangle('fill', 0, 0, args[3], args[4]) 
-    end)
-    self.img = love.graphics.newImage(rectangle_canvas:getImageData()) 
-    self.imgWidth = self.img:getWidth()
-    self.imgHeight = self.img:getHeight()
-    self.ix = self.imgWidth * 0.5
-    self.iy = self.imgHeight * 0.5
-    self:generateNormalMapFlat("top")
-
     self:setShadowType('rectangle', args[3], args[4])
 	elseif self.type == "polygon" then
     self:setPoints(...)
@@ -73,7 +62,6 @@ function body:init(id, type, ...)
 			self.ix = self.imgWidth * 0.5
 			self.iy = self.imgHeight * 0.5
 		end
-    self:generateNormalMapFlat("top")
     self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
 		self.reflective = true
   elseif self.type == "animation" then
@@ -82,45 +70,27 @@ function body:init(id, type, ...)
 		self.y = args[3] or 0
     self.animations = {}
     self.castsNoShadow = true
-    self:generateNormalMapFlat("top")
 		self.reflective = true
 	elseif self.type == "refraction" then
-    self:initNormal(...)
-		self.refraction = true
-	elseif self.type == "reflection" then
-    self:initNormal(...)
-		self.reflection = true
-	end
-  self.old_x, self.old_y = self.x, self.y
-end
-
---use for refraction and reflection because they are both just a normal map
-function body:initNormal(...)
-	local args = {...}
-  self.normal = args[1]
-  self.x = args[2] or 0
-  self.y = args[3] or 0
-  if self.normal then
-    self.normalWidth = self.normal:getWidth()
-    self.normalHeight = self.normal:getHeight()
+    self.x = args[2] or 0
+    self.y = args[3] or 0
+    self:setNormalMap(args[1], args[4], args[5])
     self.width = args[4] or self.normalWidth
     self.height = args[5] or self.normalHeight
-    self.nx = self.normalWidth * 0.5
-    self.ny = self.normalHeight * 0.5
-    self.normal:setWrap("repeat", "repeat")
-    self.normalVert = {
-      {0.0, 0.0, 0.0, 0.0},
-      {self.width, 0.0, 1.0, 0.0},
-      {self.width, self.height, 1.0, 1.0},
-      {0.0, self.height, 0.0, 1.0}
-    }
-    self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
-  else
-    self.width = args[4] or 64
-    self.height = args[5] or 64
-  end
-  self.ox = self.width * 0.5
-  self.oy = self.height * 0.5
+    self.ox = self.width * 0.5
+    self.oy = self.height * 0.5
+    self.refraction = true
+  elseif self.type == "reflection" then
+    self.x = args[2] or 0
+    self.y = args[3] or 0
+    self:setNormalMap(args[1], args[4], args[5])
+    self.width = args[4] or self.normalWidth
+    self.height = args[5] or self.normalHeight
+    self.ox = self.width * 0.5
+    self.oy = self.height * 0.5
+    self.reflection = true
+	end
+  self.old_x, self.old_y = self.x, self.y
 end
 
 -- refresh
@@ -304,25 +274,8 @@ function body:setPoints(...)
   -- normalize width and height
   self.width = self.width - self.x
   self.height = self.height - self.y
-  for i = 1, #points, 2 do
-    points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
-  end
   self.x = self.x + (self.width * 0.5)
   self.y = self.y + (self.height * 0.5)
-
-  poly_canvas = love.graphics.newCanvas(self.width, self.height)
-  util.drawto(poly_canvas, 0, 0, 1, function()
-    love.graphics.polygon('fill', points) 
-  end)
-  self.img = love.graphics.newImage(poly_canvas:getImageData()) 
-  self.imgWidth = self.img:getWidth()
-  self.imgHeight = self.img:getHeight()
-  self.ix = self.imgWidth * 0.5
-  self.iy = self.imgHeight * 0.5
-  self:generateNormalMapFlat("top")
-  --wrapping with polygon normals causes edges to show 
-  --also we do not need wrapping for this default normal map
-  self.normal:setWrap("clamp", "clamp")
 
   self:setShadowType('polygon', ...)
 end
@@ -641,95 +594,65 @@ end
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawPolyShadow(light)
-  local edgeFacingTo = {}
-  for k = 1, #self.data, 2 do
-    local indexOfNextVertex = (k + 2) % #self.data
-    local normal = vec2(-self.data[indexOfNextVertex+1] + self.data[k + 1], self.data[indexOfNextVertex] - self.data[k]):normalize()
-    local lightToPoint = vec2(self.data[k] - light.x, self.data[k + 1] - light.y):normalize()
+  local lightPosition = vector(light.x, light.y)
+  local lh = lightPosition * self.zheight
 
-    local dotProduct = normal:dot(lightToPoint)
-    if dotProduct > 0 then 
-      table.insert(edgeFacingTo, true)
-    else 
-      table.insert(edgeFacingTo, false) 
-    end
-  end
-
-  local curShadowGeometry = {}
-  local lxh = (light.x * self.zheight)
-  local lyh = (light.y * self.zheight)
   local height_diff = (self.zheight - light.z) 
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
 
-  for k = 1, #edgeFacingTo do
-    local nextIndex = (k + 1) % #edgeFacingTo
-    if nextIndex == 0 then nextIndex = #edgeFacingTo end
-
-    local x, y = self.data[nextIndex*2-1], self.data[nextIndex*2]
-    local xs, ys = (lxh - (x * light.z))/height_diff, (lyh - (y * light.z))/height_diff
-
-    if edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = x
-      curShadowGeometry[#curShadowGeometry+1] = y
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-    elseif not edgeFacingTo[k] and not edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-    elseif not edgeFacingTo[k] and edgeFacingTo[nextIndex] then
-      curShadowGeometry[#curShadowGeometry+1] = xs
-      curShadowGeometry[#curShadowGeometry+1] = ys
-      curShadowGeometry[#curShadowGeometry+1] = x
-      curShadowGeometry[#curShadowGeometry+1] = y
+  for i = 1, #self.data, 2 do
+    local vertex = vector(self.data[i], self.data[i + 1])
+    local nextVertex = vector(self.data[(i + 2) % 8], self.data[(i + 2) % 8 + 1])
+    local startToEnd = nextVertex - vertex
+    if vector(startToEnd.y, -startToEnd.x) * (vertex - lightPosition) > 0 then
+      local point1 = (lh - (vertex * light.z))/height_diff
+      local point2 = (lh - (nextVertex * light.z))/height_diff
+      love.graphics.polygon("fill", 
+        vertex.x, vertex.y, point1.x, point1.y, 
+        point2.x, point2.y, nextVertex.x, nextVertex.y)
     end
-  end
-  if #curShadowGeometry >= 6 then
-    love.graphics.polygon("fill", unpack(curShadowGeometry))
   end
 end
 
 --using shadow point calculations from this article
 --http://web.cs.wpi.edu/~matt/courses/cs563/talks/shadow/shadow.html
 function body:drawCircleShadow(light)
-  local curShadowGeometry = {}
-  local angle = math.atan2(light.x - (self.x - self.ox), (self.y - self.oy) - light.y) + math.pi / 2
-  local x2 = ((self.x - self.ox) + math.sin(angle) * self.radius)
-  local y2 = ((self.y - self.oy) - math.cos(angle) * self.radius)
-  local x3 = ((self.x - self.ox) - math.sin(angle) * self.radius)
-  local y3 = ((self.y - self.oy) + math.cos(angle) * self.radius)
-
-  local lxh = (light.x * self.zheight)
-  local lyh = (light.y * self.zheight)
+  local selfPos = vector(self.x - self.ox, self.y - self.oy)
+  local lightPosition = vector(light.x, light.y)
+  local lh = lightPosition * self.zheight
   local height_diff = (self.zheight - light.z) 
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
+
+  local angle = math.atan2(light.x - selfPos.x, selfPos.y - light.y) + math.pi / 2
+  local point1 = vector(selfPos.x + math.sin(angle) * self.radius,
+                        selfPos.y - math.cos(angle) * self.radius)
+  local point2 = vector(selfPos.x - math.sin(angle) * self.radius,
+                        selfPos.y + math.cos(angle) * self.radius)
+  local point3 = (lh - (point1 * light.z))/height_diff
+  local point4 = (lh - (point2 * light.z))/height_diff
   
-  local x4 = (lxh - (x3 * light.z))/height_diff 
-  local y4 = (lyh - (y3 * light.z))/height_diff 
-  local x5 = (lxh - (x2 * light.z))/height_diff  
-  local y5 = (lyh - (y2 * light.z))/height_diff  
+  local radius = point3:dist(point4)/2
+  local circleCenter = (point3 + point4)/2
 
-  local radius = math.sqrt(math.pow(x5 - x4, 2) + math.pow(y5-y4, 2)) / 2
-  local cx, cy = (x4 + x5)/2, (y4 + y5)/2
-  local distance1 = math.sqrt(math.pow(light.x - self.x, 2) + math.pow(light.y - self.y, 2))
-  local distance2 = math.sqrt(math.pow(light.x - cx, 2) + math.pow(light.y - cy, 2)) 
-
-  if distance1 >= self.radius then
-    love.graphics.polygon("fill", x2, y2, x3, y3, x4, y4, x5, y5)
-  end
-
-  if distance1 <= self.radius then
-    love.graphics.circle("fill", cx, cy, radius)
-  elseif distance2 < light.range then -- dont draw circle if way off screen
-    local angle1 = math.atan2(y4 - cy, x4 - cx)
-    local angle2 = math.atan2(y5 - cy, x5 - cx)
-    if angle1 > angle2 then
-      love.graphics.arc("fill", cx, cy, radius, angle1, angle2)
-    else
-      love.graphics.arc("fill", cx, cy, radius, angle1 - math.pi, angle2 - math.pi)
+  if lightPosition:dist(selfPos) <= self.radius then
+    love.graphics.circle("fill", circleCenter.x, circleCenter.y, radius)
+  else
+    love.graphics.polygon("fill", point1.x, point1.y, 
+                                  point2.x, point2.y, 
+                                  point4.x, point4.y,
+                                  point3.x, point3.y)
+    if lightPosition:dist(circleCenter) < light.range then -- dont draw circle if way off screen
+      local angle1 = math.atan2(point3.y - circleCenter.y, point3.x - circleCenter.x)
+      local angle2 = math.atan2(point4.y - circleCenter.y, point4.x - circleCenter.x)
+      if angle1 < angle2 then
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1, angle2)
+      else
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1 - math.pi, angle2 - math.pi)
+      end
     end
   end
 end
