@@ -48,6 +48,7 @@ function love.update(dt)
 		scale = scale + 0.01
 	end
 
+  lightWorld:update(dt)
 	lightMouse:setPosition(love.mouse.getX()/scale, love.mouse.getY()/scale)
 end
 

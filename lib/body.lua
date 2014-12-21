@@ -28,6 +28,7 @@ function body:init(id, type, ...)
  
   self.castsNoShadow = false
   self.visible = true
+  self.is_on_screen = true
 
 	if self.type == "circle" then
 		self.x = args[1] or 0
@@ -449,12 +450,16 @@ function body:setShadowType(type, ...)
   end
 end
 
-function body:isInLightRange(light)
-  local l, t, w = light.x - light.range, light.y - light.range, light.range*2 
-  return self:isInRange(l,t,w,w,1)
+function body:isVisible()
+  return self.visible and self.is_on_screen
 end
 
-function body:isInRange(l, t, w, h, s)
+function body:inLightRange(light)
+  local l, t, w = light.x - light.range, light.y - light.range, light.range*2 
+  return self:inRange(l,t,w,w,1)
+end
+
+function body:inRange(l, t, w, h, s)
   local radius
   if self.type == 'circle' then
     radius = self.radius

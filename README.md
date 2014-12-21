@@ -20,7 +20,7 @@ function love.load()
 end
 
 function love.update(dt)
-  lightWorld:update(dt) --only needed for animation
+  lightWorld:update(dt)
   lightWorld:setTranslation(x, y, scale)
 end
 

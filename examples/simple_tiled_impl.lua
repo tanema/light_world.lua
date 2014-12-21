@@ -56,6 +56,7 @@ function love.update(dt)
 	end
 
   map:update(dt)
+  lightWorld:update(dt)
 	lightMouse:setPosition((love.mouse.getX() - x)/scale, (love.mouse.getY() - y)/scale, z)
 end
 

@@ -63,6 +63,7 @@ function love.update(dt)
 
   cam:setScale(scale)
   cam:setPosition(x, y)
+  lightWorld:update(dt)
   lightWorld:setTranslation(x, y, scale)
 end
 

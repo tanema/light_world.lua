@@ -96,6 +96,7 @@ function love.load()
     ambient = {15,15,15},
     refractionStrength = 16.0,
     reflectionVisibility = 0.75,
+    shadowBlur = 2.0
   })
 
 	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
@@ -235,6 +236,7 @@ function love.update(dt)
   else
 		lightWorld.post_shader:removeEffect("bloom")
 	end
+  lightWorld:update(dt)
 end
 
 function love.draw()
