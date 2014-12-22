@@ -14,6 +14,7 @@ function love.load()
 	-- create light world
 	lightWorld = LightWorld({
     ambient = {55,55,55},
+    shadowBlur = 0.0
   })
 
 	map = sti.new("examples/gfx/map")

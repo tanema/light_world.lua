@@ -22,6 +22,7 @@ function love.load()
     ambient = {55,55,55},
     refractionStrength = 32.0,
     reflectionVisibility = 0.75,
+    shadowBlur = 0.0
   })
 
 	-- create light
