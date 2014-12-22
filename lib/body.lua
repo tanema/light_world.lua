@@ -50,6 +50,17 @@ function body:init(id, type, ...)
 		self.x = args[1] or 0
 		self.y = args[2] or 0
 
+    local rectangle_canvas = love.graphics.newCanvas(args[3], args[4])
+    util.drawto(rectangle_canvas, 0, 0, 1, function()
+      love.graphics.rectangle('fill', 0, 0, args[3], args[4]) 
+    end)
+    self.img = love.graphics.newImage(rectangle_canvas:getImageData()) 
+    self.imgWidth = self.img:getWidth()
+    self.imgHeight = self.img:getHeight()
+    self.ix = self.imgWidth * 0.5
+    self.iy = self.imgHeight * 0.5
+    self:generateNormalMapFlat("top")
+
     self:setShadowType('rectangle', args[3], args[4])
 	elseif self.type == "polygon" then
     self:setPoints(...)
@@ -63,6 +74,7 @@ function body:init(id, type, ...)
 			self.ix = self.imgWidth * 0.5
 			self.iy = self.imgHeight * 0.5
 		end
+    self:generateNormalMapFlat("top")
     self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
 		self.reflective = true
   elseif self.type == "animation" then
@@ -71,6 +83,7 @@ function body:init(id, type, ...)
 		self.y = args[3] or 0
     self.animations = {}
     self.castsNoShadow = true
+    self:generateNormalMapFlat("top")
 		self.reflective = true
 	elseif self.type == "refraction" then
     self.x = args[2] or 0
@@ -275,8 +288,25 @@ function body:setPoints(...)
   -- normalize width and height
   self.width = self.width - self.x
   self.height = self.height - self.y
+  for i = 1, #points, 2 do
+    points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
+  end
   self.x = self.x + (self.width * 0.5)
   self.y = self.y + (self.height * 0.5)
+
+  local poly_canvas = love.graphics.newCanvas(self.width, self.height)
+  util.drawto(poly_canvas, 0, 0, 1, function()
+    love.graphics.polygon('fill', points) 
+  end)
+  self.img = love.graphics.newImage(poly_canvas:getImageData()) 
+  self.imgWidth = self.img:getWidth()
+  self.imgHeight = self.img:getHeight()
+  self.ix = self.imgWidth * 0.5
+  self.iy = self.imgHeight * 0.5
+  self:generateNormalMapFlat("top")
+  --wrapping with polygon normals causes edges to show 
+  --also we do not need wrapping for this default normal map
+  self.normal:setWrap("clamp", "clamp")
 
   self:setShadowType('polygon', ...)
 end
