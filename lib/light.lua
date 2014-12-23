@@ -1,24 +1,28 @@
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
-local class = require(_PACKAGE.."/class")
 local util = require(_PACKAGE..'/util')
 
-local light = class()
+local light = {}
+light.__index = light
 
-function light:init(x, y, r, g, b, range)
-	self.direction = 0
-	self.angle = math.pi * 2.0
-	self.x = x or 0
-	self.y = y or 0
-	self.z = 1
-	self.red = r or 255
-	self.green = g or 255
-	self.blue = b or 255
-	self.range = range or 300
-	self.smooth = 1.0
-	self.glowSize = 0.1
-	self.glowStrength = 0.0
-	self.visible = true
-  self.is_on_screen = true
+local function new(x, y, r, g, b, range)
+  local obj = {
+    direction = 0,
+    angle = math.pi * 2.0,
+    x = x or 0,
+    y = y or 0,
+    z = 1,
+    red = r or 255,
+    green = g or 255,
+    blue = b or 255,
+    range = range or 300,
+    smooth = 1.0,
+    glowSize = 0.1,
+    glowStrength = 0.0,
+    visible = true,
+    is_on_screen = true,
+  }
+
+  return setmetatable(obj, light)
 end
 
 -- set position
@@ -118,4 +122,4 @@ function light:setVisible(visible)
   self.visible = visible
 end
 
-return light
+return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})

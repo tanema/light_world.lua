@@ -23,42 +23,46 @@ SOFTWARE.
 ]]
 local _PACKAGE = string.gsub(...,"%.","/") or ""
 if string.len(_PACKAGE) > 0 then _PACKAGE = _PACKAGE .. "/" end
-local class = require(_PACKAGE..'class')
 local Light = require(_PACKAGE..'light')
 local Body = require(_PACKAGE..'body')
 local util = require(_PACKAGE..'util')
 local PostShader = require(_PACKAGE..'postshader')
 
-local light_world = class()
+local light_world = {}
+light_world.__index = light_world
 
 light_world.shadowShader       = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
 light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
 light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
-function light_world:init(options)
-	self.lights = {}
-	self.bodies = {}
-  self.post_shader = PostShader()
+local function new(options)
+  local obj = {}
+	obj.lights = {}
+	obj.bodies = {}
+  obj.post_shader = PostShader()
+  
+  obj.l, obj.t, obj.s      =  0, 0, 1 
+	obj.ambient              = {0, 0, 0}
+	obj.refractionStrength   = 8.0
+	obj.reflectionStrength   = 16.0
+	obj.reflectionVisibility = 1.0
+	obj.shadowBlur           = 2.0
+	obj.glowBlur             = 1.0
+	obj.glowTimer            = 0.0
+	obj.glowDown             = false
 
-  self.l, self.t, self.s    =  0, 0, 1 
-	self.ambient              = {0, 0, 0}
-	self.refractionStrength   = 8.0
-	self.reflectionStrength   = 16.0
-	self.reflectionVisibility = 1.0
-	self.shadowBlur           = 2.0
-	self.glowBlur             = 1.0
-	self.glowTimer            = 0.0
-	self.glowDown             = false
-
-  self.disableGlow          = false
-  self.disableMaterial      = false
-  self.disableReflection    = true
-  self.disableRefraction    = true
+  obj.disableGlow          = false
+  obj.disableMaterial      = false
+  obj.disableReflection    = true
+  obj.disableRefraction    = true
 
   options = options or {}
-  for k, v in pairs(options) do self[k] = v end
+  for k, v in pairs(options) do obj[k] = v end
 
-  self:refreshScreenSize()
+  local world = setmetatable(obj, light_world)
+  world:refreshScreenSize()
+
+  return world
 end
 
 function light_world:refreshScreenSize(w, h)
@@ -304,4 +308,4 @@ function light_world:remove(to_kill)
   return false
 end
 
-return light_world
+return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})

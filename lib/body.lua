@@ -1,110 +1,114 @@
 local _PACKAGE    = (...):match("^(.+)[%./][^%./]+") or ""
-local class       = require(_PACKAGE.."/class")
 local normal_map  = require(_PACKAGE..'/normal_map')
 local util        = require(_PACKAGE..'/util')
 local anim8       = require(_PACKAGE..'/anim8')
 local vector      = require(_PACKAGE..'/vector')
-local body        = class()
+
+local body        = {}
+body.__index = body
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
 
-function body:init(id, type, ...)
+local function new(id, type, ...)
 	local args = {...}
-	self.id = id
-	self.type = type
-	self.shine = true
-	self.red = 1.0
-	self.green = 1.0
-	self.blue = 1.0
-	self.alpha = 1.0
-	self.glowRed = 255
-	self.glowGreen = 255
-	self.glowBlue = 255
-	self.glowStrength = 0.0
-	self.tileX = 0
-	self.tileY = 0
-  self.zheight = 1
+  local obj = setmetatable({}, body)
+	obj.id = id
+	obj.type = type
+	obj.shine = true
+	obj.red = 1.0
+	obj.green = 1.0
+	obj.blue = 1.0
+	obj.alpha = 1.0
+	obj.glowRed = 255
+	obj.glowGreen = 255
+	obj.glowBlue = 255
+	obj.glowStrength = 0.0
+	obj.tileX = 0
+	obj.tileY = 0
+  obj.zheight = 1
  
-  self.castsNoShadow = false
-  self.visible = true
-  self.is_on_screen = true
+  obj.castsNoShadow = false
+  obj.visible = true
+  obj.is_on_screen = true
 
-	if self.type == "circle" then
-		self.x = args[1] or 0
-		self.y = args[2] or 0
+	if obj.type == "circle" then
+		obj.x = args[1] or 0
+		obj.y = args[2] or 0
 
     circle_canvas = love.graphics.newCanvas(args[3]*2, args[3]*2)
     util.drawto(circle_canvas, 0, 0, 1, function()
       love.graphics.circle('fill', args[3], args[3], args[3]) 
     end)
-    self.img = love.graphics.newImage(circle_canvas:getImageData()) 
-    self.imgWidth = self.img:getWidth()
-    self.imgHeight = self.img:getHeight()
-    self.ix = self.imgWidth * 0.5
-    self.iy = self.imgHeight * 0.5
-    self:generateNormalMapFlat("top")
+    obj.img = love.graphics.newImage(circle_canvas:getImageData()) 
+    obj.imgWidth = obj.img:getWidth()
+    obj.imgHeight = obj.img:getHeight()
+    obj.ix = obj.imgWidth * 0.5
+    obj.iy = obj.imgHeight * 0.5
+    obj:generateNormalMapFlat("top")
 
-    self:setShadowType('circle', args[3], args[4], args[5])
-	elseif self.type == "rectangle" then
-		self.x = args[1] or 0
-		self.y = args[2] or 0
+    obj:setShadowType('circle', args[3], args[4], args[5])
+	elseif obj.type == "rectangle" then
+		obj.x = args[1] or 0
+		obj.y = args[2] or 0
 
     local rectangle_canvas = love.graphics.newCanvas(args[3], args[4])
     util.drawto(rectangle_canvas, 0, 0, 1, function()
       love.graphics.rectangle('fill', 0, 0, args[3], args[4]) 
     end)
-    self.img = love.graphics.newImage(rectangle_canvas:getImageData()) 
-    self.imgWidth = self.img:getWidth()
-    self.imgHeight = self.img:getHeight()
-    self.ix = self.imgWidth * 0.5
-    self.iy = self.imgHeight * 0.5
-    self:generateNormalMapFlat("top")
+    obj.img = love.graphics.newImage(rectangle_canvas:getImageData()) 
+    obj.imgWidth = obj.img:getWidth()
+    obj.imgHeight = obj.img:getHeight()
+    obj.ix = obj.imgWidth * 0.5
+    obj.iy = obj.imgHeight * 0.5
+    obj:generateNormalMapFlat("top")
 
-    self:setShadowType('rectangle', args[3], args[4])
-	elseif self.type == "polygon" then
-    self:setPoints(...)
-	elseif self.type == "image" then
-		self.img = args[1]
-		self.x = args[2] or 0
-		self.y = args[3] or 0
-		if self.img then
-			self.imgWidth = self.img:getWidth()
-			self.imgHeight = self.img:getHeight()
-			self.ix = self.imgWidth * 0.5
-			self.iy = self.imgHeight * 0.5
+    obj:setShadowType('rectangle', args[3], args[4])
+	elseif obj.type == "polygon" then
+    obj:setPoints(...)
+	elseif obj.type == "image" then
+		obj.img = args[1]
+		obj.x = args[2] or 0
+		obj.y = args[3] or 0
+		if obj.img then
+			obj.imgWidth = obj.img:getWidth()
+			obj.imgHeight = obj.img:getHeight()
+			obj.ix = obj.imgWidth * 0.5
+			obj.iy = obj.imgHeight * 0.5
 		end
-    self:generateNormalMapFlat("top")
-    self:setShadowType('rectangle', args[4] or self.imgWidth, args[5] or self.imgHeight, args[6], args[7])
-		self.reflective = true
-  elseif self.type == "animation" then
-		self.img = args[1]
-		self.x = args[2] or 0
-		self.y = args[3] or 0
-    self.animations = {}
-    self.castsNoShadow = true
-    self:generateNormalMapFlat("top")
-		self.reflective = true
-	elseif self.type == "refraction" then
-    self.x = args[2] or 0
-    self.y = args[3] or 0
-    self:setNormalMap(args[1], args[4], args[5])
-    self.width = args[4] or self.normalWidth
-    self.height = args[5] or self.normalHeight
-    self.ox = self.width * 0.5
-    self.oy = self.height * 0.5
-    self.refraction = true
-  elseif self.type == "reflection" then
-    self.x = args[2] or 0
-    self.y = args[3] or 0
-    self:setNormalMap(args[1], args[4], args[5])
-    self.width = args[4] or self.normalWidth
-    self.height = args[5] or self.normalHeight
-    self.ox = self.width * 0.5
-    self.oy = self.height * 0.5
-    self.reflection = true
+    obj:generateNormalMapFlat("top")
+    obj:setShadowType('rectangle', args[4] or obj.imgWidth, args[5] or obj.imgHeight, args[6], args[7])
+		obj.reflective = true
+  elseif obj.type == "animation" then
+		obj.img = args[1]
+		obj.x = args[2] or 0
+		obj.y = args[3] or 0
+    obj.animations = {}
+    obj.castsNoShadow = true
+    obj:generateNormalMapFlat("top")
+		obj.reflective = true
+	elseif obj.type == "refraction" then
+    obj.x = args[2] or 0
+    obj.y = args[3] or 0
+    obj:setNormalMap(args[1], args[4], args[5])
+    obj.width = args[4] or obj.normalWidth
+    obj.height = args[5] or obj.normalHeight
+    obj.ox = obj.width * 0.5
+    obj.oy = obj.height * 0.5
+    obj.refraction = true
+  elseif obj.type == "reflection" then
+    obj.x = args[2] or 0
+    obj.y = args[3] or 0
+    obj:setNormalMap(args[1], args[4], args[5])
+    obj.width = args[4] or obj.normalWidth
+    obj.height = args[5] or obj.normalHeight
+    obj.ox = obj.width * 0.5
+    obj.oy = obj.height * 0.5
+    obj.reflection = true
 	end
-  self.old_x, self.old_y = self.x, self.y
+  obj.old_x, obj.old_y = obj.x, obj.y
+
+  return obj
 end
 
 -- refresh
@@ -714,4 +718,4 @@ function body:drawImageShadow(light)
   love.graphics.draw(self.shadowMesh, self.x - self.ox, self.y - self.oy, 0, s, s)
 end
 
-return body
+return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})

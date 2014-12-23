@@ -1,4 +1,4 @@
-normal_map = {}
+local normal_map = {}
 
 function normal_map.fromHeightMap(heightMap, strength)
 	local imgData = heightMap:getData()

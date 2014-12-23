@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 local _PACKAGE = (...):match("^(.+)[%./][^%./]+") or ""
-local class = require(_PACKAGE..'/class')
 local util = require(_PACKAGE..'/util')
 
-local post_shader = class()
+local post_shader = {}
+post_shader.__index = post_shader
 
 local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders")
 local shaders = {}
@@ -44,18 +44,16 @@ for i,v in ipairs(files) do
   end
 end
 
-function post_shader:init()
-  self:refreshScreenSize()
-  self.effects = {}
+local function new()
+  local obj = {effects = {}}
+  local class = setmetatable(obj, post_shader)
+  class:refreshScreenSize()
+  return class
 end
 
 function post_shader:refreshScreenSize(w, h)
   w, h = w or love.window.getWidth(), h or love.window.getHeight()
-
   self.back_buffer   = love.graphics.newCanvas(w, h)
-
-  self.w = w
-  self.h = h
 end
 
 function post_shader:addEffect(shaderName, ...)
@@ -116,7 +114,6 @@ function post_shader:drawTiltShift(canvas, args)
 end
 
 function post_shader:drawShader(shaderName, canvas, args)
-  local w, h = love.graphics.getWidth(), love.graphics.getHeight()
   local current_arg = 1
 
   local effect = shaders[shaderName]
@@ -164,4 +161,4 @@ function process_palette(palette)
   return palette
 end
 
-return post_shader
+return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})
