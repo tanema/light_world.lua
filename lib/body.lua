@@ -615,11 +615,17 @@ function body:drawMaterial()
   end
 end
 
+function body:drawStencil()
+  if not self.refraction and not self.reflection and not self.castsNoShadow then
+    love.graphics.draw(self.img, self.x - self.ix, self.y - self.iy)
+  end
+end
+
 function body:drawShadow(light)
   if self.castsNoShadow or (self.zheight - light.z) > 0 then
     return
   end
-
+   
   love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
   if self.shadowType == "rectangle" or self.shadowType == "polygon" then
     self:drawPolyShadow(light)

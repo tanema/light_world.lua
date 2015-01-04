@@ -31,9 +31,10 @@ local PostShader = require(_PACKAGE..'postshader')
 local light_world = {}
 light_world.__index = light_world
 
-light_world.shadowShader       = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
-light_world.refractionShader   = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
-light_world.reflectionShader   = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
+light_world.image_mask       = love.graphics.newShader(_PACKAGE.."/shaders/image_mask.glsl")
+light_world.shadowShader     = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
+light_world.refractionShader = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
+light_world.reflectionShader = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
 
 local function new(options)
   local obj = {}
@@ -122,17 +123,27 @@ function light_world:drawShadows(l,t,w,h,s)
   self.shadow_buffer:clear()
   for i = 1, #self.lights do
     local light = self.lights[i]
-    if self.lights[i]:isVisible() then
+    if light:isVisible() then
       -- create shadow map for this light
       self.shadowMap:clear()
       util.drawto(self.shadowMap, l, t, s, function()
+        --I dont know if it uses both or just calls both
         love.graphics.setStencil(function()
           local angle = light.direction - (light.angle / 2.0)
           love.graphics.arc("fill", light.x, light.y, light.range, angle, angle + light.angle)
         end)
+        love.graphics.setInvertedStencil(function()
+          love.graphics.setShader(self.image_mask)
+          for k = 1, #self.bodies do
+            if self.bodies[k]:inLightRange(light) and self.bodies[k]:isVisible() then
+              self.bodies[k]:drawStencil()
+            end
+          end
+          love.graphics.setShader()
+        end)
         for k = 1, #self.bodies do
-          if self.bodies[k]:inLightRange(self.lights[i]) and self.bodies[k]:isVisible() then
-            self.bodies[k]:drawShadow(self.lights[i])
+          if self.bodies[k]:inLightRange(light) and self.bodies[k]:isVisible() then
+            self.bodies[k]:drawShadow(light)
           end
         end
       end)
