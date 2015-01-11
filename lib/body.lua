@@ -649,7 +649,7 @@ function body:drawPolyShadow(light)
 
   for i = 1, #self.data, 2 do
     local vertex = vector(self.data[i], self.data[i + 1])
-    local nextVertex = vector(self.data[(i + 2) % 8], self.data[(i + 2) % 8 + 1])
+    local nextVertex = vector(self.data[(i + 2) % #self.data], self.data[(i + 2) % #self.data + 1])
     local startToEnd = nextVertex - vertex
     if vector(startToEnd.y, -startToEnd.x) * (vertex - lightPosition) > 0 then
       local point1 = (lh - (vertex * light.z))/height_diff
