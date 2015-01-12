@@ -298,15 +298,23 @@ function light_world:newBody(type, ...)
   return self.bodies[#self.bodies]
 end
 
+function light_world:is_body(target)
+  return target.type ~= nil
+end
+
+function light_world:is_light(target)
+  return target.angle ~= nil
+end
+
 function light_world:remove(to_kill)
-  if to_kill:is_a(Body) then
+  if self:is_body(to_kill) then
     for i = 1, #self.bodies do
       if self.bodies[i] == to_kill then
         table.remove(self.bodies, i)
         return true
       end
     end
-  elseif to_kill:is_a(Light) then
+  elseif self:is_light(to_kill) then
     for i = 1, #self.lights do
       if self.lights[i] == to_kill then
         table.remove(self.lights, i)
