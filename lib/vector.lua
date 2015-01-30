@@ -43,4 +43,23 @@ function vector:dist(b)
   return math.sqrt(math.pow(b.x - self.x, 2) + math.pow(b.y-self.y, 2))
 end
 
+function vector:unpack()
+  return self.x, self.y
+end
+
+function vector:rotateAround(origin, angle)
+  local s = math.sin(angle)
+  local c = math.cos(angle)
+  -- translate point back to origin
+  self.x = self.x - origin.x
+  self.y = self.y - origin.y
+  -- rotate point
+  self.x = (self.x * c - self.y * s)
+  self.y = (self.x * s + self.y * c)
+  -- translate point back 
+  self.x = self.x + origin.x
+  self.y = self.y + origin.y
+  return self
+end
+
 return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})

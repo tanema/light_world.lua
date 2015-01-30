@@ -86,12 +86,6 @@ function love.keypressed(k)
 		if colorAberration == 0.0 then
 			colorAberration = 3.0
 		end
-	elseif k == "f" then
-    lightWorld:remove(lightMouse)
-	elseif k == "g" then
-    lightWorld:remove(circleTest)
-	elseif k == "d" then
-    lightWorld:remove(rectangleTest)
   end
 end
 
@@ -120,6 +114,17 @@ function love.update(dt)
     polygonTest:move(-(dt * 200), 0)
 	elseif love.keyboard.isDown("l") then
     polygonTest:move((dt * 200), 0)
+  end
+
+	if love.keyboard.isDown("f") then
+    polygonTest:scale(0.005)
+	elseif love.keyboard.isDown("a") then
+    polygonTest:scale(-0.005)
+  end
+	if love.keyboard.isDown("s") then
+    polygonTest:rotate(0.05)
+	elseif love.keyboard.isDown("d") then
+    polygonTest:rotate(-0.05) 
   end
 
 	if love.keyboard.isDown("-") then
