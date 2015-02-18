@@ -117,30 +117,22 @@ end
 -- refresh
 function body:refresh()
   if self.shadowType == 'polygon' and self:has_changed() then
-    local dx, dy, dr, dsx, dsy = self:changes()
-    if self:position_changed() then
-      for i = 1, #self.data, 2 do
-        self.data[i], self.data[i+1] = self.data[i] + dx, self.data[i+1] + dy
-      end
-    end
-    if self:rotation_changed() then
-      local center = vector(self.x, self.y)
-      for i = 1, #self.data, 2 do
-        self.data[i], self.data[i+1] = vector(self.data[i], self.data[i+1]):rotateAround(center, dr):unpack()
-      end
-    end
-    if self:scale_changed() then
-      for i = 1, #self.data, 2 do
-        self.data[i] = self.x + (self.data[i] - self.x) + ((self.data[i] - self.x) * dsx)
-        self.data[i+1] = self.y + (self.data[i+1] - self.y) + ((self.data[i+1] - self.y) * dsy)
-      end
+    self.data = {unpack(self.unit_data)}
+    local center = vector(self.x, self.y)
+    for i = 1, #self.data, 2 do
+      local point = vector(self.data[i], self.data[i+1])
+      point = point:rotate(self.rotation)
+      point = point:scale(self.scalex, self.scaley)
+      self.data[i], self.data[i+1] = (point + center):unpack()
     end
     self:commit_changes()
   end
 end
 
 function body:has_changed()
-  return self:position_changed() or self:rotation_changed() or self:scale_changed()
+  return self:position_changed() or 
+          self:rotation_changed() or 
+          self:scale_changed()
 end
 
 function body:position_changed()
@@ -155,14 +147,6 @@ end
 function body:scale_changed()
   return self.old_scalex ~= self.scalex or
          self.old_scaley ~= self.scaley
-end
-
-function body:changes()
-  return self.x - self.old_x, 
-         self.y - self.old_y,
-         self.rotation - self.old_rotation,
-         self.scalex - self.old_scalex,
-         self.scaley - self.old_scaley
 end
 
 function body:commit_changes()
@@ -331,28 +315,37 @@ end
 
 -- set polygon data
 function body:setPoints(...)
-  local points = {...}
-  self.x, self.y, self.width, self.height = points[1], points[2], 0, 0
-  for i = 1, #points, 2 do
-    local px, py = points[i], points[i+1]
+  self.unit_data = {...}
+
+  --calculate l,r,t,b
+  self.x, self.y, self.width, self.height = self.unit_data[1], self.unit_data[2], 0, 0
+  for i = 1, #self.unit_data, 2 do
+    local px, py = self.unit_data[i], self.unit_data[i+1]
     if px < self.x then self.x = px end
     if py < self.y then self.y = py end
     if px > self.width then self.width = px end
     if py > self.height then self.height = py end
   end
+
   -- normalize width and height
   self.width = self.width - self.x
   self.height = self.height - self.y
-  for i = 1, #points, 2 do
-    points[i], points[i+1] = points[i] - self.x, points[i+1] - self.y
+  for i = 1, #self.unit_data, 2 do
+    self.unit_data[i], self.unit_data[i+1] = self.unit_data[i] - self.x, self.unit_data[i+1] - self.y
   end
   self.x = self.x + (self.width * 0.5)
   self.y = self.y + (self.height * 0.5)
 
   local poly_canvas = love.graphics.newCanvas(self.width, self.height)
   util.drawto(poly_canvas, 0, 0, 1, function()
-    love.graphics.polygon('fill', points) 
+    love.graphics.polygon('fill', self.unit_data) 
   end)
+
+  --normalize points to be around the center x y
+  for i = 1, #self.unit_data, 2 do
+    self.unit_data[i], self.unit_data[i+1] = self.unit_data[i] - self.width * 0.5, self.unit_data[i+1] - self.height * 0.5
+  end
+
   self.img = love.graphics.newImage(poly_canvas:getImageData()) 
   self.imgWidth = self.img:getWidth()
   self.imgHeight = self.img:getHeight()

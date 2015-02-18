@@ -47,19 +47,13 @@ function vector:unpack()
   return self.x, self.y
 end
 
-function vector:rotateAround(origin, angle)
-  local s = math.sin(angle)
-  local c = math.cos(angle)
-  -- translate point back to origin
-  self.x = self.x - origin.x
-  self.y = self.y - origin.y
-  -- rotate point
-  self.x = (self.x * c - self.y * s)
-  self.y = (self.x * s + self.y * c)
-  -- translate point back 
-  self.x = self.x + origin.x
-  self.y = self.y + origin.y
-  return self
+function vector:rotate(theta)
+  return new((math.cos(theta) * self.x) - (math.sin(theta) * self.y),
+            (math.sin(theta) * self.x) + (math.cos(theta) * self.y))
+end
+
+function vector:scale(sx, sy)
+  return new(self.x * sx, self.y * sy)
 end
 
 return setmetatable({new = new}, {__call = function(_, ...) return new(...) end})
