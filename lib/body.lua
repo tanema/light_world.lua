@@ -303,7 +303,7 @@ end
 
 -- get radius
 function body:getRadius()
-  return self.radius
+  return self.radius * self.scalex
 end
 
 -- set radius
@@ -547,9 +547,11 @@ end
 function body:inRange(l, t, w, h, s)
   local radius
   if self.type == 'circle' then
-    radius = self.radius
+    radius = self.radius * self.scalex
   else
-    radius = (self.width > self.height and self.width or self.height)
+    local sw = (self.width * self.scalex)
+    local sh = (self.height * self.scaley)
+    radius = (sw > sh and sw or sh)
   end
     
   local bx, by, bw, bh = self.x - radius, self.y - radius, radius * 2, radius * 2
@@ -576,7 +578,7 @@ function body:drawGlow()
   love.graphics.setColor(self.glowRed * self.glowStrength, self.glowGreen * self.glowStrength, self.glowBlue * self.glowStrength)
 
   if self.type == "circle" then
-    love.graphics.circle("fill", self.x, self.y, self.radius)
+    love.graphics.circle("fill", self.x, self.y, self.radius * self.scalex)
   elseif self.type == "polygon" then
     love.graphics.polygon("fill", unpack(self.data))
   elseif (self.type == "image" or self.type == "animation") and self.img then
@@ -614,7 +616,7 @@ function body:drawRefraction()
 
   if not self.refractive then
     if self.type == "circle" then
-      love.graphics.circle("fill", self.x, self.y, self.radius)
+      love.graphics.circle("fill", self.x, self.y, self.radius * self.scalex)
     elseif self.type == "polygon" then
       love.graphics.polygon("fill", unpack(self.data))
     elseif self.type == "image" and self.img then
@@ -715,23 +717,24 @@ function body:drawCircleShadow(light)
   local lightPosition = vector(light.x, light.y)
   local lh = lightPosition * self.zheight
   local height_diff = (self.zheight - light.z) 
+  local radius = self.radius * self.scalex
   if height_diff == 0 then -- prevent inf
     height_diff = -0.001
   end
 
   local angle = math.atan2(light.x - selfPos.x, selfPos.y - light.y) + math.pi / 2
-  local point1 = vector(selfPos.x + math.sin(angle) * self.radius,
-                        selfPos.y - math.cos(angle) * self.radius)
-  local point2 = vector(selfPos.x - math.sin(angle) * self.radius,
-                        selfPos.y + math.cos(angle) * self.radius)
+  local point1 = vector(selfPos.x + math.sin(angle) * radius,
+                        selfPos.y - math.cos(angle) * radius)
+  local point2 = vector(selfPos.x - math.sin(angle) * radius,
+                        selfPos.y + math.cos(angle) * radius)
   local point3 = (lh - (point1 * light.z))/height_diff
   local point4 = (lh - (point2 * light.z))/height_diff
   
-  local radius = point3:dist(point4)/2
+  local shadow_radius = point3:dist(point4)/2
   local circleCenter = (point3 + point4)/2
 
-  if lightPosition:dist(selfPos) <= self.radius then
-    love.graphics.circle("fill", circleCenter.x, circleCenter.y, radius)
+  if lightPosition:dist(selfPos) <= radius then
+    love.graphics.circle("fill", circleCenter.x, circleCenter.y, shadow_radius)
   else
     love.graphics.polygon("fill", point1.x, point1.y, 
                                   point2.x, point2.y, 
@@ -741,9 +744,9 @@ function body:drawCircleShadow(light)
       local angle1 = math.atan2(point3.y - circleCenter.y, point3.x - circleCenter.x)
       local angle2 = math.atan2(point4.y - circleCenter.y, point4.x - circleCenter.x)
       if angle1 < angle2 then
-        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1, angle2)
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, shadow_radius, angle1, angle2)
       else
-        love.graphics.arc("fill", circleCenter.x, circleCenter.y, radius, angle1 - math.pi, angle2 - math.pi)
+        love.graphics.arc("fill", circleCenter.x, circleCenter.y, shadow_radius, angle1 - math.pi, angle2 - math.pi)
       end
     end
   end

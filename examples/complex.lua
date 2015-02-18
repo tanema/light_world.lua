@@ -162,6 +162,11 @@ function love.update(dt)
 
 	tileX = tileX + dt * 32.0
 	tileY = tileY + dt * 8.0
+  for i = 1, phyCnt do		
+		if phyLight[i]:getType() == "refraction" then		
+			phyLight[i]:setNormalTileOffset(tileX, tileY)		
+		end		
+  end
 
 	-- draw shader
 	if colorAberration > 0.0 then
