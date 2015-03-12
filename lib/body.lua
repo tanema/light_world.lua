@@ -497,20 +497,19 @@ function body:setShadowType(type, ...)
     self.ox = args[2] or 0
     self.oy = args[3] or 0
   elseif self.shadowType == "rectangle" then
-    self.shadowType = "polygon"
-    self.width = args[1] or 64
-    self.height = args[2] or 64
-    self.ox = args[3] or self.width * 0.5
-    self.oy = args[4] or self.height * 0.5
-
-    self.data = {
+    self.ox = args[3] or args[1] * 0.5
+    self.oy = args[4] or args[2] * 0.5
+    self:setShadowType('polygon',
       self.x - self.ox,  self.y - self.oy,
-      self.x - self.ox + self.width, self.y - self.oy,
-      self.x - self.ox + self.width, self.y - self.oy + self.height,
-      self.x - self.ox,  self.y - self.oy + self.height
-    }
+      self.x - self.ox + args[1], self.y - self.oy,
+      self.x - self.ox + args[1], self.y - self.oy + args[2],
+      self.x - self.ox,  self.y - self.oy + args[2]
+    )
   elseif self.shadowType == "polygon" then
-    self.data = args or {0, 0, 0, 0, 0, 0}
+    if not self.unit_data then
+      self:setPoints(...)
+    end
+    self:refresh()
   elseif self.shadowType == "image" then
     if self.img then
       self.width = self.imgWidth
