@@ -346,17 +346,19 @@ function body:setPoints(...)
     self.unit_data[i], self.unit_data[i+1] = self.unit_data[i] - self.width * 0.5, self.unit_data[i+1] - self.height * 0.5
   end
 
-  self.img = love.graphics.newImage(poly_canvas:getImageData()) 
-  self.imgWidth = self.img:getWidth()
-  self.imgHeight = self.img:getHeight()
-  self.ix = self.imgWidth * 0.5
-  self.iy = self.imgHeight * 0.5
-  self:generateNormalMapFlat("top")
+  if not self.img then
+    self.img = love.graphics.newImage(poly_canvas:getImageData()) 
+    self.imgWidth = self.img:getWidth()
+    self.imgHeight = self.img:getHeight()
+    self.ix = self.imgWidth * 0.5
+    self.iy = self.imgHeight * 0.5
+    self:generateNormalMapFlat("top")
+  end
   --wrapping with polygon normals causes edges to show 
   --also we do not need wrapping for this default normal map
   self.normal:setWrap("clamp", "clamp")
-
-  self:setShadowType('polygon', ...)
+  self.shadowType = "polygon"
+  self:refresh()
 end
 
 -- get polygon data
@@ -497,19 +499,20 @@ function body:setShadowType(type, ...)
     self.ox = args[2] or 0
     self.oy = args[3] or 0
   elseif self.shadowType == "rectangle" then
-    self.ox = args[3] or args[1] * 0.5
-    self.oy = args[4] or args[2] * 0.5
-    self:setShadowType('polygon',
+    self.shadowType = "polygon"
+    local width = args[1] or 64
+    local height = args[2] or 64
+    self.ox = args[3] or width * 0.5
+    self.oy = args[4] or height * 0.5
+
+    self:setPoints(
       self.x - self.ox,  self.y - self.oy,
-      self.x - self.ox + args[1], self.y - self.oy,
-      self.x - self.ox + args[1], self.y - self.oy + args[2],
-      self.x - self.ox,  self.y - self.oy + args[2]
+      self.x - self.ox + width, self.y - self.oy,
+      self.x - self.ox + width, self.y - self.oy + height,
+      self.x - self.ox,  self.y - self.oy + height
     )
   elseif self.shadowType == "polygon" then
-    if not self.unit_data then
-      self:setPoints(...)
-    end
-    self:refresh()
+    self:setPoints(args)
   elseif self.shadowType == "image" then
     if self.img then
       self.width = self.imgWidth
