@@ -420,7 +420,7 @@ function love.keypressed(k, u)
 
 	elseif k == "f11" then
 		physicWorld:destroy()
-		lightWorld:clearBodys()
+		lightWorld:clearBodies()
 		initScene()
 	elseif k == "f12" then
 		lightWorld:clearLights()
