@@ -44,7 +44,7 @@ local function new(id, type, ...)
     util.drawto(circle_canvas, 0, 0, 1, function()
       love.graphics.circle('fill', args[3], args[3], args[3]) 
     end)
-    obj.img = love.graphics.newImage(circle_canvas:getImageData()) 
+    obj.img = love.graphics.newImage(circle_canvas:newImageData()) 
     obj.imgWidth = obj.img:getWidth()
     obj.imgHeight = obj.img:getHeight()
     obj.ix = obj.imgWidth * 0.5
@@ -347,7 +347,7 @@ function body:setPoints(...)
   end
 
   if not self.img then
-    self.img = love.graphics.newImage(poly_canvas:getImageData()) 
+    self.img = love.graphics.newImage(poly_canvas:newImageData()) 
     self.imgWidth = self.img:getWidth()
     self.imgHeight = self.img:getHeight()
     self.ix = self.imgWidth * 0.5
@@ -434,7 +434,8 @@ function body:setNormalMap(normal, width, height, nx, ny)
       {self.normalWidth, self.normalHeight, self.normalWidth / self.normal:getWidth(), self.normalHeight / self.normal:getHeight()},
       {0.0, self.normalHeight, 0.0, self.normalHeight / self.normal:getHeight()}
     }
-    self.normalMesh = love.graphics.newMesh(self.normalVert, self.normal, "fan")
+    self.normalMesh = love.graphics.newMesh(self.normalVert, "fan")
+    self.normalMesh:setTexture(self.normal)
   else
     self.normalMesh = nil
   end

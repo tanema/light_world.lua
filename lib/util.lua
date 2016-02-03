@@ -1,6 +1,8 @@
 local util = {}
+--TODO: the whole stencil/canvas system should be reviewed since it has been changed in a naive way
 
 function util.process(canvas, options)
+  --TODO: now you cannot draw a canvas to itself  
   util.drawCanvasToCanvas(canvas, canvas, options)
 end
 
@@ -15,17 +17,21 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
       love.graphics.setShader(options["shader"])
     end
     if options["stencil"] then
-      love.graphics.setStencil(options["stencil"])
+      love.graphics.stencil(options["stencil"])
     end
     if options["istencil"] then
-      love.graphics.setInvertedStencil(options["istencil"])
+      love.graphics.stencil(options["istencil"])
+      --TODO: invert map
     end
     if options["color"] then
       love.graphics.setColor(unpack(options["color"]))
     else
       love.graphics.setColor(255,255,255)
     end
+    --TODO: not really sure if this is right
+    love.graphics.setCanvas()
     love.graphics.draw(canvas,0,0)
+    love.graphics.setCanvas(canvas)
     if options["blendmode"] then
       love.graphics.setBlendMode("alpha")
     end
@@ -33,10 +39,12 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
       love.graphics.setShader()
     end
     if options["stencil"] then
-      love.graphics.setStencil()
+      --TODO: check if commenting this is really ok
+      --love.graphics.stencil()
     end
     if options["istencil"] then
-      love.graphics.setInvertedStencil()
+      --TODO: check if commenting this is really ok
+      --love.graphics.setInvertedStencil()
     end
   end)
 end

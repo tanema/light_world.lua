@@ -40,7 +40,7 @@ function love.load()
 	love.graphics.setFont(font)
 
 	-- set background
-	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth() + 32, love.window.getHeight() + 24, 32, 24)
+	quadScreen = love.graphics.newQuad(0, 0, love.graphics.getWidth() + 32, love.graphics.getHeight() + 24, 32, 24)
 	imgFloor = love.graphics.newImage("examples/gfx/floor.png")
 	imgFloor:setWrap("repeat", "repeat")
 

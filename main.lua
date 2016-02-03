@@ -5,7 +5,6 @@
 -- All examples in one application! Yaay!
 --
 -- Updated by Dresenpai
-
 require "lib/postshader"
 local LightWorld = require "lib"
 local ProFi = require 'examples.vendor.ProFi'
@@ -17,8 +16,8 @@ exf.available = {}
 
 function love.load()
   exf.list = List:new()
-  exf.smallfont = love.graphics.newFont(love._vera_ttf,12)
-  exf.bigfont = love.graphics.newFont(love._vera_ttf, 24)
+  exf.smallfont = love.graphics.newFont(12)
+  exf.bigfont = love.graphics.newFont(24)
   exf.list.font = exf.smallfont
 
   exf.bigball = love.graphics.newImage("examples/gfx/love-big-ball.png")
@@ -65,7 +64,7 @@ function exf.draw()
     love.graphics.setBackgroundColor(0, 0, 0)
 
     love.graphics.setColor(48, 156, 225)
-    love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
     love.graphics.setColor(255, 255, 255, 191)
     love.graphics.setFont(exf.bigfont)
@@ -281,7 +280,7 @@ end
 
 function List:mousepressed(mx, my, b)
   if self:hasBar() then
-	  if b == "l" then
+	  if b == 1 then
 	    local x, y, w, h = self:getBarRect()
 	    if inside(mx, my, x, y, w, h) then
 	      self.bar_lock = { x = mx, y = my }
@@ -304,7 +303,7 @@ function List:mousepressed(mx, my, b)
 	  end
   end
 
-  if b == "l" and inside(mx, my, self.x+2, self.y+1, self.width-3, self.height-3) then
+  if b == 1 and inside(mx, my, self.x+2, self.y+1, self.width-3, self.height-3) then
     local tx, ty = mx-self.x, my + self:getOffset() - self.y
     local index = math.floor((ty/self.sum_item_height)*self.items.n)
     local i = self.items[index+1]
@@ -317,7 +316,7 @@ end
 
 function List:mousereleased(x, y, b)
   if self:hasBar() then
-	  if b == "l" then
+	  if b == 1 then
 	    self.bar_lock = nil
 	  end
   end
