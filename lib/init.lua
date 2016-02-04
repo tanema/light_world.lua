@@ -107,9 +107,10 @@ end
 
 -- draw normal shading
 function light_world:drawShadows(l,t,w,h,s)
-  -- create normal map
+  love.graphics.setCanvas( self.normalMap )
+  love.graphics.clear()
+  love.graphics.setCanvas()
   util.drawto(self.normalMap, l, t, s, function()
-    love.graphics.clear()
     for i = 1, #self.bodies do
       if self.bodies[i]:isVisible() then
         self.bodies[i]:drawNormal()
@@ -136,9 +137,9 @@ function light_world:drawShadows(l,t,w,h,s)
           local angle = light.direction - (light.angle / 2.0)
           love.graphics.arc("fill", light.x, light.y, light.range, angle, angle + light.angle)
         end)
+        love.graphics.setStencilTest("greater",0)
         love.graphics.stencil(function()
           love.graphics.setShader(self.image_mask)
-          -- TODO:invert mask
           for k = 1, #self.bodies do
             if self.bodies[k]:inLightRange(light) and self.bodies[k]:isVisible() then
               self.bodies[k]:drawStencil()
@@ -146,6 +147,7 @@ function light_world:drawShadows(l,t,w,h,s)
           end
           love.graphics.setShader()
         end)
+        love.graphics.setStencilTest("equal", 0)
         for k = 1, #self.bodies do
           if self.bodies[k]:inLightRange(light) and self.bodies[k]:isVisible() then
             self.bodies[k]:drawShadow(light)
@@ -178,6 +180,7 @@ function light_world:drawShadows(l,t,w,h,s)
 
   self.post_shader:drawBlur(self.shadow_buffer, {self.shadowBlur})
   util.drawCanvasToCanvas(self.shadow_buffer, self.render_buffer, {blendmode = "multiply"})
+  love.graphics.setStencilTest()
 end
 
 -- draw material

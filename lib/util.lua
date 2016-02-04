@@ -18,33 +18,29 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
     end
     if options["stencil"] then
       love.graphics.stencil(options["stencil"])
+      love.graphics.setStencilTest("greater",0)
     end
     if options["istencil"] then
       love.graphics.stencil(options["istencil"])
-      --TODO: invert map
+      love.graphics.setStencilTest("equal", 0)
     end
     if options["color"] then
       love.graphics.setColor(unpack(options["color"]))
     else
       love.graphics.setColor(255,255,255)
     end
-    --TODO: not really sure if this is right
-    love.graphics.setCanvas()
-    love.graphics.draw(canvas,0,0)
-    love.graphics.setCanvas(canvas)
+    if love.graphics.getCanvas() ~= canvas then
+      love.graphics.draw(canvas,0,0)
+    end
     if options["blendmode"] then
       love.graphics.setBlendMode("alpha")
     end
     if options["shader"] then
       love.graphics.setShader()
     end
-    if options["stencil"] then
-      --TODO: check if commenting this is really ok
-      --love.graphics.stencil()
-    end
-    if options["istencil"] then
-      --TODO: check if commenting this is really ok
+    if options["stencil"] or options["istencil"] then
       --love.graphics.setInvertedStencil()
+      love.graphics.setStencilTest()
     end
   end)
 end
