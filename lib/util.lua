@@ -3,7 +3,9 @@ local util = {}
 
 function util.process(canvas, options)
   --TODO: now you cannot draw a canvas to itself  
-  util.drawCanvasToCanvas(canvas, canvas, options)
+  temp = love.graphics.newCanvas()
+  util.drawCanvasToCanvas(canvas, temp, options)
+  util.drawCanvasToCanvas(temp, canvas, options)
 end
 
 function util.drawCanvasToCanvas(canvas, other_canvas, options)
