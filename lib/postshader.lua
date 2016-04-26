@@ -52,7 +52,7 @@ local function new()
 end
 
 function post_shader:refreshScreenSize(w, h)
-  w, h = w or love.window.getWidth(), h or love.window.getHeight()
+  w, h = w or love.graphics.getWidth(), h or love.graphics.getHeight()
   self.back_buffer   = love.graphics.newCanvas(w, h)
 end
 
