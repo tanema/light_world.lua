@@ -525,8 +525,9 @@ function body:setShadowType(type, ...)
         {0.0, self.height, 0.0, 1.0}
       }
       if not self.shadowMesh then
-        self.shadowMesh = love.graphics.newMesh(self.shadowVert, self.img, "fan")
-        self.shadowMesh:setVertexColors(true)
+        self.shadowMesh = love.graphics.newMesh(self.shadowVert)
+        self.shadowMesh:setTexture(self.img)
+        self.shadowMesh:setAttributeEnabled("VertexColor", true)
       end
     else
       self.width = 64

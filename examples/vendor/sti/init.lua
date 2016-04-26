@@ -1,90 +1,53 @@
---[[
-------------------------------------------------------------------------------
-Simple Tiled Implementation is licensed under the MIT Open Source License.
-(http://www.opensource.org/licenses/mit-license.html)
-------------------------------------------------------------------------------
-
-Copyright (c) 2014 Landon Manning - LManning17@gmail.com - LandonManning.com
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-]]--
+--- Simple and fast Tiled map loader and renderer.
+-- @module sti
+-- @author Landon Manning
+-- @copyright 2015
+-- @license MIT/X11
 
 local STI = {
-	_LICENSE = "STI is distributed under the terms of the MIT license. See LICENSE.md.",
-	_URL = "https://github.com/karai17/Simple-Tiled-Implementation",
-	_VERSION = "0.9.4",
-	_DESCRIPTION = "Simple Tiled Implementation is a Tiled Map Editor library designed for the *awesome* LÖVE framework."
+	_LICENSE     = "MIT/X11",
+	_URL         = "https://github.com/karai17/Simple-Tiled-Implementation",
+	_VERSION     = "0.14.1.12",
+	_DESCRIPTION = "Simple Tiled Implementation is a Tiled Map Editor library designed for the *awesome* LÖVE framework.",
+	cache        = {}
 }
 
-local path = ... .. "." -- lol
-local Map = require(path .. "map")
-local framework
+local path = (...):gsub('%.init$', '') .. "."
+local Map  = require(path .. "map")
 
-if love then
-	framework = require(path .. "framework.love")
-elseif corona then -- I don't think this works
-	framework = require(path .. "framework.corona")
-else
-	framework = require(path .. "framework.pure")
-end
+--- Instance a new map.
+-- @param path Path to the map file.
+-- @param plugins A list of plugins to load.
+-- @param ox Offset of map on the X axis (in pixels)
+-- @param oy Offset of map on the Y axis (in pixels)
+-- @return table The loaded Map.
+function STI.new(map, plugins, ox, oy)
+	-- Check for valid map type
+	local ext = map:sub(-4, -1)
+	assert(ext == ".lua", string.format(
+		"Invalid file type: %s. File must be of type: lua.",
+		ext
+	))
 
-function STI.new(map)
-	map = map .. ".lua"
-	
 	-- Get path to map
 	local path = map:reverse():find("[/\\]") or ""
 	if path ~= "" then
 		path = map:sub(1, 1 + (#map - path))
 	end
-	
+
 	-- Load map
-	map = framework.load(map)
+	map = love.filesystem.load(map)
 	setfenv(map, {})
 	map = setmetatable(map(), {__index = Map})
-	
-	map:init(path, framework)
-	
+
+	map:init(STI, path, plugins, ox, oy)
+
 	return map
 end
 
--- http://wiki.interfaceware.com/534.html
-function string.split(s, d)
-	local t = {}
-	local i = 0
-	local f
-	local match = '(.-)' .. d .. '()'
-	
-	if string.find(s, d) == nil then
-		return {s}
-	end
-	
-	for sub, j in string.gmatch(s, match) do
-		i = i + 1
-		t[i] = sub
-		f = j
-	end
-	
-	if i ~= 0 then
-		t[i+1] = string.sub(s, f)
-	end
-	
-	return t
+--- Flush image cache.
+function STI:flush()
+	self.cache = {}
 end
 
 return STI

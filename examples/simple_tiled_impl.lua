@@ -17,7 +17,7 @@ function love.load()
     shadowBlur = 0.0
   })
 
-	map = sti.new("examples/gfx/map")
+	map = sti.new("examples/gfx/map.lua")
 	image_normal = love.graphics.newImage("examples/gfx/border_NRM.png")
 
 	-- create light

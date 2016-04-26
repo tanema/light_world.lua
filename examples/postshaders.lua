@@ -9,12 +9,12 @@ function love.load()
   colorAberration = 0.0
 	-- load images
 	image = love.graphics.newImage("examples/gfx/machine2.png")
-	quadScreen = love.graphics.newQuad(0, 0, love.window.getWidth() + 32, love.window.getHeight() + 24, 32, 24)
+	quadScreen = love.graphics.newQuad(0, 0, love.graphics.getWidth() + 32, love.graphics.getHeight() + 24, 32, 24)
 	imgFloor = love.graphics.newImage("examples/gfx/floor.png")
 	imgFloor:setWrap("repeat", "repeat")
 
   post_shader = PostShader()
-  render_buffer = love.graphics.newCanvas(love.window.getWidth(), love.window.getHeight())
+  render_buffer = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
 end
 
 function love.keypressed(k)
@@ -92,9 +92,9 @@ end
 
 function love.draw()
   local w, h = love.graphics.getWidth(), love.graphics.getHeight()
-  render_buffer:clear()
   love.graphics.push()
     love.graphics.setCanvas(render_buffer)
+    love.graphics.clear()
     love.graphics.translate(x, y)
     love.graphics.scale(scale)
 
