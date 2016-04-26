@@ -2,6 +2,8 @@
 
   This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
 only it has been largely refactored and edited to allow for scaling and proper translation.  
+
+*Supports love 0.10.1*
  
 ## Installation
    
