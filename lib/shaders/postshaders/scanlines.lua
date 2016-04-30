@@ -1,3 +1,4 @@
+return [[//
 extern float strength = 2.0;
 extern float time = 0.0;
 
@@ -30,3 +31,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
 		return vec4(vec3(red * 0.75, green * 0.75, blue * 0.75) * brightness, 1.0);
 	}
 }
+]]

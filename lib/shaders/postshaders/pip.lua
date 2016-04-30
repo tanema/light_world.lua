@@ -1,3 +1,4 @@
+return [[//
 #define glarebasesize 0.896
 #define power 0.50
 extern float time;
@@ -12,7 +13,7 @@ float luminance(vec3 color)
 float scanline(float ypos)
 {
 
-	float c = mod(time * 3.0 + ypos * 5.0, 15.0);	
+	float c = mod(time * 3.0 + ypos * 5.0, 15.0);
 	return 1.0 - smoothstep(0.0, 1.0, c);
 }
 
@@ -35,7 +36,7 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texcoord, vec2 pixel_coords)
 		for (j = -1; j < 1; j++)
 		{
 			sum += Texel(texture, texcoord + vec2(-i, j)*glaresize) * power;
-			bum += Texel(texture, texcoord + vec2(j, i)*glaresize) * power;            
+			bum += Texel(texture, texcoord + vec2(j, i)*glaresize) * power;
 		}
 	}
 	
@@ -59,4 +60,4 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texcoord, vec2 pixel_coords)
 	
 	return finalcolor;
 }
-
+]]

@@ -1,3 +1,4 @@
+return [[//
 #define distortion 0.2
 vec2 radialDistortion(vec2 coord) {
   vec2 cc = coord - 0.5;
@@ -16,3 +17,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
   texcolor.a = 1.0;
   return texcolor;
 }
+]]

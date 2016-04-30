@@ -1,3 +1,4 @@
+return [[//
 /*
     Copyright (c) 2014 Tim Anema
     light shadow, shine and normal shader all in one
@@ -47,4 +48,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
     return pixel;
   }
 }
-
+]]

@@ -1,3 +1,4 @@
+return [[//
 extern vec2 redStrength = vec2(4.0, 3.0);
 extern vec2 greenStrength = vec2(-2.0, -1.0);
 extern vec2 blueStrength = vec2(1.0, -3.0);
@@ -10,3 +11,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 
 	return vec4(colRed, colGreen, colBlue, 1.0);
 }
+]]

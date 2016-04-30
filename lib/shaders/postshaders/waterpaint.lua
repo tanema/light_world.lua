@@ -1,22 +1,23 @@
+return [[//
 /*
      Themaister's Waterpaint shader
 
-     Placed in the public domain. 
+     Placed in the public domain.
 
      (From this thread: http://board.byuu.org/viewtopic.php?p=30483#p30483 
      PD declaration here: http://board.byuu.org/viewtopic.php?p=30542#p30542 )
-     
+
      modified by slime73 for use with love2d and mari0
 */
 
- 
+
 vec4 compress(vec4 in_color, float threshold, float ratio)
 {
 	vec4 diff = in_color - vec4(threshold);
 	diff = clamp(diff, 0.0, 100.0);
 	return in_color - (diff * (1.0 - 1.0/ratio));
 }
- 
+
 vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 {
 	float x = 0.5 * (1.0 / love_ScreenSize.x);
@@ -53,3 +54,4 @@ vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 	
 	return final;
 }
+]]

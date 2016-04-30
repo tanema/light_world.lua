@@ -1,3 +1,4 @@
+return [[//
 extern vec3 palette[4];
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
@@ -6,3 +7,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords){
 
 	return vec4(palette[index], 1.0);
 }
+]]

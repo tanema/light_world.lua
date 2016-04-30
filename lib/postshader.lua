@@ -31,15 +31,16 @@ local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders"
 local shaders = {}
 	
 for i,v in ipairs(files) do
-  local name = _PACKAGE.."/shaders/postshaders".."/"..v
+  local name = _PACKAGE.."/shaders/postshaders/"..v
+  local module = _PACKAGE..".shaders.postshaders."..v:gsub("%.lua","")
   if love.filesystem.isFile(name) then
     local str = love.filesystem.read(name)
-    local effect = love.graphics.newShader(name)
+    local effect = love.graphics.newShader(require(module))
     local defs = {}
     for vtype, extern in str:gmatch("extern (%w+) (%w+)") do
       defs[extern] = true
     end
-    local shaderName = name:match(".-([^\\|/]-[^%.]+)$"):gsub("%.glsl", "")
+    local shaderName = name:match(".-([^\\|/]-[^%.]+)$"):gsub("%.lua", "")
     shaders[shaderName] = {effect, defs}
   end
 end
