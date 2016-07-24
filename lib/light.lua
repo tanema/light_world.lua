@@ -49,7 +49,7 @@ function light:move(x, y, z)
   end
 end
 
--- get x
+-- get position
 function light:getPosition()
   return self.x, self.y, self.z
 end
@@ -59,6 +59,11 @@ function light:setColor(red, green, blue)
   self.red = red
   self.green = green
   self.blue = blue
+end
+
+-- get range
+function light:getRange()
+  return self.range
 end
 
 -- set range
