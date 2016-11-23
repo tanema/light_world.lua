@@ -7,8 +7,8 @@ local vector      = require(_PACKAGE..'/vector')
 local body        = {}
 body.__index = body
 
-body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
-body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
+body.glowShader     = love.graphics.newShader(require(_PACKAGE..".shaders.glow"))
+body.materialShader = love.graphics.newShader(require(_PACKAGE..".shaders.material"))
 
 local function new(id, type, ...)
 	local args = {...}

@@ -1,3 +1,4 @@
+return [[//
 /*
 	caligari's scanlines
 
@@ -13,7 +14,7 @@
 
 		http://board.byuu.org/viewtopic.php?p=36219#p36219
 
-		"As I said to Hyllian by PM, I'm fine with the GPL (not really a bi
+		"As I said to Hyllian by PM, I'm fine with the GPL (not really a big
 		deal...)"
    )
 */
@@ -155,3 +156,4 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texCoord, vec2 pixel_coords)
 
 	return clamp(GAMMA_OUT(color), 0.0, 1.0);
 }
+]]

@@ -1,3 +1,4 @@
+return [[//
 extern Image backBuffer;
 
 extern float refractionStrength = 1.0;
@@ -16,3 +17,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 		return vec4(0.0);
 	}
 }
+]]

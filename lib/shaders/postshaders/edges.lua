@@ -1,8 +1,9 @@
+return [[//
 /*
     Edge shader
     Author: Themaister
     License: Public domain.
-    
+
     modified by slime73 for use with love2d and mari0
 */
 
@@ -10,7 +11,7 @@ vec3 grayscale(vec3 color)
 {
 	return vec3(dot(color, vec3(0.3, 0.59, 0.11)));
 }
- 
+
 vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 {
 	vec4 texcolor = Texel(texture, tex);
@@ -35,5 +36,4 @@ vec4 effect(vec4 vcolor, Image texture, vec2 tex, vec2 pixel_coords)
 	vec4 final = vec4(5.0 * grayscale(abs(res - c11)), 1.0);
 	return clamp(final, 0.0, 1.0);
 }
-
-
+]]

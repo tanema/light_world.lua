@@ -1,3 +1,4 @@
+return [[//
 extern Image glowImage;
 extern float glowTime;
 
@@ -17,3 +18,4 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
 	
 	return vec4(Texel(texture, texture_coords).rgb * glowInfo.r, 1.0);
 }
+]]

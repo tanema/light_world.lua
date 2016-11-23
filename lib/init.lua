@@ -31,10 +31,10 @@ local PostShader = require(_PACKAGE..'postshader')
 local light_world = {}
 light_world.__index = light_world
 
-light_world.image_mask       = love.graphics.newShader(_PACKAGE.."/shaders/image_mask.glsl")
-light_world.shadowShader     = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
-light_world.refractionShader = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
-light_world.reflectionShader = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
+light_world.image_mask       = love.graphics.newShader(require(_PACKAGE.."shaders.image_mask"))
+light_world.shadowShader     = love.graphics.newShader(require(_PACKAGE.."shaders.shadow"))
+light_world.refractionShader = love.graphics.newShader(require(_PACKAGE.."shaders.refraction"))
+light_world.reflectionShader = love.graphics.newShader(require(_PACKAGE.."shaders.reflection"))
 
 local function new(options)
   local obj = {}
