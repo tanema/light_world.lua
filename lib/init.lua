@@ -157,7 +157,7 @@ function light_world:drawShadows(l,t,w,h,s)
       -- draw scene for this light using normals and shadowmap
       self.shadowShader:send('lightColor', {light.red / 255.0, light.green / 255.0, light.blue / 255.0})
       self.shadowShader:send("lightPosition", {(light.x + l/s) * s, (light.y + t/s) * s, (light.z * 10) / 255.0})
-      self.shadowShader:send('lightRange',{light.range * s})
+      self.shadowShader:send('lightRange',light.range * s)
       self.shadowShader:send("lightSmooth", light.smooth)
       self.shadowShader:send("lightGlow", {1.0 - light.glowSize, light.glowStrength})
       util.drawCanvasToCanvas(self.shadowMap, self.shadow_buffer, {
