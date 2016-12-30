@@ -8,7 +8,12 @@ function util.process(canvas, options)
   if not temp then
     temp = love.graphics.newCanvas()
   end
-  love.graphics.clearCanvas(temp)
+
+  local previousCanvas = love.graphics.getCanvas()
+  love.graphics.setCanvas(temp)
+  love.graphics.clear()
+  love.graphics.setCanvas(previousCanvas)
+
   util.drawCanvasToCanvas(canvas, temp, options)
   util.drawCanvasToCanvas(temp, canvas, options)
 end
