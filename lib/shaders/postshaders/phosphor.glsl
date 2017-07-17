@@ -94,22 +94,22 @@ vec4 grid_color( vec2 coords )
 vec2 onex = vec2( 1.0/love_ScreenSize.x, 0.0 );
 vec2 oney = vec2( 0.0, 1.0/love_ScreenSize.y );
 
-vec4 effect(vec4 vcolor, Image texture, vec2 texCoord, vec2 pixel_coords)
+vec4 effect(vec4 vcolor, Image texture, highp vec2 texCoord, vec2 pixel_coords)
 {
-	vec2 coords = (texCoord * love_ScreenSize.xy);
-	vec2 pixel_start = floor(coords);
+	highp vec2 coords = (texCoord * love_ScreenSize.xy);
+	highp vec2 pixel_start = floor(coords);
 	coords -= pixel_start;
-	vec2 pixel_center = pixel_start + vec2(0.5);
-	vec2 texture_coords = pixel_center / love_ScreenSize.xy;
+	highp vec2 pixel_center = pixel_start + vec2(0.5);
+	highp vec2 texture_coords = pixel_center / love_ScreenSize.xy;
 
-	vec4 color = vec4(0.0);
-	vec4 pixel;
-	vec3 centers = vec3(-0.25,-0.5,-0.75);
-	vec3 posx = vec3(coords.x);
-	vec3 hweight;
-	float vweight;
-	float dx,dy;
-	float w;
+	highp vec4 color = vec4(0.0);
+	highp vec4 pixel;
+	highp vec3 centers = vec3(-0.25,-0.5,-0.75);
+	highp vec3 posx = vec3(coords.x);
+	highp vec3 hweight;
+	highp float vweight;
+	highp float dx,dy;
+	highp float w;
 
 	float i,j;
 

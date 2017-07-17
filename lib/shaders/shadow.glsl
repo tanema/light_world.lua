@@ -32,7 +32,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
         pixel.rgb = lightColor * pow(att, lightSmooth);
       }
     } else {
-      vec3 normal = normalize(vec3(normalColor.r,invert_normal ? 1 - normalColor.g : normalColor.g, normalColor.b) * 2.0 - 1.0); 
+      vec3 normal = normalize(vec3(normalColor.r,invert_normal ? 1.0 - normalColor.g : normalColor.g, normalColor.b) * 2.0 - 1.0); 
       //on the normal map, draw normal shadows
       vec3 dir = vec3((lightPosition.xy - pixel_coords.xy) / love_ScreenSize.xy, lightPosition.z);
       dir.x *= love_ScreenSize.x / love_ScreenSize.y;
@@ -47,4 +47,3 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords) {
     return pixel;
   }
 }
-

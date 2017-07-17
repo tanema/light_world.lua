@@ -31,18 +31,18 @@ local PostShader = require(_PACKAGE..'postshader')
 local light_world = {}
 light_world.__index = light_world
 
-light_world.image_mask       = love.graphics.newShader(_PACKAGE.."/shaders/image_mask.glsl")
-light_world.shadowShader     = love.graphics.newShader(_PACKAGE.."/shaders/shadow.glsl")
-light_world.refractionShader = love.graphics.newShader(_PACKAGE.."shaders/refraction.glsl")
-light_world.reflectionShader = love.graphics.newShader(_PACKAGE.."shaders/reflection.glsl")
+light_world.image_mask       = util.loadShader(_PACKAGE.."/shaders/image_mask.glsl")
+light_world.shadowShader     = util.loadShader(_PACKAGE.."/shaders/shadow.glsl")
+light_world.refractionShader = util.loadShader(_PACKAGE.."/shaders/refraction.glsl")
+light_world.reflectionShader = util.loadShader(_PACKAGE.."/shaders/reflection.glsl")
 
 local function new(options)
   local obj = {}
 	obj.lights = {}
 	obj.bodies = {}
   obj.post_shader = PostShader()
-  
-  obj.l, obj.t, obj.s      =  0, 0, 1 
+
+  obj.l, obj.t, obj.s      =  0, 0, 1
 	obj.ambient              = {0, 0, 0}
 	obj.refractionStrength   = 8.0
 	obj.reflectionStrength   = 16.0
@@ -273,7 +273,7 @@ function light_world:clear()
   light_world:clearBodies()
 end
 
-function light_world:setTranslation(l, t, s) 
+function light_world:setTranslation(l, t, s)
   self.l, self.t, self.s = l or self.l, t or self.t, s or self.s
 end
 
@@ -296,13 +296,13 @@ function light_world:newCircle(...) return self:newBody("circle", ...) end
 function light_world:newPolygon(...) return self:newBody("polygon", ...) end
 function light_world:newImage(...) return self:newBody("image", ...) end
 
-function light_world:newRefraction(...) 
+function light_world:newRefraction(...)
   self.disableRefraction = false
-  return self:newBody("refraction", ...) 
+  return self:newBody("refraction", ...)
 end
-function light_world:newReflection(normal, ...) 
+function light_world:newReflection(normal, ...)
   self.disableReflection = false
-  return self:newBody("reflection", ...) 
+  return self:newBody("reflection", ...)
 end
 
 -- new body
