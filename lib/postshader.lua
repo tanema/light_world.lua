@@ -29,12 +29,12 @@ post_shader.__index = post_shader
 
 local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders")
 local shaders = {}
-	
+
 for i,v in ipairs(files) do
   local name = _PACKAGE.."/shaders/postshaders".."/"..v
   if love.filesystem.isFile(name) then
     local str = love.filesystem.read(name)
-    local effect = love.graphics.newShader(name)
+    local effect = util.loadShader(name)
     local defs = {}
     for vtype, extern in str:gmatch("extern (%w+) (%w+)") do
       defs[extern] = true
@@ -73,14 +73,14 @@ function post_shader:toggleEffect(shaderName, ...)
 end
 
 function post_shader:drawWith(canvas)
-  for shader, args in pairs(self.effects) do 
+  for shader, args in pairs(self.effects) do
     if shader == "bloom" then
       self:drawBloom(canvas, args)
     elseif shader == "blur" then
       self:drawBlur(canvas, args)
     elseif shader == "tilt_shift" then
       self:drawTiltShift(canvas, args)
-    else 
+    else
       self:drawShader(shader, canvas, args)
     end
   end
@@ -126,9 +126,9 @@ function post_shader:drawShader(shaderName, canvas, args)
       effect[1]:send("time", love.timer.getTime())
     elseif def == "palette" then
       effect[1]:send("palette", unpack(process_palette({
-        args[current_arg], 
-        args[current_arg + 1], 
-        args[current_arg + 2], 
+        args[current_arg],
+        args[current_arg + 1],
+        args[current_arg + 2],
         args[current_arg + 3]
       })))
       current_arg = current_arg + 4
