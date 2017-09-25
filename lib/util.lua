@@ -1,9 +1,18 @@
 local util = {}
 --TODO: the whole stencil/canvas system should be reviewed since it has been changed in a naive way
 
+local temp = nil
+
 function util.process(canvas, options)
-  --TODO: now you cannot draw a canvas to itself
-  temp = love.graphics.newCanvas()
+  if not temp then
+    temp = love.graphics.newCanvas()
+  end
+
+  local previousCanvas = love.graphics.getCanvas()
+  love.graphics.setCanvas(temp)
+  love.graphics.clear()
+  love.graphics.setCanvas(previousCanvas)
+
   util.drawCanvasToCanvas(canvas, temp, options)
   util.drawCanvasToCanvas(temp, canvas, options)
 end
