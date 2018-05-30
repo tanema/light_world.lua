@@ -48,7 +48,7 @@ function normal_map.fromHeightMap(heightMap, strength)
 end
 
 function normal_map.generateFlat(img, mode)
-  local imgData = img:getData()
+  local imgData = love.image.newImageData(img:getWidth(), img:getHeight())
   local imgNormalData = love.image.newImageData(img:getWidth(), img:getHeight())
   local color
 
