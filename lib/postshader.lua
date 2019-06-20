@@ -32,7 +32,6 @@ local shaders = {}
 
 for i,v in ipairs(files) do
   local name = _PACKAGE.."/shaders/postshaders".."/"..v
-  inf = love.filesystem.getInfo(name)
   if love.filesystem.getInfo(name).type == "file" then
     local str = love.filesystem.read(name)
     local effect = util.loadShader(name)
