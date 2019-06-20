@@ -21,6 +21,7 @@
 
 // 0.5 = the spot stays inside the original pixel
 // 1.0 = the spot bleeds up to the center of next pixel
+
 #define PHOSPHOR_WIDTH  0.9
 #define PHOSPHOR_HEIGHT 0.65
 
@@ -33,7 +34,7 @@
 
 // Uncomment to only draw every third pixel, which highlights the shape
 // of individual (remaining) spots.
-// #define DEBUG
+//#define DEBUG
 
 // Uncomment one of these to choose a gamma correction method.
 // If none are uncommented, no gamma correction is done.
@@ -61,6 +62,8 @@ vec4 A_IN = vec4( 12.0/(InputGamma+1.0)-3.0 );
 vec4 B_IN = vec4(1.0) - A_IN;
 vec4 A_OUT = vec4(6.0 - 15.0 * OutputGamma / 2.0 / (OutputGamma+1.0));
 vec4 B_OUT = vec4(1.0) - A_OUT;
+uniform Image _tex0_;
+
 #define GAMMA_IN(color)     ( (A_IN + B_IN * color) * color * color )
 #define GAMMA_OUT(color)    ( A_OUT * sqrt(color) + B_OUT * sqrt( sqrt(color) ) )
 
@@ -78,7 +81,7 @@ vec4 B_IN = vec4(1.0) - A_IN;
 #ifdef DEBUG
 vec4 grid_color( vec2 coords )
 {
-		vec2 snes = floor( coords * love_ScreenSize );
+		vec2 snes = floor( coords * love_ScreenSize.xy );
 		if ( (mod(snes.x, 3.0) == 0.0) && (mod(snes.y, 3.0) == 0.0) )
 				return texture2D(_tex0_, coords);
 		else

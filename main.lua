@@ -27,7 +27,7 @@ function love.load()
 	local n = 0
 
   for i, v in ipairs(files) do
-    is_file = love.filesystem.isFile("examples/".. v )
+    is_file = (love.filesystem.getInfo("examples/".. v ).type == "file")
     if is_file then
       n = n + 1
       table.insert(exf.available, v);
@@ -292,13 +292,13 @@ function List:mousepressed(mx, my, b)
 
 	  if b == "wd" then
 	    self.bar_pos = self.bar_pos + bar_pixel_dt
-	    if self.bar_pos > self.bar_max_pos then 
-        self.bar_pos = self.bar_max_pos 
+	    if self.bar_pos > self.bar_max_pos then
+        self.bar_pos = self.bar_max_pos
       end
 	  elseif b == "wu" then
 	    self.bar_pos = self.bar_pos - bar_pixel_dt
-	    if self.bar_pos < 0 then 
-        self.bar_pos = 0 
+	    if self.bar_pos < 0 then
+        self.bar_pos = 0
       end
 	  end
   end
@@ -344,9 +344,9 @@ function List:draw()
   -- Get interval to display.
   local start_i = math.floor( self:getOffset()/(self.item_height+1) ) + 1
   local end_i = start_i+math.floor( self.height/(self.item_height+1) ) + 1
-  
-  if end_i > self.items.n then 
-    end_i = self.items.n 
+
+  if end_i > self.items.n then
+    end_i = self.items.n
   end
 
   love.graphics.setScissor(self.x, self.y, self.width, self.height)

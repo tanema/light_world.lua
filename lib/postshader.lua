@@ -27,12 +27,13 @@ local util = require(_PACKAGE..'/util')
 local post_shader = {}
 post_shader.__index = post_shader
 
-local files = love.filesystem.getInfo(_PACKAGE .. "/shaders/postshaders")
+local files = love.filesystem.getDirectoryItems(_PACKAGE .. "/shaders/postshaders")
 local shaders = {}
 
 for i,v in ipairs(files) do
   local name = _PACKAGE.."/shaders/postshaders".."/"..v
-  if love.filesystem.isFile(name) then
+  inf = love.filesystem.getInfo(name)
+  if love.filesystem.getInfo(name).type == "file" then
     local str = love.filesystem.read(name)
     local effect = util.loadShader(name)
     local defs = {}

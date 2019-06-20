@@ -13,7 +13,7 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
 
   util.drawto(other_canvas, 0, 0, 1, function()
     if options["blendmode"] then
-      love.graphics.setBlendMode(options["blendmode"])
+      love.graphics.setBlendMode(options["blendmode"], "premultiplied")
     end
     if options["shader"] then
       love.graphics.setShader(options["shader"])
@@ -60,6 +60,7 @@ function util.drawto(canvas, x, y, scale, cb)
 end
 
 function util.loadShader(name)
+    print("loading:", name)
   local shader = ""
   local externInit = {}
   for line in love.filesystem.lines(name) do
