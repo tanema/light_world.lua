@@ -27,7 +27,7 @@ local util = require(_PACKAGE..'/util')
 local post_shader = {}
 post_shader.__index = post_shader
 
-local files = love.filesystem.getDirectoryItems(_PACKAGE.."/shaders/postshaders")
+local files = love.filesystem.getInfo(_PACKAGE .. "/shaders/postshaders")
 local shaders = {}
 
 for i,v in ipairs(files) do
