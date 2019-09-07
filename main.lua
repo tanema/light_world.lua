@@ -121,7 +121,7 @@ function exf.start(item, file)
 	local unused1, unused2, n = string.find(item, "(%s)%.lua")
 
 	if exf.intable(exf.available, file) then
-		if not love.filesystem.exists("examples/" .. file) then
+		if not love.filesystem.getInfo("examples/" .. file) then
 			print("Could not load game .. " .. file)
 		else
 
@@ -337,7 +337,7 @@ function List:draw()
   love.graphics.setLineStyle("rough")
   love.graphics.setFont(self.font)
 
-  love.graphics.setColor(48/255, 156/255, 1)
+  love.graphics.setColor(48/255, 156/255, 225 / 255)
 
   local mx, my = love.mouse.getPosition()
 

@@ -32,7 +32,7 @@ local shaders = {}
 
 for i,v in ipairs(files) do
   local name = _PACKAGE.."/shaders/postshaders".."/"..v
-  if love.filesystem.getInfo(name).type == "file" then
+  if love.filesystem.getInfo(name).type == "file" and string.sub(v, 1, 1) ~= '.' then
     local str = love.filesystem.read(name)
     local effect = util.loadShader(name)
     local defs = {}
@@ -94,7 +94,9 @@ function post_shader:drawBloom(canvas, args)
   util.process(self.back_buffer, {shader = shaders['blurh'][1]})
   util.process(self.back_buffer, {shader = shaders['contrast'][1]})
   util.process(canvas, {shader = shaders['contrast'][1]})
-  util.drawCanvasToCanvas(self.back_buffer, canvas, {blendmode = "add", color = {255, 255, 255, (args[2] or 0.25) * 255}})
+  util.drawCanvasToCanvas(self.back_buffer, canvas, {
+    blendmode = "add", color = {1, 1, 1, (args[2] or 0.25)}
+  })
 end
 
 function post_shader:drawBlur(canvas, args)
@@ -151,7 +153,7 @@ function post_shader:drawShader(shaderName, canvas, args)
 end
 
 function process_tint(r, g, b)
-  return (r and r/255.0 or 1.0), (g and g/255.0 or 1.0), (b and b/255.0 or 1.0)
+  return (r or 1.0), (g or 1.0), (b or 1.0)
 end
 
 function process_palette(palette)

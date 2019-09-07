@@ -11,9 +11,11 @@ end
 function util.drawCanvasToCanvas(canvas, other_canvas, options)
   options = options or {}
 
-  util.drawto(other_canvas, 0, 0, 1, function()
-    if options["blendmode"] then
-      love.graphics.setBlendMode(options["blendmode"], "premultiplied")
+  util.drawto(other_canvas, 0, 0, 1, options['stencil'] or options['istencil'] and true or false, function()
+    if options["blendmode"] == 'multiply' then
+      love.graphics.setBlendMode(options["blendmode"], 'premultiplied')
+    elseif options["blendmode"] then
+      love.graphics.setBlendMode(options["blendmode"])
     end
     if options["shader"] then
       love.graphics.setShader(options["shader"])
@@ -29,7 +31,7 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
     if options["color"] then
       love.graphics.setColor(unpack(options["color"]))
     else
-      love.graphics.setColor(255,255,255)
+      love.graphics.setColor(1,1,1)
     end
     if love.graphics.getCanvas() ~= canvas then
       love.graphics.draw(canvas,0,0)
@@ -47,11 +49,11 @@ function util.drawCanvasToCanvas(canvas, other_canvas, options)
   end)
 end
 
-function util.drawto(canvas, x, y, scale, cb)
+function util.drawto(canvas, x, y, scale, stencil, cb)
   local last_buffer = love.graphics.getCanvas()
   love.graphics.push()
     love.graphics.origin()
-    love.graphics.setCanvas({canvas,stencil = true})
+      love.graphics.setCanvas({ canvas, stencil = stencil })
       love.graphics.translate(x, y)
       love.graphics.scale(scale)
       cb()
@@ -60,7 +62,6 @@ function util.drawto(canvas, x, y, scale, cb)
 end
 
 function util.loadShader(name)
-    print("loading:", name)
   local shader = ""
   local externInit = {}
   for line in love.filesystem.lines(name) do
@@ -96,5 +97,6 @@ function util.loadShader(name)
   end
   return effect
 end
+
 
 return util
