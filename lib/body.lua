@@ -382,10 +382,6 @@ end
 
 -- set glass color
 function body:setColor(r, g, b)
-  if r > 1 then r = r / 255 end
-  if g > 1 then g = r / 255 end
-  if b > 1 then b = r / 255 end
-
   self.red = r
   self.green = g
   self.blue = b
@@ -689,7 +685,7 @@ function body:drawShadow(light)
     return
   end
 
-  love.graphics.setColor(self.red, self.green, self.blue, self.alpha)
+  love.graphics.setColor(self.red / 255, self.green / 255, self.blue / 255, self.alpha / 255)
   if self.shadowType == "polygon" then
     self:drawPolyShadow(light)
   elseif self.shadowType == "circle" then
@@ -779,10 +775,10 @@ function body:drawImageShadow(light)
   local shadowY = (length * math.cos(shadowRotation) + 1.0) * shadowStartY
 
   self.shadowMesh:setVertices({
-    {shadowX, shadowY, 0, 0, self.red, self.green, self.blue, self.alpha},
-    {shadowX + self.imgWidth, shadowY, 1, 0, self.red, self.green, self.blue, self.alpha},
-    {self.imgWidth, shadowStartY, 1, 1, self.red, self.green, self.blue, self.alpha},
-    {0, shadowStartY, 0, 1, self.red, self.green, self.blue, self.alpha}
+    {shadowX, shadowY, 0, 0, self.red / 255, self.green / 255, self.blue / 255, self.alpha / 255},
+    {shadowX + self.imgWidth, shadowY, 1, 0, self.red / 255, self.green / 255, self.blue / 255, self.alpha / 255},
+    {self.imgWidth, shadowStartY, 1, 1, self.red / 255, self.green / 255, self.blue / 255, self.alpha / 255},
+    {0, shadowStartY, 0, 1, self.red / 255, self.green / 255, self.blue / 255, self.alpha / 255}
   })
 
   love.graphics.draw(self.shadowMesh, self.x, self.y, self.rotation, self.scalex, self.scaley, self.ox, self.oy)

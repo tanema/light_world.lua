@@ -104,7 +104,6 @@ function light_world:draw(cb)
     _ = self.disableReflection or self:drawReflection(    self.l,self.t,self.w,self.h,self.s)
   end)
   self.post_shader:drawWith(self.render_buffer, self.l, self.t, self.s)
-  -- love.graphics.draw(self.shadow_buffer)
 end
 
 -- draw normal shading
@@ -169,7 +168,9 @@ function light_world:drawShadows(l,t,w,h,s)
         shader = self.shadowShader,
         stencil = function()
           local angle = light.direction - (light.angle / 2.0)
-          love.graphics.arc("fill", (light.x + l/s) * s, (light.y + t/s) * s, light.range, angle, angle + light.angle)
+          love.graphics.arc(
+            "fill", (light.x + l/s) * s, (light.y + t/s) * s, light.range, angle, angle + light.angle
+          )
         end
       })
     end
