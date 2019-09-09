@@ -67,4 +67,9 @@ There are example in the example directory how to use both of these with the lib
 A License has been included in this project
 
 ## Contributors
-- Jon (@xiejiangzhi)
+- Jon @xiejiangzhi
+- Brandon Blanker Lim-it @flamendless 
+- @Azorlogh
+- Gustavo Kishima @gukiboy
+- Rose L. Liverman @TangentFoxy
+- Kyle McLamb @Alloyed
