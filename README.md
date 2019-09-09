@@ -65,3 +65,6 @@ There are example in the example directory how to use both of these with the lib
 ## License
 
 A License has been included in this project
+
+## Contributors
+- Jon (@xiejiangzhi)
