@@ -96,7 +96,7 @@ function love.load()
     shadowBlur = 2.0
   })
 
-	mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
+	mouseLight = lightWorld:newLight(0, 0, 1, 191/ 255, 0.5, lightRange)
 	mouseLight:setGlowStrength(0.3)
 	mouseLight:setSmooth(lightSmooth)
 	mouseLight.z = 63
@@ -162,19 +162,19 @@ function love.update(dt)
 
 	tileX = tileX + dt * 32.0
 	tileY = tileY + dt * 8.0
-  for i = 1, phyCnt do		
-		if phyLight[i]:getType() == "refraction" then		
-			phyLight[i]:setNormalTileOffset(tileX, tileY)		
-		end		
+  for i = 1, phyCnt do
+		if phyLight[i]:getType() == "refraction" then
+			phyLight[i]:setNormalTileOffset(tileX, tileY)
+		end
   end
 
 	-- draw shader
 	if colorAberration > 0.0 then
 		-- vert / horz blur
 		lightWorld.post_shader:addEffect("blur", 2.0, 2.0)
-		lightWorld.post_shader:addEffect("chromatic_aberration", 
-      {math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration}, 
-      {math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration}, 
+		lightWorld.post_shader:addEffect("chromatic_aberration",
+      {math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * colorAberration},
+      {math.cos(lightDirection * 10.0) * colorAberration, math.sin(lightDirection * 10.0) * -colorAberration},
       {math.sin(lightDirection * 10.0) * colorAberration, math.cos(lightDirection * 10.0) * -colorAberration})
   else
 		lightWorld.post_shader:removeEffect("blur")
@@ -199,10 +199,10 @@ function love.draw()
     lightWorld:draw(function(l, t, w, h, s)
       love.graphics.setBlendMode("alpha")
       if normalOn then
-        love.graphics.setColor(127, 127, 255)
+        love.graphics.setColor(0.5, 0.5, 1)
         love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
       else
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         if textureOn then
           love.graphics.draw(imgFloor, quadScreen, 0,0)
         else
@@ -214,7 +214,7 @@ function love.draw()
         if phyLight[i]:getType() == "refraction" then
           if not normalOn then
             love.graphics.setBlendMode("alpha")
-            love.graphics.setColor(255, 255, 255, 191)
+            love.graphics.setColor(1, 1, 1, 191/255)
             love.graphics.draw(water, phyLight[i].x - phyLight[i].ox, phyLight[i].y - phyLight[i].oy)
           end
         end
@@ -224,20 +224,22 @@ function love.draw()
       for i = 1, phyCnt do
         if phyLight[i]:getType() == "polygon" then
           math.randomseed(i)
-          love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+          love.graphics.setColor(math.random(), math.random(), math.random())
           love.graphics.polygon("fill", phyLight[i]:getPoints())
         elseif phyLight[i]:getType() == "circle" then
           math.randomseed(i)
-          love.graphics.setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+          love.graphics.setColor(math.random(), math.random(), math.random())
           local cx, cy = phyLight[i]:getPosition()
           love.graphics.circle("fill", cx, cy, phyLight[i]:getRadius())
         elseif phyLight[i]:getType() == "image" then
           if normalOn and phyLight[i].normal then
-            love.graphics.setColor(255, 255, 255)
+            love.graphics.setColor(1, 1, 1)
             love.graphics.draw(phyLight[i].normal, phyLight[i].x - phyLight[i].nx, phyLight[i].y - phyLight[i].ny)
           elseif not phyLight[i].material then
             math.randomseed(i)
-            love.graphics.setColor(math.random(127, 255), math.random(127, 255), math.random(127, 255))
+            love.graphics.setColor(
+              math.random(127, 255) / 255, math.random(127, 255)/ 255, math.random(127, 255) / 255
+            )
             love.graphics.draw(phyLight[i].img, phyLight[i].x - phyLight[i].ix, phyLight[i].y - phyLight[i].iy)
           end
         end
@@ -254,65 +256,65 @@ function love.draw()
 		love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), 44)
 		love.graphics.rectangle("fill", 0, love.graphics.getHeight() - 68, 240, 68)
 		love.graphics.rectangle("fill", love.graphics.getWidth() - 244, love.graphics.getHeight() - 84, 244, 84)
-		love.graphics.setColor(0, 255, 0)
+		love.graphics.setColor(0, 1, 0)
 		love.graphics.print("F1: Help (on)", 4 + 152 * 0, 4)
 		if shadowBlur >= 1.0 then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F5: Shadowblur (" .. shadowBlur .. ")", 4 + 152 * 4, 4)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F5: Shadowblur (off)", 4 + 152 * 4, 4)
 		end
 		if bloomOn > 0.0 then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F6: Bloom (" .. (bloomOn * 4) .. ")", 4 + 152 * 0, 4 + 20 * 1)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F6: Bloom (off)", 4 + 152 * 0, 4 + 20 * 1)
 		end
 		if textureOn then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F7: Texture (on)", 4 + 152 * 1, 4 + 20 * 1)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F7: Texture (off)", 4 + 152 * 1, 4 + 20 * 1)
 		end
 		if normalOn then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F8: Normal (on)", 4 + 152 * 2, 4 + 20 * 1)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F8: Normal (off)", 4 + 152 * 2, 4 + 20 * 1)
 		end
 		if glowBlur >= 1.0 then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F9: Glow Blur (" .. glowBlur .. ")", 4 + 152 * 3, 4 + 20 * 1)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F9: Glow Blur (off)", 4 + 152 * 3, 4 + 20 * 1)
 		end
 		if effectOn >= 1.0 then
-			love.graphics.setColor(0, 255, 0)
+			love.graphics.setColor(0, 1, 0)
 			love.graphics.print("F10: Effects (" .. effectOn .. ")", 4 + 152 * 4, 4 + 20 * 1)
 		else
-			love.graphics.setColor(255, 0, 0)
+			love.graphics.setColor(1, 0, 0)
 			love.graphics.print("F10: Effects (off)", 4 + 152 * 4, 4 + 20 * 1)
 		end
-		love.graphics.setColor(255, 0, 255)
+		love.graphics.setColor(1, 0, 1)
 		love.graphics.print("F11: Clear obj.", 4 + 152 * 4, 4 + 20 * 2)
 		love.graphics.print("F12: Clear lights", 4 + 152 * 4, 4 + 20 * 3)
-		love.graphics.setColor(0, 127, 255)
+		love.graphics.setColor(0, 0.5, 1)
 		love.graphics.print("WASD Keys: Move objects", 4, love.graphics.getHeight() - 20 * 3)
 		love.graphics.print("Arrow Keys: Move map", 4, love.graphics.getHeight() - 20 * 2)
 		love.graphics.print("0-9 Keys: Add object", 4, love.graphics.getHeight() - 20 * 1)
-		love.graphics.setColor(255, 127, 0)
+		love.graphics.setColor(1, 0.5, 0)
 		love.graphics.print("M.left: Add cube", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 4)
 		love.graphics.print("M.middle: Add light", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 3)
 		love.graphics.print("M.right: Add circle", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 2)
 		love.graphics.print("M.scroll: Change smooth", love.graphics.getWidth() - 240, love.graphics.getHeight() - 20 * 1)
-		love.graphics.setColor(255, 127, 0)
+		love.graphics.setColor(1, 0.5, 0)
 	else
-		love.graphics.setColor(255, 255, 255, 191)
+		love.graphics.setColor(1, 1, 1, 191/255)
 		love.graphics.print("F1: Help", 4, 4)
 	end
 end
@@ -324,11 +326,11 @@ function love.mousepressed(x, y, c)
 		local light
 
 		if r == 0 then
-			light = lightWorld:newLight(x, y, 31, 127, 63, lightRange)
+			light = lightWorld:newLight(x, y, 31/ 255, 0.5, 63/ 255, lightRange)
 		elseif r == 1 then
-			light = lightWorld:newLight(x, y, 127, 63, 31, lightRange)
+			light = lightWorld:newLight(x, y, 0.5, 63/255, 31/255, lightRange)
 		else
-			light = lightWorld:newLight(x, y, 31, 63, 127, lightRange)
+			light = lightWorld:newLight(x, y, 31/255, 63/255, 127/255, lightRange)
 		end
 		light:setSmooth(lightSmooth)
 		light:setGlowStrength(0.3)
@@ -424,7 +426,7 @@ function love.keypressed(k, u)
 		initScene()
 	elseif k == "f12" then
 		lightWorld:clearLights()
-		mouseLight = lightWorld:newLight(0, 0, 255, 191, 127, lightRange)
+		mouseLight = lightWorld:newLight(0, 0, 1, 191/255, 0.5, lightRange)
 		mouseLight:setGlowStrength(0.3)
 		mouseLight:setSmooth(lightSmooth)
 	elseif k == "1" then
@@ -498,7 +500,7 @@ function love.keypressed(k, u)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld:newImage(blopp, mx, my, 42, 16, 21, 0)
 		phyLight[phyCnt]:generateNormalMapGradient("gradient", "gradient")
-		phyLight[phyCnt]:setAlpha(255 * 0.5)
+		phyLight[phyCnt]:setAlpha(0.5)
 	elseif k == "7" then
 		-- add image
 		phyCnt = phyCnt + 1
@@ -517,24 +519,24 @@ function love.keypressed(k, u)
       mx+w, my+h,
       mx, my+h
     )
-		phyLight[phyCnt]:setAlpha(255 * 0.5)
+		phyLight[phyCnt]:setAlpha(0.5)
 		phyLight[phyCnt]:setGlowStrength(1.0)
 		math.randomseed(phyCnt)
-		phyLight[phyCnt]:setGlowColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyLight[phyCnt]:setGlowColor(math.random(), math.random(), math.random())
 		math.randomseed(phyCnt)
-		phyLight[phyCnt]:setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyLight[phyCnt]:setColor(math.random(), math.random(), math.random())
 	elseif k == "9" then
 		-- add circle
 		math.randomseed(love.timer.getTime())
 		cRadius = math.random(8, 32)
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld:newCircle(mx, my, cRadius)
-		phyLight[phyCnt]:setAlpha(255 * 0.5)
+		phyLight[phyCnt]:setAlpha(0.5)
 		phyLight[phyCnt]:setGlowStrength(1.0)
 		math.randomseed(phyCnt)
-		phyLight[phyCnt]:setGlowColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyLight[phyCnt]:setGlowColor(math.random(), math.random(), math.random())
 		math.randomseed(phyCnt)
-		phyLight[phyCnt]:setColor(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		phyLight[phyCnt]:setColor(math.random(), math.random(), math.random())
 	elseif k == "0" then
 		phyCnt = phyCnt + 1
 		phyLight[phyCnt] = lightWorld:newRefraction(refraction_normal, mx, my)
@@ -545,11 +547,11 @@ function love.keypressed(k, u)
 		local light
 
 		if r == 0 then
-			light = lightWorld:newLight(mx, my, 31, 127, 63, lightRange)
+			light = lightWorld:newLight(mx, my, 31/255, 127 / 255, 63 / 255, lightRange)
 		elseif r == 1 then
-			light = lightWorld:newLight(mx, my, 127, 63, 31, lightRange)
+			light = lightWorld:newLight(mx, my, 127 / 255, 63 / 255, 31 / 255, lightRange)
 		else
-			light = lightWorld:newLight(mx, my, 31, 63, 127, lightRange)
+			light = lightWorld:newLight(mx, my, 31 / 255, 63 / 255, 127 / 255, lightRange)
 		end
 		light:setSmooth(lightSmooth)
 		light:setGlowStrength(0.3)
@@ -559,9 +561,9 @@ function love.keypressed(k, u)
 		local light
 
 		if r == 0 then
-			light = lightWorld:newLight(mx, my, 31, 127, 63, lightRange)
+			light = lightWorld:newLight(mx, my, 31/255, 127/255, 63/255, lightRange)
 		elseif r == 1 then
-			light = lightWorld:newLight(mx, my, 127, 63, 31, lightRange)
+			light = lightWorld:newLight(mx, my, 127/255, 63/255, 31/255, lightRange)
 		else
 			light = lightWorld:newLight(mx, my, 31, 63, 127, lightRange)
 		end

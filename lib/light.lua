@@ -5,15 +5,19 @@ local light = {}
 light.__index = light
 
 local function new(x, y, r, g, b, range)
+  if r and r > 1 then r = r / 255 end
+  if g and g > 1 then g = g / 255 end
+  if b and b > 1 then b = b / 255 end
+
   local obj = {
     direction = 0,
     angle = math.pi * 2.0,
     x = x or 0,
     y = y or 0,
     z = 1,
-    red = r or 255,
-    green = g or 255,
-    blue = b or 255,
+    red = r or 1,
+    green = g or 1,
+    blue = b or 1,
     range = range or 300,
     smooth = 1.0,
     glowSize = 0.1,
@@ -55,10 +59,14 @@ function light:getPosition()
 end
 
 -- set color
-function light:setColor(red, green, blue)
-  self.red = red
-  self.green = green
-  self.blue = blue
+function light:setColor(r, g, b)
+  if r > 1 then r = r / 255 end
+  if g > 1 then g = g / 255 end
+  if b > 1 then b = b / 255 end
+
+  self.red = r
+  self.green = g
+  self.blue = b
 end
 
 -- get range

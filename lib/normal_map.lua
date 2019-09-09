@@ -1,7 +1,7 @@
 local normal_map = {}
 
 function normal_map.fromHeightMap(heightMap, strength)
-	local imgData = heightMap:getData()
+	local imgData = normal_map.getImgData(heightMap)
 	local imgData2 = love.image.newImageData(heightMap:getWidth(), heightMap:getHeight())
 	local red, green, blue, alpha
 	local x, y
@@ -31,14 +31,14 @@ function normal_map.fromHeightMap(heightMap, strength)
 						y = i + m - 1
 					end
 
-					local red, green, blue, alpha = imgData:getPixel(x, y)
-					matrix[l][m] = red
+					local r, _g, _b, _a = imgData:getPixel(x, y)
+					matrix[l][m] = r
 				end
 			end
 
-			red = (255 + ((matrix[1][2] - matrix[2][2]) + (matrix[2][2] - matrix[3][2])) * strength) / 2.0
-			green = (255 + ((matrix[2][2] - matrix[1][1]) + (matrix[2][3] - matrix[2][2])) * strength) / 2.0
-			blue = 192
+			red = (1 + ((matrix[1][2] - matrix[2][2]) + (matrix[2][2] - matrix[3][2])) * strength) / 2.0
+			green = (1 + ((matrix[2][2] - matrix[1][1]) + (matrix[2][3] - matrix[2][2])) * strength) / 2.0
+			blue = 192/255
 
 			imgData2:setPixel(k, i, red, green, blue)
 		end
@@ -48,20 +48,20 @@ function normal_map.fromHeightMap(heightMap, strength)
 end
 
 function normal_map.generateFlat(img, mode)
-  local imgData = img:getData()
+  local imgData = normal_map.getImgData(img)
   local imgNormalData = love.image.newImageData(img:getWidth(), img:getHeight())
   local color
 
   if mode == "top" then
-    color = {127, 127, 255}
+    color = {0.5, 0.5, 1}
   elseif mode == "front" then
-    color = {127, 0, 127}
+    color = {0.5, 0, 0.5}
   elseif mode == "back" then
-    color = {127, 255, 127}
+    color = {0.5, 1, 0.5}
   elseif mode == "left" then
-    color = {31, 0, 223}
+    color = {31/255, 0, 223/255}
   elseif mode == "right" then
-    color = {223, 0, 127}
+    color = {223/255, 0, 0.5}
   end
 
   for i = 0, img:getHeight() - 1 do
@@ -78,7 +78,7 @@ function normal_map.generateGradient(img, horizontalGradient, verticalGradient)
   horizontalGradient = horizontalGradient or "gradient"
   verticalGradient = verticalGradient or horizontalGradient
 
-  local imgData = img:getData()
+  local imgData = normal_map.getImgData(img)
   local imgWidth, imgHeight = img:getWidth(), img:getHeight()
   local imgNormalData = love.image.newImageData(imgWidth, imgHeight)
   local dx = 255.0 / imgWidth
@@ -94,28 +94,34 @@ function normal_map.generateGradient(img, horizontalGradient, verticalGradient)
         if horizontalGradient == "gradient" then
           nx = i * dx
         elseif horizontalGradient == "inverse" then
-          nx = 255 - i * dx
+          nx = 1 - i * dx
         else
-          nx = 127
+          nx = 0.5
         end
 
         if verticalGradient == "gradient" then
-          ny = 127 - k * dy * 0.5
-          nz = 255 - k * dy * 0.5
+          ny = 0.5 - k * dy * 0.5
+          nz = 1 - k * dy * 0.5
         elseif verticalGradient == "inverse" then
-          ny = 127 + k * dy * 0.5
-          nz = 127 - k * dy * 0.25
+          ny = 0.5 + k * dy * 0.5
+          nz = 0.5 - k * dy * 0.25
         else
-          ny = 255
-          nz = 127
+          ny = 1
+          nz = 0.5
         end
 
-        imgNormalData:setPixel(i, k, nx, ny, nz, 255)
+        imgNormalData:setPixel(i, k, nx, ny, nz, 1)
       end
     end
   end
 
   return love.graphics.newImage(imgNormalData)
+end
+
+function normal_map.getImgData(img)
+  local canvas = love.graphics.newCanvas(img:getWidth(), img:getHeight())
+  canvas:renderTo(function() love.graphics.draw(img, 0, 0) end)
+  return canvas:newImageData()
 end
 
 return normal_map

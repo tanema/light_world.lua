@@ -27,7 +27,7 @@ function love.load()
 	local n = 0
 
   for i, v in ipairs(files) do
-    is_file = love.filesystem.isFile("examples/".. v )
+    is_file = (love.filesystem.getInfo("examples/".. v ).type == "file")
     if is_file then
       n = n + 1
       table.insert(exf.available, v);
@@ -63,10 +63,10 @@ function exf.draw()
 	lightWorld:draw(function()
     love.graphics.setBackgroundColor(0, 0, 0)
 
-    love.graphics.setColor(48, 156, 225)
+    love.graphics.setColor(48/255, 156/255, 225/255)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
-    love.graphics.setColor(255, 255, 255, 191)
+    love.graphics.setColor(1, 1, 1, 191/255)
     love.graphics.setFont(exf.bigfont)
     love.graphics.print("Examples:", 50, 50)
 
@@ -75,7 +75,7 @@ function exf.draw()
 
     exf.list:draw()
 
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.draw(exf.bigball, 800 - 128, 600 - 128, love.timer.getTime(), 1, 1, exf.bigball:getWidth() * 0.5, exf.bigball:getHeight() * 0.5)
   end)
 end
@@ -121,7 +121,7 @@ function exf.start(item, file)
 	local unused1, unused2, n = string.find(item, "(%s)%.lua")
 
 	if exf.intable(exf.available, file) then
-		if not love.filesystem.exists("examples/" .. file) then
+		if not love.filesystem.getInfo("examples/" .. file) then
 			print("Could not load game .. " .. file)
 		else
 
@@ -158,7 +158,7 @@ end
 
 function exf.clear()
   love.graphics.setBackgroundColor(0,0,0)
-  love.graphics.setColor(255, 255, 255)
+  love.graphics.setColor(1, 1, 1)
 	love.graphics.setLineWidth(1)
 	love.graphics.setLineStyle("smooth")
   love.graphics.setBlendMode("alpha")
@@ -182,11 +182,11 @@ function exf.resume()
 
 	-- create light world
 	lightWorld = LightWorld({
-    ambient = {127, 127, 127} 
+    ambient = {127/255, 127/255, 127/255}
   })
 
 	-- create light
-	lightMouse = lightWorld:newLight(0, 0, 255, 127, 63, 500)
+	lightMouse = lightWorld:newLight(0, 0, 1, 127/255, 63/255, 500)
 	lightMouse:setSmooth(2)
 
 	-- create shadow bodys
@@ -292,13 +292,13 @@ function List:mousepressed(mx, my, b)
 
 	  if b == "wd" then
 	    self.bar_pos = self.bar_pos + bar_pixel_dt
-	    if self.bar_pos > self.bar_max_pos then 
-        self.bar_pos = self.bar_max_pos 
+	    if self.bar_pos > self.bar_max_pos then
+        self.bar_pos = self.bar_max_pos
       end
 	  elseif b == "wu" then
 	    self.bar_pos = self.bar_pos - bar_pixel_dt
-	    if self.bar_pos < 0 then 
-        self.bar_pos = 0 
+	    if self.bar_pos < 0 then
+        self.bar_pos = 0
       end
 	  end
   end
@@ -337,16 +337,16 @@ function List:draw()
   love.graphics.setLineStyle("rough")
   love.graphics.setFont(self.font)
 
-  love.graphics.setColor(48, 156, 225)
+  love.graphics.setColor(48/255, 156/255, 225 / 255)
 
   local mx, my = love.mouse.getPosition()
 
   -- Get interval to display.
   local start_i = math.floor( self:getOffset()/(self.item_height+1) ) + 1
   local end_i = start_i+math.floor( self.height/(self.item_height+1) ) + 1
-  
-  if end_i > self.items.n then 
-    end_i = self.items.n 
+
+  if end_i > self.items.n then
+    end_i = self.items.n
   end
 
   love.graphics.setScissor(self.x, self.y, self.width, self.height)
@@ -357,17 +357,17 @@ function List:draw()
     local hover = inside(mx, my, x, y, w, h)
 
     if hover then
-      love.graphics.setColor(0, 0, 0, 127)
+      love.graphics.setColor(0, 0, 0, 127/255)
     else
-      love.graphics.setColor(0, 0, 0, 63)
+      love.graphics.setColor(0, 0, 0, 63/255)
     end
 
     love.graphics.rectangle("fill", x+1, y+i+1, w-3, h)
 
     if hover then
-      love.graphics.setColor(255, 255, 255)
+    	love.graphics.setColor(1, 1, 1, 1)
     else
-      love.graphics.setColor(255, 255, 255, 127)
+      love.graphics.setColor(1, 1, 1, 127/255)
     end
 
     local e_id = string.sub(self.items[i], 1, 5)
@@ -385,15 +385,15 @@ function List:draw()
     local hover = inside(mx, my, x, y, w, h)
 
     if hover or self.bar_lock then
-      love.graphics.setColor(0, 0, 0, 127)
+      love.graphics.setColor(0, 0, 0, 127/255)
     else
-      love.graphics.setColor(0, 0, 0, 63)
+      love.graphics.setColor(0, 0, 0, 63/255)
     end
     love.graphics.rectangle("fill", x, y, w, h)
   end
 
   -- Border.
-  love.graphics.setColor(0, 0, 0, 63)
+  love.graphics.setColor(0, 0, 0, 63/255)
   love.graphics.rectangle("line", self.x+self.width, self.y, self.bar_width, self.height)
   love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
 end

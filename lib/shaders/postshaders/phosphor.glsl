@@ -21,6 +21,7 @@
 
 // 0.5 = the spot stays inside the original pixel
 // 1.0 = the spot bleeds up to the center of next pixel
+
 #define PHOSPHOR_WIDTH  0.9
 #define PHOSPHOR_HEIGHT 0.65
 
@@ -61,6 +62,7 @@ vec4 A_IN = vec4( 12.0/(InputGamma+1.0)-3.0 );
 vec4 B_IN = vec4(1.0) - A_IN;
 vec4 A_OUT = vec4(6.0 - 15.0 * OutputGamma / 2.0 / (OutputGamma+1.0));
 vec4 B_OUT = vec4(1.0) - A_OUT;
+
 #define GAMMA_IN(color)     ( (A_IN + B_IN * color) * color * color )
 #define GAMMA_OUT(color)    ( A_OUT * sqrt(color) + B_OUT * sqrt( sqrt(color) ) )
 
@@ -76,25 +78,26 @@ vec4 B_IN = vec4(1.0) - A_IN;
 #endif
 
 #ifdef DEBUG
-vec4 grid_color( vec2 coords )
+vec4 grid_color(Image tex, vec2 coords )
 {
-		vec2 snes = floor( coords * love_ScreenSize );
-		if ( (mod(snes.x, 3.0) == 0.0) && (mod(snes.y, 3.0) == 0.0) )
-				return texture2D(_tex0_, coords);
-		else
+		vec2 snes = floor( coords * love_ScreenSize.xy );
+		if ( (mod(snes.x, 3.0) == 0.0) && (mod(snes.y, 3.0) == 0.0) ) {
+				return texture2D(tex, coords);
+    } else {
 				return vec4(0.0);
+    }
 }
-#define TEX2D(coords)   GAMMA_IN( grid_color( coords ) )
+#define TEX2D(tex, coords)   GAMMA_IN( grid_color(tex, coords) )
 
 #else // DEBUG
-#define TEX2D(coords)   GAMMA_IN( texture2D(_tex0_, coords) )
+#define TEX2D(tex, coords)   GAMMA_IN( texture2D(tex, coords) )
 
 #endif // DEBUG
 
 vec2 onex = vec2( 1.0/love_ScreenSize.x, 0.0 );
 vec2 oney = vec2( 0.0, 1.0/love_ScreenSize.y );
 
-vec4 effect(vec4 vcolor, Image texture, highp vec2 texCoord, vec2 pixel_coords)
+vec4 effect(vec4 vcolor, Image tex, highp vec2 texCoord, vec2 pixel_coords)
 {
 	highp vec2 coords = (texCoord * love_ScreenSize.xy);
 	highp vec2 pixel_start = floor(coords);
@@ -121,9 +124,8 @@ vec4 effect(vec4 vcolor, Image texture, highp vec2 texCoord, vec2 pixel_coords)
 			if (vweight !=0.0 ) {
 					for ( i = -1.0; i<=1.0; i++ ) {
 							pixel = TEX2D(
-									texture_coords
-									+ i * onex
-									+ j * oney
+                  tex,
+									texture_coords + i * onex + j * oney
 							);
 
 							/* Evaluate the distance (in x) from
