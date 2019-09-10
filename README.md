@@ -3,7 +3,7 @@
   This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
 only it has been largely refactored and edited to allow for scaling and proper translation.  
 
-*Supports love 0.10.1*
+*Supports love 11.2(master branch), 0.10.1(commit 414b9b74c0eb95bfb8b5e26a11caf2b32beccca0)
  
 ## Installation
    
@@ -17,7 +17,7 @@ local LightWorld = require "lib" --the path to where light_world is (in this rep
 --create light world
 function love.load()
   lightWorld = LightWorld({
-    ambient = {55,55,55},         --the general ambient light in the environment
+    ambient = {55/255,55/255,55/255},         --the general ambient light in the environment
   })
 end
 
