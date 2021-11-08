@@ -1,14 +1,14 @@
 # light_world.lua
 
-  This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine), 
-only it has been largely refactored and edited to allow for scaling and proper translation.  
+  This is the light modeling done by Priorblue [here](https://bitbucket.org/PriorBlue/love2d-light-and-shadow-engine),
+only it has been largely refactored and edited to allow for scaling and proper translation.
 
 *Supports love 11.2(master branch), 0.10.1(commit 414b9b74c0eb95bfb8b5e26a11caf2b32beccca0)
- 
+
 ## Installation
-   
+
   Copy and rename the lib folder into your project.
-    
+
 ## How to use
 
 ```lua
@@ -37,7 +37,7 @@ function love.draw()
 end
 ```
 
-For more information please check out the [wiki](https://github.com/tanema/light_world.lua/wiki) and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action. 
+For more information please check out the [wiki](https://github.com/tanema/light_world.lua/wiki) and see the examples directory to see how it is fully used. This project can be run with love to see the demonstrations in action.
 
 ### Gamera & HUMP
 There are example in the example directory how to use both of these with the library.
@@ -61,14 +61,14 @@ There are example in the example directory how to use both of these with the lib
 * chromatic aberration [Preview](http://onepixelahead.de/love2d_polyshadow16.gif)
 * postshader with many included postshaders, plus easy to extend
 * animations in tandem with normal maps thanks to [anim8](https://github.com/kikito/anim8)
-			
+
 ## License
 
 A License has been included in this project
 
 ## Contributors
 - Jon @xiejiangzhi
-- Brandon Blanker Lim-it @flamendless 
+- Brandon Blanker Lim-it @flamendless
 - @Azorlogh
 - Gustavo Kishima @gukiboy
 - Rose L. Liverman @TangentFoxy

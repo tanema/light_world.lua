@@ -1,11 +1,8 @@
 -- Example: Animation Example
 local LightWorld = require "lib"
 local anim8 = require 'lib.anim8'
-local ProFi = require 'examples.vendor.ProFi'
 
 function love.load()
-  ProFi:start()
-
   x, y, z, scale = 0, 0, 1, 1
 	-- load images
 	image = love.graphics.newImage("examples/gfx/scott_pilgrim.png")
@@ -83,7 +80,7 @@ function love.draw()
       love.graphics.setColor(255, 255, 255)
       love.graphics.rectangle("fill", -x/scale, -y/scale, love.graphics.getWidth()/scale, love.graphics.getHeight()/scale)
       animation:drawAnimation()
- 
+
       animation2:draw(image, 200, 30)
     end)
   love.graphics.pop()

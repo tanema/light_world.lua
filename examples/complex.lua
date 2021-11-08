@@ -1,6 +1,5 @@
 -- Example: Complex Example
 local LightWorld = require "lib"
-local ProFi = require 'examples.vendor.ProFi'
 
 function initScene()
 	-- physic world
@@ -30,8 +29,6 @@ function initScene()
 end
 
 function love.load()
-  ProFi:start()
-
   love.graphics.setBackgroundColor(0, 0, 0)
 	love.graphics.setDefaultFilter("nearest", "nearest")
 

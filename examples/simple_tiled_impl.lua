@@ -1,11 +1,8 @@
 -- Example: STI Example
 local LightWorld = require "lib"
 local sti = require 'examples.vendor.sti'
-local ProFi = require 'examples.vendor.ProFi'
 
 function love.load()
-  ProFi:start()
-
   x = 0
   y = 0
   z = 1
@@ -26,13 +23,13 @@ function love.load()
 
   -- walls
 	lightWorld:newRectangle(400, 32, 800, 64):setNormalMap(image_normal, 800, 64)
-	lightWorld:newRectangle(32, 272, 64, 416):setNormalMap(image_normal, 64, 416) 
-	lightWorld:newRectangle(400, 464, 800, 32):setNormalMap(image_normal, 800, 32) 
-	lightWorld:newRectangle(784, 272, 32, 416):setNormalMap(image_normal, 32, 416) 
+	lightWorld:newRectangle(32, 272, 64, 416):setNormalMap(image_normal, 64, 416)
+	lightWorld:newRectangle(400, 464, 800, 32):setNormalMap(image_normal, 800, 32)
+	lightWorld:newRectangle(784, 272, 32, 416):setNormalMap(image_normal, 32, 416)
 
   --blocks
-	lightWorld:newRectangle(224, 256, 128, 124):setNormalMap(image_normal, 128, 124) 
-	lightWorld:newRectangle(592, 224, 224, 64):setNormalMap(image_normal, 224, 64) 
+	lightWorld:newRectangle(224, 256, 128, 124):setNormalMap(image_normal, 128, 124)
+	lightWorld:newRectangle(592, 224, 224, 64):setNormalMap(image_normal, 224, 64)
 end
 
 function love.update(dt)
