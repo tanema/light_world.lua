@@ -1,4 +1,3 @@
--- Example: Complex Example
 local LightWorld = require "lib"
 
 function initScene()
@@ -28,7 +27,7 @@ function initScene()
 	phyLight = {}
 end
 
-function love.load()
+local function load()
   love.graphics.setBackgroundColor(0, 0, 0)
 	love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -125,12 +124,12 @@ function love.load()
 	tileY = 0
 end
 
-function love.update(dt)
+local function update(dt)
 	love.window.setTitle("Light vs. Shadow Engine (FPS:" .. love.timer.getFPS() .. ")")
 
   mx, my = (love.mouse.getX() - offsetX)/scale, (love.mouse.getY() - offsetY)/scale
 
-	mouseLight:setPosition(mx, my, 1 + (math.sin(lightDirection) + 1.0))
+	mouseLight:setPosition(mx, my, 1 + (math.sin(lightDirection)+1.0))
 
 	lightDirection = lightDirection + dt
 	colorAberration = math.max(0.0, colorAberration - dt * 10.0)
@@ -187,7 +186,7 @@ function love.update(dt)
   lightWorld:update(dt)
 end
 
-function love.draw()
+local function draw()
 	-- set shader buffer
   lightWorld:setTranslation(offsetX,offsetY, scale)
   love.graphics.push()
@@ -316,7 +315,7 @@ function love.draw()
 	end
 end
 
-function love.mousepressed(x, y, c)
+local function mousepressed(x, y, c)
 	if c == "m" then
 		-- add light
 		local r = lightWorld:getLightCount() % 3
@@ -361,7 +360,7 @@ function love.mousepressed(x, y, c)
 	end
 end
 
-function love.keypressed(k, u)
+local function keypressed(k, u)
 	-- debug options
 	if k == "f1" then
 		helpOn = not helpOn
@@ -574,3 +573,11 @@ function love.keypressed(k, u)
 		end
 	end
 end
+
+return {
+  load = load,
+  update = update,
+  draw = draw,
+  keypressed = keypressed,
+	mousepressed = mousepressed,
+}
