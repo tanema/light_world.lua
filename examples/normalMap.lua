@@ -5,8 +5,8 @@ local lightWorld, lightMouse
 
 local function load()
 	-- load images
-	image = love.graphics.newImage("examples/gfx/rock.png")
-	image_normal = love.graphics.newImage("examples/gfx/rock_n.png")
+	image = love.graphics.newImage("examples/img/normalMap/rock.png")
+	image_normal = love.graphics.newImage("examples/img/normalMap/normal.png")
 	-- create light world
 	lightWorld = LightWorld({ambient = {0.21,0.21,0.21}})
 	-- create light

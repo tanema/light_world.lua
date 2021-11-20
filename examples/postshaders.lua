@@ -6,7 +6,7 @@ local img
 local function load()
   post_shader = PostShader()
   render_buffer = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
-  img = love.graphics.newImage("examples/gfx/kingscard.jpeg")
+  img = love.graphics.newImage("examples/img/postshaders/kingscard.jpeg")
 end
 
 local function keypressed(k)

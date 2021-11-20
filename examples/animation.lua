@@ -3,8 +3,8 @@ local x, y, z, scale = 20, -55, 1, 3.5
 
 local function load()
   -- load images
-  image = love.graphics.newImage("examples/gfx/scott_pilgrim.png")
-  image_normal = love.graphics.newImage("examples/gfx/scott_pilgrim_NRM.png")
+  image = love.graphics.newImage("examples/img/animation/scott_pilgrim.png")
+  image_normal = love.graphics.newImage("examples/img/animation/scott_pilgrim_NRM.png")
   -- create light world
   lightWorld = LightWorld({ambient = {0.49, 0.49, 0.49}})
   -- create light

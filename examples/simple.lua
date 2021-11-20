@@ -12,9 +12,9 @@ local box_locations = {
 }
 
 local function load()
-  image = love.graphics.newImage("examples/gfx/machine.png")
-  normal = love.graphics.newImage("examples/gfx/machine_normal.png")
-  glow = love.graphics.newImage("examples/gfx/machine_glow.png")
+  image = love.graphics.newImage("examples/img/simple/machine.png")
+  normal = love.graphics.newImage("examples/img/simple/machine_normal.png")
+  glow = love.graphics.newImage("examples/img/simple/machine_glow.png")
   -- create light world
   lightWorld = LightWorld({ambient = {0.21,0.21,0.21}})
   -- create light

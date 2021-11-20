@@ -10,10 +10,10 @@ function List:new(x, y, w, h)
   return o
 end
 
-function List:add(item, file, cb)
+function List:add(label, cb)
   local x, y = self.x+2, self.y+((self.h+1)*(#self.items-1)+1)
   local w, h = self.w-3, self.h
-  table.insert(self.items, {item = item, file = file, cb = cb, x = x, y = y, w = w, h = h, hover = false})
+  table.insert(self.items, {label = label, cb = cb, x = x, y = y, w = w, h = h, hover = false})
 end
 
 function List:update(dt)
@@ -36,7 +36,7 @@ function List:draw()
     love.graphics.setColor(0, 0, 0, item.hover and 0.49 or 0.24)
     love.graphics.rectangle("fill", item.x+1, item.y+1, item.w-3, item.h)
     love.graphics.setColor(1, 1, 1, item.hover and 1 or 0.49)
-    love.graphics.print(item.item, item.x+10, item.y+6)
+    love.graphics.print(item.label, item.x+10, item.y+6)
   end
 end
 

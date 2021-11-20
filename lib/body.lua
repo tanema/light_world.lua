@@ -11,21 +11,21 @@ body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
 
 local function new(id, type, ...)
-	local args = {...}
+  local args = {...}
   local obj = setmetatable({}, body)
-	obj.id = id
-	obj.type = type
-	obj.shine = true
-	obj.red = 1.0
-	obj.green = 1.0
-	obj.blue = 1.0
-	obj.alpha = 1.0
-	obj.glowRed = 1
-	obj.glowGreen = 1
-	obj.glowBlue = 1
-	obj.glowStrength = 0.0
-	obj.tileX = 0
-	obj.tileY = 0
+  obj.id = id
+  obj.type = type
+  obj.shine = true
+  obj.red = 1.0
+  obj.green = 1.0
+  obj.blue = 1.0
+  obj.alpha = 1.0
+  obj.glowRed = 1
+  obj.glowGreen = 1
+  obj.glowBlue = 1
+  obj.glowStrength = 0.0
+  obj.tileX = 0
+  obj.tileY = 0
   obj.zheight = 1
 
   obj.rotation = 0
@@ -36,9 +36,9 @@ local function new(id, type, ...)
   obj.visible = true
   obj.is_on_screen = true
 
-	if obj.type == "circle" then
-		obj.x = args[1] or 0
-		obj.y = args[2] or 0
+  if obj.type == "circle" then
+    obj.x = args[1] or 0
+    obj.y = args[2] or 0
 
     circle_canvas = love.graphics.newCanvas(args[3]*2, args[3]*2)
     util.drawto(circle_canvas, 0, 0, 1, false, function()
@@ -52,44 +52,45 @@ local function new(id, type, ...)
     obj:generateNormalMapFlat("top")
 
     obj:setShadowType('circle', args[3], args[4], args[5])
-	elseif obj.type == "rectangle" then
-		local x = args[1] or 0
-		local y = args[2] or 0
+  elseif obj.type == "rectangle" then
+    local x = args[1] or 0
+    local y = args[2] or 0
     local width = args[3] or 64
     local height = args[4] or 64
     local ox = args[5] or width * 0.5
     local oy = args[6] or height * 0.5
 
+    obj.type = "polygon"
     obj:setPoints(
       x - ox, y - oy,
       x - ox + width, y - oy,
       x - ox + width, y - oy + height,
       x - ox,  y - oy + height
     )
-	elseif obj.type == "polygon" then
+  elseif obj.type == "polygon" then
     obj:setPoints(...)
-	elseif obj.type == "image" then
-		obj.img = args[1]
-		obj.x = args[2] or 0
-		obj.y = args[3] or 0
-		if obj.img then
-			obj.imgWidth = obj.img:getWidth()
-			obj.imgHeight = obj.img:getHeight()
-			obj.ix = obj.imgWidth * 0.5
-			obj.iy = obj.imgHeight * 0.5
-		end
+  elseif obj.type == "image" then
+    obj.img = args[1]
+    obj.x = args[2] or 0
+    obj.y = args[3] or 0
+    if obj.img then
+      obj.imgWidth = obj.img:getWidth()
+      obj.imgHeight = obj.img:getHeight()
+      obj.ix = obj.imgWidth * 0.5
+      obj.iy = obj.imgHeight * 0.5
+    end
     obj:generateNormalMapFlat("top")
     obj:setShadowType('rectangle', args[4] or obj.imgWidth, args[5] or obj.imgHeight, args[6], args[7])
-		obj.reflective = true
+    obj.reflective = true
   elseif obj.type == "animation" then
-		obj.img = args[1]
-		obj.x = args[2] or 0
-		obj.y = args[3] or 0
+    obj.img = args[1]
+    obj.x = args[2] or 0
+    obj.y = args[3] or 0
     obj.animations = {}
     obj.castsNoShadow = true
     obj:generateNormalMapFlat("top")
-		obj.reflective = true
-	elseif obj.type == "refraction" then
+    obj.reflective = true
+  elseif obj.type == "refraction" then
     obj.x = args[2] or 0
     obj.y = args[3] or 0
     obj:setNormalMap(args[1], args[4], args[5])
@@ -107,7 +108,7 @@ local function new(id, type, ...)
     obj.ox = obj.width * 0.5
     obj.oy = obj.height * 0.5
     obj.reflection = true
-	end
+  end
 
   obj:commit_changes()
 

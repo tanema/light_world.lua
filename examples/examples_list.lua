@@ -1,14 +1,14 @@
 local List = require('examples.lib.list')
 local LightWorld = require('lib')
 local examples = {
-  ["Animation Example"] = "animation.lua",
-  ["Complex Example"] = "complex.lua",
-  ["Gamera Example"] = "gamera.lua",
-  ["Hump Example"] = "hump.lua",
-  ["Normal Map Example"] = "normalMap.lua",
-  ["Only Postshader Example"] = "postshaders.lua",
-  ["Simple Example"] = "simple.lua",
-  ["STI Example"] = "simple_tiled_impl.lua",
+  {"Simple", "simple.lua"},
+  {"Gamera", "gamera.lua"},
+  {"Hump", "hump.lua"},
+  {"Normal Map", "normalMap.lua"},
+  {"Animation", "animation.lua"},
+  {"STI Example", "simple_tiled_impl.lua"},
+  {"Only Postshader Example", "postshaders.lua"},
+  {"Complex Example", "complex.lua"},
 }
 local list, smallfont, bigfont, bigball, lightWorld, lightMouse
 
@@ -34,12 +34,9 @@ local function load()
   smallfont = love.graphics.newFont(12)
   bigfont = love.graphics.newFont(24)
   list.font = smallfont
-  bigball = love.graphics.newImage("examples/gfx/love-big-ball.png")
-  local n = 0
-  for c, v in pairs(examples) do
-    n = n + 1
-    local title = string.format("%04d", n) .. " " .. c .. " (" .. v .. ")"
-    list:add(title, v, function() start(v) end)
+  bigball = love.graphics.newImage("examples/img/love-big-ball.png")
+  for n, v in ipairs(examples) do
+    list:add(string.format("%04d", n).." "..v[1].." ("..v[2]..")", function() start(v[2]) end)
   end
   love.window.setTitle("LOVE Example Browser")
   lightWorld = LightWorld({ambient = {0.49, 0.49, 0.49}})

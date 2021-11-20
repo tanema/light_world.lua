@@ -5,8 +5,8 @@ local lightWorld, map, image_normal, lightMouse
 local function load()
 	-- create light world
   lightWorld = LightWorld({ambient = {0.49, 0.49, 0.49}})
-	map = sti.new("examples/gfx/map.lua")
-	image_normal = love.graphics.newImage("examples/gfx/border_NRM.png")
+	map = sti.new("examples/img/sti/map.lua")
+	image_normal = love.graphics.newImage("examples/img/sti/border_NRM.png")
 	-- create light
   lightMouse = lightWorld:newLight(0, 0, 1, 0.49, 0.24, 300)
 	lightMouse:setGlowStrength(0.3)
