@@ -1,12 +1,19 @@
 local util = {}
 local tempCanvas
+local lastCanvasWidth, lastCanvasHeight
+
 --TODO: the whole stencil/canvas system should be reviewed since it has been changed in a naive way
 
 function util.process(canvas, options)
-  --TODO: now you cannot draw a canvas to itself
-  if not tempCanvas then
-    tempCanvas = love.graphics.newCanvas()
+  
+  local canvasWidth, canvasHeight = love.graphics.getDimensions()
+  
+  -- If canvas size has changed, recreate tempCanvas
+  if not tempCanvas or canvasWidth ~= lastCanvasWidth or canvasHeight ~= lastCanvasHeight then
+    tempCanvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
+    lastCanvasWidth, lastCanvasHeight = canvasWidth, canvasHeight
   end
+
   util.drawCanvasToCanvas(canvas, tempCanvas, options)
   util.drawCanvasToCanvas(tempCanvas, canvas, options)
 end
