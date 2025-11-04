@@ -176,7 +176,7 @@ function light_world:drawShadows(l,t,w,h,s)
       stencil = function()
         local angle = light.direction - (light.angle / 2.0)
         love.graphics.arc(
-          "fill", (light.x + l/s) * s, (light.y + t/s) * s, light.range, angle, angle + light.angle
+          "fill", (light.x + l/s) * s, (light.y + t/s) * s, light.range * s, angle, angle + light.angle
         )
       end
     })
