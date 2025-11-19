@@ -575,11 +575,17 @@ end
 function body:drawNormal()
   if not self.refraction and not self.reflection and self.normalMesh then
     love.graphics.setColor(1, 1, 1)
+
+    love.graphics.setShader(body.normalRotateShader)
+    body.normalRotateShader:send("rotation", self.rotation)
+
     if self.type == 'animation' then
       self.animation:draw(self.normal, self.x, self.y, self.rotation, self.scalex, self.scaley, self.nx, self.ny)
     else
       love.graphics.draw(self.normalMesh, self.x, self.y, self.rotation, self.scalex, self.scaley, self.nx, self.ny)
     end
+
+    love.graphics.setShader()
   end
 end
 
