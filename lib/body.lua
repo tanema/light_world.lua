@@ -9,6 +9,7 @@ body.__index = body
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
+body.normalRotateShader = love.graphics.newShader(_PACKAGE .. "/shaders/normal_rotate.glsl")
 
 local function new(id, type, ...)
   local args = {...}
