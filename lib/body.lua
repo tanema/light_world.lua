@@ -9,6 +9,7 @@ body.__index = body
 
 body.glowShader     = love.graphics.newShader(_PACKAGE.."/shaders/glow.glsl")
 body.materialShader = love.graphics.newShader(_PACKAGE.."/shaders/material.glsl")
+body.normalRotateShader = love.graphics.newShader(_PACKAGE .. "/shaders/normal_rotate.glsl")
 
 local function new(id, type, ...)
   local args = {...}
@@ -575,11 +576,17 @@ end
 function body:drawNormal()
   if not self.refraction and not self.reflection and self.normalMesh then
     love.graphics.setColor(1, 1, 1)
+
+    love.graphics.setShader(body.normalRotateShader)
+    body.normalRotateShader:send("rotation", self.rotation)
+
     if self.type == 'animation' then
       self.animation:draw(self.normal, self.x, self.y, self.rotation, self.scalex, self.scaley, self.nx, self.ny)
     else
       love.graphics.draw(self.normalMesh, self.x, self.y, self.rotation, self.scalex, self.scaley, self.nx, self.ny)
     end
+
+    love.graphics.setShader()
   end
 end
 
